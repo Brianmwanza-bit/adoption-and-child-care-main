@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+h1 {
+    color: #2d6a4f;
+    text-align: center;
+    margin-top: 2rem;
+}
+#app {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+body.yellow-bg {
+    background: #ffd600;
+    min-height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+.header {
+    text-align: center;
+    margin-top: 2rem;
+    color: #2d2d2d;
+}
+.header .highlight {
+    color: #3d2fd6;
+    font-weight: bold;
+}
+.logo {
+    background: #c77dff;
+    color: #fff700;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 1rem;
+    padding: 0.5rem 0;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+    line-height: 1.1;
+}
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+.feature-card {
+    background: #f1f1f1;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.feature-img.placeholder-img {
+    width: 60px;
+    height: 60px;
+    background: #e0e0e0;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+.feature-label {
+    font-size: 1rem;
+    color: #333;
+    text-align: center;
+}
+.bottom-nav {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    background: #fafafa;
+    border-radius: 1rem;
+    padding: 0.5rem 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.nav-item {
+    flex: 1;
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+}
+.nav-icon {
+    display: block;
+    font-size: 1.3rem;
+    margin-bottom: 0.2rem;
+}
+.nav-item:first-child {
+    color: #3d2fd6;
+}
+.main-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 2rem auto;
+    background: #fff;
+    padding: 1.5rem 0.5rem 1rem 0.5rem;
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+} 

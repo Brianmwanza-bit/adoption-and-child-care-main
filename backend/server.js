@@ -10,7 +10,7 @@ require('dotenv').config();
 const path = require('path');
 
 const app = express();
-const PORT = proces.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 app.use(cors());
@@ -90,7 +90,10 @@ dbTables = [
   { name: 'money_records', pk: 'money_id' },
   { name: 'education_records', pk: 'record_id' },
   { name: 'documents', pk: 'document_id' },
-  { name: 'users', pk: 'user_id' }
+  { name: 'users', pk: 'user_id' },
+  { name: 'audit_logs', pk: 'log_id' },
+  { name: 'permissions', pk: 'permission_id' },
+  { name: 'user_permissions', pk: 'user_id' }
 ];
 
 dbTables.forEach(table => {
@@ -144,6 +147,43 @@ app.post('/documents/upload', authenticateToken, upload.single('file'), (req, re
       res.json({ id: result.insertId, file: file.filename });
     }
   );
+});
+
+// --- Get Children by Guardian (Stored Procedure) ---
+app.get('/children/by-guardian/:guardianId', authenticateToken, (req, res) => {
+  db.query('CALL GetChildrenByGuardian(?)', [req.params.guardianId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results[0]);
+  });
+});
+// --- Permissions Management ---
+app.post('/permissions/assign', authenticateToken, (req, res) => {
+  const { user_id, permission_id } = req.body;
+  db.query('INSERT INTO user_permissions (user_id, permission_id) VALUES (?, ?)', [user_id, permission_id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Permission assigned' });
+  });
+});
+app.delete('/permissions/revoke', authenticateToken, (req, res) => {
+  const { user_id, permission_id } = req.body;
+  db.query('DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?', [user_id, permission_id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Permission revoked' });
+  });
+});
+// --- Get User Permissions ---
+app.get('/users/:id/permissions', authenticateToken, (req, res) => {
+  db.query('SELECT p.* FROM permissions p JOIN user_permissions up ON p.permission_id = up.permission_id WHERE up.user_id = ?', [req.params.id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
+});
+// --- Get Audit Logs for a Table/Record ---
+app.get('/audit_logs/:table/:record_id', authenticateToken, (req, res) => {
+  db.query('SELECT * FROM audit_logs WHERE table_name = ? AND record_id = ?', [req.params.table, req.params.record_id], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(results);
+  });
 });
 
 // --- Error Handling Middleware ---

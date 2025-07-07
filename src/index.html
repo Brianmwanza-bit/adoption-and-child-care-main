@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adoption and Child Care Tracking System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="icons/c8.jpg" sizes="32x32" style="border-radius:50%;overflow:hidden;">
+    <link rel="icon" type="image/png" href="icons/c8.jpg" sizes="192x192" purpose="maskable">
+</head>
+<body class="luminous-darkgreen-bg">
+    <div class="main-container">
+        <div class="logo">ADOPTION AND CHILD CARE<br>TRACKING SYSTEM</div>
+        <div class="features-grid">
+            <button class="feature-card" type="button" data-feature="court">
+                <span class="feature-img"><img src="icons/c1.jpg" alt="Court"></span>
+                <span class="feature-label">Court</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="independent-living">
+                <span class="feature-img"><img src="icons/c2.jpg" alt="Emancipated"></span>
+                <span class="feature-label">Emancipated</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="placement">
+                <span class="feature-img"><img src="icons/-2000px.jpg" alt=""></span>
+                <span class="feature-label">PLACEMENT</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="medical-health">
+                <span class="feature-img"><img src="icons/c3.jpg" alt="Medical"></span>
+                <span class="feature-label">Medical</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="mental-health">
+                <span class="feature-img"><img src="icons/c4.jpg" alt="Guardia"></span>
+                <span class="feature-label">Guardia</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="case-reports">
+                <span class="feature-img"><img src="icons/c5.png" alt="Case Reports"></span>
+                <span class="feature-label">Case Reports</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="money">
+                <span class="feature-img"><img src="icons/c6.jpg" alt="Money"></span>
+                <span class="feature-label">Money</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="education">
+                <span class="feature-img"><img src="icons/c7.jpg" alt="Education"></span>
+                <span class="feature-label">Education</span>
+            </button>
+        </div>
+        <div id="feature-content"></div>
+        <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></div>
+            <div class="nav-item"><span class="nav-icon">🎥</span><span class="nav-label">Video</span></div>
+            <div class="nav-item"><span class="nav-icon">🔍</span><span class="nav-label">Search</span></div>
+            <div class="nav-item" id="about-btn"><span class="nav-icon">ℹ️</span><span class="nav-label">About</span></div>
+        </div>
+        <button id="reconnect-btn">Reconnect to Server</button>
+    </div>
+    <div id="search-modal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close-btn" id="close-search-modal">&times;</span>
+        <h2>Search Records</h2>
+        <form id="search-form">
+          <input type="text" id="search-query" name="search-query" placeholder="Child's Name, Birth Certificate Number, Guardian's Name, Guardian's ID Number">
+          <button type="submit">Search</button>
+        </form>
+      </div>
+    </div>
+    <div id="video-modal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close-btn" id="close-video-modal">&times;</span>
+        <h2>Camera Options</h2>
+        <div class="button-row">
+          <button id="take-picture-btn" type="button">Picture</button>
+          <button id="record-video-btn" type="button">Video</button>
+        </div>
+        <div id="camera-container"></div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

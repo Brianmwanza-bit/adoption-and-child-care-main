@@ -1,0 +1,22 @@
+{
+  "name": "Adoption and Child Care Tracking System",
+  "short_name": "AdoptCare",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#222",
+  "theme_color": "#2d6a4f",
+  "icons": [
+    {
+      "src": "icons/c8.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/c8.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+} 

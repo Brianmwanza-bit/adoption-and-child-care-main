@@ -1,0 +1,24 @@
+{
+  "name": "adoption-and-child-care-main",
+  "version": "1.0.0",
+  "description": "Adoption and Child Care Tracking System - Frontend",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'No build step. Open index.html directly.'"
+  },
+  "author": "Brian Mwanza",
+  "license": "MIT",
+  "devDependencies": {
+    "package-name": "^0.1.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "mysql2": "^3.14.1"
+  }
+}

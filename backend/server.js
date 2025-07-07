@@ -16,6 +16,7 @@ const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../src')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MySQL connection

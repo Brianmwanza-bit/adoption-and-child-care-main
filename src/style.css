@@ -245,6 +245,24 @@ body.luminous-darkgreen-bg {
 #video-modal .modal-content button:hover {
   background: #2d6a4f;
 }
+.user-list-btn {
+  background: #3d2fd6;
+  color: #fff;
+  border: none;
+  border-radius: 0.5em;
+  padding: 1em;
+  font-size: 1.1em;
+  width: 100%;
+  margin: 0.5em 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.user-list-btn:hover {
+  background: #2d6a4f;
+}
+.user-modal-content {
+  background: unset !important;
+}
 @media (max-width: 600px) {
   .modal-content {
     max-width: 98vw;

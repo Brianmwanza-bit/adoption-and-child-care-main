@@ -91,3 +91,18 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 *Feel free to reach out for more help with any section, design ideas, or technical setup!*
+
+## Restoring the Database
+
+To restore the database using the provided SQL file, follow these steps:
+
+1. Make sure MySQL is running on your system.
+2. Open a terminal or command prompt.
+3. Run the following command (replace 'root' and database name if needed):
+
+```
+mysql -u root adoption_and_childcare_tracking_system_db < database/adoption_and_childcare_tracking_system_db.sql
+```
+
+- This will recreate the tables and data as exported.
+- You can also use tools like DBeaver or phpMyAdmin to import the SQL file if you prefer a graphical interface.

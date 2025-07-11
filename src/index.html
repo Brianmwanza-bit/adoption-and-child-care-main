@@ -7,8 +7,38 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/jpeg" href="icons/c8.jpg" sizes="32x32" style="border-radius:50%;overflow:hidden;">
     <link rel="icon" type="image/png" href="icons/c8.jpg" sizes="192x192" purpose="maskable">
+    <style>
+      .user-modal-content {
+        background: #0074D9;
+        padding: 2em;
+        border-radius: 1em;
+      }
+      .close-btn-user-modal {
+        color: #fff;
+        font-size: 2em;
+        cursor: pointer;
+        float: right;
+      }
+      #user-roles-block {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+      }
+      .user-role-btn {
+        background: #005fa3;
+        color: #fff;
+        border: none;
+        border-radius: 0.5em;
+        padding: 1em;
+        font-size: 1.1em;
+      }
+      .user-modal-title {
+        color: #fff;
+      }
+    </style>
 </head>
 <body class="luminous-darkgreen-bg">
+    
     <div class="main-container">
         <div class="logo">ADOPTION AND CHILD CARE<br>TRACKING SYSTEM</div>
         <div class="features-grid">
@@ -16,9 +46,9 @@
                 <span class="feature-img"><img src="icons/c1.jpg" alt="Court"></span>
                 <span class="feature-label">Court</span>
             </button>
-            <button class="feature-card" type="button" data-feature="independent-living">
-                <span class="feature-img"><img src="icons/c2.jpg" alt="Emancipated"></span>
-                <span class="feature-label">Emancipated</span>
+            <button class="feature-card" type="button" data-feature="children">
+                <span class="feature-img"><img src="icons/c2.jpg" alt="Children"></span>
+                <span class="feature-label">Children</span>
             </button>
             <button class="feature-card" type="button" data-feature="placement">
                 <span class="feature-img"><img src="icons/-2000px.jpg" alt=""></span>
@@ -44,15 +74,39 @@
                 <span class="feature-img"><img src="icons/c7.jpg" alt="Education"></span>
                 <span class="feature-label">Education</span>
             </button>
+            <button class="feature-card" type="button" data-feature="user">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="User"></span>
+                <span class="feature-label">User</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="users">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="Users"></span>
+                <span class="feature-label">Users</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="audit-logs">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="Audit Logs"></span>
+                <span class="feature-label">Audit Logs</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="permissions">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="Permissions"></span>
+                <span class="feature-label">Permissions</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="user-permissions">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="User Permissions"></span>
+                <span class="feature-label">User Permissions</span>
+            </button>
+            <button class="feature-card" type="button" data-feature="documents">
+                <span class="feature-img"><img src="icons/c8.jpg" alt="Documents"></span>
+                <span class="feature-label">Documents</span>
+            </button>
         </div>
         <div id="feature-content"></div>
         <div class="bottom-nav">
             <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></div>
-            <div class="nav-item"><span class="nav-icon">🎥</span><span class="nav-label">Video</span></div>
+            <div class="nav-item"><span class="nav-icon">📷</span><span class="nav-label">Camera</span></div>
             <div class="nav-item"><span class="nav-icon">🔍</span><span class="nav-label">Search</span></div>
             <div class="nav-item" id="about-btn"><span class="nav-icon">ℹ️</span><span class="nav-label">About</span></div>
         </div>
-        <button id="reconnect-btn">Reconnect to Server</button>
+        <button id="reconnect-btn" type="button">Reconnect to Server</button>
     </div>
     <div id="search-modal" class="modal" style="display:none;">
       <div class="modal-content">
@@ -73,6 +127,16 @@
           <button id="record-video-btn" type="button">Video</button>
         </div>
         <div id="camera-container"></div>
+      </div>
+    </div>
+    <!-- Add a modal for the users list -->
+    <div id="users-modal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close-btn close-btn-user-modal" id="close-users-modal">&times;</span>
+        <h2 class="user-modal-title">Users</h2>
+        <div id="users-list-block">
+          <!-- User buttons will be injected here by JS -->
+        </div>
       </div>
     </div>
     <script src="script.js"></script>

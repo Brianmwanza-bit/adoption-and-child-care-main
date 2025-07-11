@@ -10,7 +10,7 @@ require('dotenv').config();
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8888;
 const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 app.use(cors());
@@ -20,18 +20,16 @@ app.use(express.static(path.join(__dirname, '../src')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MySQL connection
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || 'adoption_child_care'
+  database: process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
+  waitForConnections: true,
+  connectionLimit: 10
 });
 
-db.connect(err => {
-  if (err) throw err;
-  console.log('Connected to MySQL');
-});
-
+// Replace all db.query with pool.query
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -42,6 +40,13 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+
+// Replace db.connect block with pool.getConnection to test connection
+pool.getConnection((err, connection) => {
+  if (err) throw err;
+  console.log('Connected to MySQL (pool)');
+  connection.release();
+});
 
 // JWT middleware
 function authenticateToken(req, res, next) {
@@ -55,28 +60,48 @@ function authenticateToken(req, res, next) {
   });
 }
 
+// Utility for standardized error responses
+function formatError(code, message, details) {
+  return { success: false, error: { code, message, details } };
+}
+
 // --- AUTH ---
-app.post('/register', async (req, res) => {
+app.post('/register', async (req, res, next) => {
+  try {
   const { username, password, role, email } = req.body;
+    if (!username || !password || !role || !email) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'role', 'email'] }));
+    }
   const password_hash = await bcrypt.hash(password, 10);
-  db.query('INSERT INTO users (username, password_hash, role, email) VALUES (?, ?, ?, ?)',
+    pool.query('INSERT INTO users (username, password_hash, role, email) VALUES (?, ?, ?, ?)',
     [username, password_hash, role, email],
     (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: result.insertId, username, role, email });
+        if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+        res.json({ success: true, id: result.insertId, username, role, email });
     });
+  } catch (err) {
+    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
+  }
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res, next) => {
+  try {
   const { username, password } = req.body;
-  db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-    if (err || results.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!username || !password) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing username or password'));
+    }
+    pool.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      if (results.length === 0) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
     const user = results[0];
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+      if (!valid) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
     const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET, { expiresIn: '1h' });
-    res.json({ token });
+      res.json({ success: true, token });
   });
+  } catch (err) {
+    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
+  }
 });
 
 // --- CRUD Endpoints for All Tables ---
@@ -99,100 +124,111 @@ dbTables = [
 
 dbTables.forEach(table => {
   // Get all
-  app.get(`/${table.name}`, authenticateToken, (req, res) => {
-    db.query(`SELECT * FROM ${table.name}`, (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(results);
+  app.get(`/${table.name}`, authenticateToken, (req, res, next) => {
+    pool.query(`SELECT * FROM ${table.name}`, (err, results) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      res.json({ success: true, data: results });
     });
   });
   // Get one
-  app.get(`/${table.name}/:id`, authenticateToken, (req, res) => {
-    db.query(`SELECT * FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(results[0]);
+  app.get(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
+    pool.query(`SELECT * FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, results) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      if (!results.length) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      res.json({ success: true, data: results[0] });
     });
   });
   // Create
-  app.post(`/${table.name}`, authenticateToken, (req, res) => {
-    db.query(`INSERT INTO ${table.name} SET ?`, req.body, (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: result.insertId, ...req.body });
+  app.post(`/${table.name}`, authenticateToken, (req, res, next) => {
+    pool.query(`INSERT INTO ${table.name} SET ?`, req.body, (err, result) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      res.json({ success: true, id: result.insertId, ...req.body });
     });
   });
   // Update
-  app.put(`/${table.name}/:id`, authenticateToken, (req, res) => {
-    db.query(`UPDATE ${table.name} SET ? WHERE ${table.pk} = ?`, [req.body, req.params.id], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Updated' });
+  app.put(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
+    pool.query(`UPDATE ${table.name} SET ? WHERE ${table.pk} = ?`, [req.body, req.params.id], (err, result) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      if (result.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      res.json({ success: true, message: 'Updated' });
     });
   });
   // Delete
-  app.delete(`/${table.name}/:id`, authenticateToken, (req, res) => {
-    db.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'Deleted' });
+  app.delete(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
+    pool.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, result) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      if (result.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      res.json({ success: true, message: 'Deleted' });
     });
   });
 });
 
 // --- File Upload for Documents ---
-app.post('/documents/upload', authenticateToken, upload.single('file'), (req, res) => {
+app.post('/documents/upload', authenticateToken, upload.single('file'), (req, res, next) => {
+  try {
   const { child_id } = req.body;
   const file = req.file;
-  if (!file) return res.status(400).json({ error: 'No file uploaded' });
-  db.query(
+    if (!file) return res.status(400).json(formatError('VALIDATION_ERROR', 'No file uploaded'));
+    pool.query(
     'INSERT INTO documents (child_id, file_name, file_type, file_path) VALUES (?, ?, ?, ?)',
     [child_id, file.originalname, file.mimetype, file.path],
     (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: result.insertId, file: file.filename });
+        if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+        res.json({ success: true, id: result.insertId, file: file.filename });
     }
   );
+  } catch (err) {
+    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
+  }
 });
 
 // --- Get Children by Guardian (Stored Procedure) ---
-app.get('/children/by-guardian/:guardianId', authenticateToken, (req, res) => {
-  db.query('CALL GetChildrenByGuardian(?)', [req.params.guardianId], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results[0]);
+app.get('/children/by-guardian/:guardianId', authenticateToken, (req, res, next) => {
+  pool.query('CALL GetChildrenByGuardian(?)', [req.params.guardianId], (err, results) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    res.json({ success: true, data: results[0] });
   });
 });
 // --- Permissions Management ---
-app.post('/permissions/assign', authenticateToken, (req, res) => {
+app.post('/permissions/assign', authenticateToken, (req, res, next) => {
   const { user_id, permission_id } = req.body;
-  db.query('INSERT INTO user_permissions (user_id, permission_id) VALUES (?, ?)', [user_id, permission_id], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Permission assigned' });
+  pool.query('INSERT INTO user_permissions (user_id, permission_id) VALUES (?, ?)', [user_id, permission_id], (err) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    res.json({ success: true, message: 'Permission assigned' });
   });
 });
-app.delete('/permissions/revoke', authenticateToken, (req, res) => {
+app.delete('/permissions/revoke', authenticateToken, (req, res, next) => {
   const { user_id, permission_id } = req.body;
-  db.query('DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?', [user_id, permission_id], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Permission revoked' });
+  pool.query('DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?', [user_id, permission_id], (err, result) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    if (result.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', 'Permission not found'));
+    res.json({ success: true, message: 'Permission revoked' });
   });
 });
 // --- Get User Permissions ---
-app.get('/users/:id/permissions', authenticateToken, (req, res) => {
-  db.query('SELECT p.* FROM permissions p JOIN user_permissions up ON p.permission_id = up.permission_id WHERE up.user_id = ?', [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
+app.get('/users/:id/permissions', authenticateToken, (req, res, next) => {
+  pool.query('SELECT p.* FROM permissions p JOIN user_permissions up ON p.permission_id = up.permission_id WHERE up.user_id = ?', [req.params.id], (err, results) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    res.json({ success: true, data: results });
   });
 });
 // --- Get Audit Logs for a Table/Record ---
-app.get('/audit_logs/:table/:record_id', authenticateToken, (req, res) => {
-  db.query('SELECT * FROM audit_logs WHERE table_name = ? AND record_id = ?', [req.params.table, req.params.record_id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
+app.get('/audit_logs/:table/:record_id', authenticateToken, (req, res, next) => {
+  pool.query('SELECT * FROM audit_logs WHERE table_name = ? AND record_id = ?', [req.params.table, req.params.record_id], (err, results) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    res.json({ success: true, data: results });
   });
 });
 
 // --- Error Handling Middleware ---
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error(err.stack || err);
+  const code = err.code || 'INTERNAL_ERROR';
+  const message = err.message || 'Something went wrong!';
+  const details = err.details || undefined;
+  res.status(500).json(formatError(code, message, details));
 });
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 }); 

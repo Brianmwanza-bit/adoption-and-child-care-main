@@ -1,6 +1,11 @@
 // script.js
 // All event listeners and logic are now wrapped in DOMContentLoaded for reliability
 
+// Block access to secondary frontend if not logged in
+if (!localStorage.getItem('authToken') && window.location.pathname !== '/') {
+  window.location.href = '/';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   // --- NAV BUTTONS ---
 document.getElementById('about-btn').addEventListener('click', function() {
@@ -268,7 +273,7 @@ document.getElementById('record-video-btn').addEventListener('click', function()
 });
 
   // --- FEATURE BUTTONS ---
-  const API_BASE = 'http://192.168.43.244:8888';
+  const API_BASE = 'http://localhost:3000';
   const featureTableMap = {
     'court': 'court_cases',
     'children': 'children',
@@ -287,7 +292,60 @@ document.getElementById('record-video-btn').addEventListener('click', function()
   };
 document.querySelectorAll('.feature-card').forEach(function(btn) {
     const feature = btn.getAttribute('data-feature');
-    if (feature === 'user') {
+    if (feature === 'court') {
+      btn.addEventListener('click', function() {
+        // Open a new tab with a form to add a court case
+        const formHtml = `
+          <html><head><title>Add Court Case</title>
+          <style>body{font-family:sans-serif;padding:2em;}label{display:block;margin-top:1em;}input,textarea{width:100%;padding:0.5em;margin-top:0.2em;}button{margin-top:1em;padding:0.7em 2em;background:#0074D9;color:#fff;border:none;border-radius:0.3em;cursor:pointer;}</style>
+          </head><body>
+          <h2>Add Court Case</h2>
+          <form id='court-form'>
+            <label>Case Name<input name='case_name' required></label>
+            <label>Case Number<input name='case_number' required></label>
+            <label>Date<input name='date' type='date' required></label>
+            <label>Description<textarea name='description'></textarea></label>
+            <button type='submit'>Add Case</button>
+          </form>
+          <div id='result'></div>
+          <script>
+            const API_BASE = '${API_BASE}';
+            document.getElementById('court-form').onsubmit = async function(e) {
+              e.preventDefault();
+              const form = e.target;
+              const data = {
+                case_name: form.case_name.value,
+                case_number: form.case_number.value,
+                date: form.date.value,
+                description: form.description.value
+              };
+              document.getElementById('result').textContent = 'Submitting...';
+              try {
+                const res = await fetch(API_BASE + '/court_cases', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                  document.getElementById('result').textContent = 'Court case added!';
+                  form.reset();
+                } else {
+                  document.getElementById('result').textContent = 'Error: ' + (result.error?.message || 'Unknown error');
+                }
+              } catch (err) {
+                document.getElementById('result').textContent = 'Error: ' + err.message;
+              }
+            };
+          <\/script></body></html>
+        `;
+        const win = window.open('', '_blank');
+        win.document.write(formHtml);
+        win.document.close();
+      });
+      return;
+    }
+    if (feature === 'users') {
       btn.addEventListener('click', function() {
         document.getElementById('user-modal').style.display = 'block';
       });
@@ -295,33 +353,131 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
     }
     if (featureTableMap[feature]) {
       btn.addEventListener('click', function() {
-        fetch(`${API_BASE}/${featureTableMap[feature]}`)
-          .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-          })
-          .then(data => {
-            const contentDiv = document.getElementById('feature-content');
-      if (Array.isArray(data) && data.length > 0) {
-              contentDiv.innerHTML = `<h3>${btn.querySelector('.feature-label').textContent} List</h3>` +
-                '<ul>' + data.map(row => `<li>${Object.values(row).join(' | ')}</li>`).join('') + '</ul>';
-            } else {
-              contentDiv.innerHTML = `<p>No ${btn.querySelector('.feature-label').textContent.toLowerCase()} found.</p>`;
-            }
-          })
-          .catch(error => {
-            document.getElementById('feature-content').innerHTML = `<p style=\"color:red;\">Error fetching ${btn.querySelector('.feature-label').textContent.toLowerCase()}: ${error.message}</p>`;
-          });
+        // Open a new tab with a form to add a record for this feature
+        const table = featureTableMap[feature];
+        // Define fields for each table (customize as needed)
+        const tableFields = {
+          'children': [
+            { name: 'first_name', label: 'First Name', type: 'text', required: true },
+            { name: 'last_name', label: 'Last Name', type: 'text', required: true },
+            { name: 'dob', label: 'Date of Birth', type: 'date', required: true },
+            { name: 'gender', label: 'Gender', type: 'text', required: true }
+          ],
+          'placement': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'placement_date', label: 'Placement Date', type: 'date', required: true },
+            { name: 'placement_type', label: 'Placement Type', type: 'text', required: true }
+          ],
+          'medical_records': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'record_date', label: 'Record Date', type: 'date', required: true },
+            { name: 'notes', label: 'Notes', type: 'textarea', required: false }
+          ],
+          'guardians': [
+            { name: 'first_name', label: 'First Name', type: 'text', required: true },
+            { name: 'last_name', label: 'Last Name', type: 'text', required: true },
+            { name: 'relationship', label: 'Relationship', type: 'text', required: true }
+          ],
+          'case_reports': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'report_date', label: 'Report Date', type: 'date', required: true },
+            { name: 'summary', label: 'Summary', type: 'textarea', required: false }
+          ],
+          'money_records': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'amount', label: 'Amount', type: 'number', required: true },
+            { name: 'date', label: 'Date', type: 'date', required: true },
+            { name: 'description', label: 'Description', type: 'textarea', required: false }
+          ],
+          'education_records': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'school_name', label: 'School Name', type: 'text', required: true },
+            { name: 'grade', label: 'Grade', type: 'text', required: true },
+            { name: 'year', label: 'Year', type: 'number', required: true }
+          ],
+          'audit_logs': [
+            { name: 'user_id', label: 'User ID', type: 'number', required: true },
+            { name: 'action', label: 'Action', type: 'text', required: true },
+            { name: 'timestamp', label: 'Timestamp', type: 'datetime-local', required: true }
+          ],
+          'permissions': [
+            { name: 'permission_name', label: 'Permission Name', type: 'text', required: true },
+            { name: 'description', label: 'Description', type: 'textarea', required: false }
+          ],
+          'user_permissions': [
+            { name: 'user_id', label: 'User ID', type: 'number', required: true },
+            { name: 'permission_id', label: 'Permission ID', type: 'number', required: true }
+          ],
+          'documents': [
+            { name: 'child_id', label: 'Child ID', type: 'number', required: true },
+            { name: 'file', label: 'File', type: 'file', required: true }
+          ]
+        };
+        const fields = tableFields[table] || [];
+        let formFieldsHtml = fields.map(f =>
+          `<label>${f.label}<${f.type === 'textarea' ? 'textarea' : 'input'} name='${f.name}' type='${f.type !== 'textarea' ? f.type : ''}' ${f.required ? 'required' : ''}></${f.type === 'textarea' ? 'textarea' : 'input'}></label>`
+        ).join('');
+        const formHtml = `
+          <html><head><title>Add ${feature}</title>
+          <style>body{font-family:sans-serif;padding:2em;}label{display:block;margin-top:1em;}input,textarea{width:100%;padding:0.5em;margin-top:0.2em;}button{margin-top:1em;padding:0.7em 2em;background:#0074D9;color:#fff;border:none;border-radius:0.3em;cursor:pointer;} .home-btn-center{position:fixed;left:50%;bottom:2em;transform:translateX(-50%);background:#222;color:#fff;padding:1em 2em;border-radius:2em;font-size:1.1em;z-index:1000;border:none;box-shadow:0 2px 8px #0002;}</style>
+          </head><body>
+          <h2>Add ${feature.charAt(0).toUpperCase() + feature.slice(1)}</h2>
+          <form id='add-form' ${fields.some(f=>f.type==='file')?'enctype="multipart/form-data"':''}>
+            ${formFieldsHtml}
+            <button type='submit'>Add</button>
+          </form>
+          <div id='result'></div>
+          <button class='home-btn-center' id='home-btn-center' type='button'>Home</button>
+          <script>
+            const API_BASE = '${API_BASE}';
+            document.getElementById('add-form').onsubmit = async function(e) {
+              e.preventDefault();
+              const form = e.target;
+              let data;
+              let fetchOptions = { method: 'POST' };
+              if (${fields.some(f=>f.type==='file')}) {
+                data = new FormData(form);
+                fetchOptions.body = data;
+              } else {
+                data = {};
+                Array.from(form.elements).forEach(el => {
+                  if (el.name) data[el.name] = el.value;
+                });
+                fetchOptions.headers = { 'Content-Type': 'application/json' };
+                fetchOptions.body = JSON.stringify(data);
+              }
+              document.getElementById('result').textContent = 'Submitting...';
+              try {
+                const res = await fetch(API_BASE + '/${table}', fetchOptions);
+                const result = await res.json();
+                if (result.success) {
+                  document.getElementById('result').textContent = '${feature.charAt(0).toUpperCase() + feature.slice(1)} added!';
+                  form.reset();
+                } else {
+                  document.getElementById('result').textContent = 'Error: ' + (result.error?.message || 'Unknown error');
+                }
+              } catch (err) {
+                document.getElementById('result').textContent = 'Error: ' + err.message;
+              }
+            };
+            document.getElementById('home-btn-center').onclick = function() {
+              document.getElementById('add-form').reset();
+              document.getElementById('result').textContent = '';
+            };
+          <\/script></body></html>
+        `;
+        const win = window.open('', '_blank');
+        win.document.write(formHtml);
+        win.document.close();
       });
+      return;
     }
   });
 
-  // --- USERS MODAL ---
-  const usersBtn = document.querySelector('.feature-card[data-feature="users"]');
-  if (usersBtn) {
-    usersBtn.addEventListener('click', function() {
-      const usersModal = document.getElementById('users-modal');
-      const usersListBlock = document.getElementById('users-list-block');
+  // --- USERS BUTTON (TOP CENTER) ---
+  document.getElementById('users-top-btn').addEventListener('click', function() {
+    const userModal = document.getElementById('user-modal');
+    const userRolesBlock = document.getElementById('user-roles-block');
       // List of roles
       const roles = [
         'Admin',
@@ -332,19 +488,18 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
         'Medical Expert',
         'Police'
       ];
-      usersListBlock.innerHTML = roles.map(role =>
-        `<button class='user-list-btn' type='button'>${role}</button>`
+    userRolesBlock.innerHTML = roles.map(role =>
+      `<button class='user-role-btn' type='button'>${role}</button>`
       ).join('');
-      usersModal.style.display = 'block';
-      document.querySelectorAll('.user-list-btn').forEach((btn, idx) => {
+    userModal.style.display = 'block';
+    document.querySelectorAll('.user-role-btn').forEach((btn, idx) => {
         btn.addEventListener('click', function() {
           alert(roles[idx] + ' button clicked!');
         });
       });
     });
-  }
-  document.getElementById('close-users-modal').addEventListener('click', function() {
-    document.getElementById('users-modal').style.display = 'none';
+  document.getElementById('close-user-modal').addEventListener('click', function() {
+    document.getElementById('user-modal').style.display = 'none';
   });
 
   // --- USER MODAL ---
@@ -371,6 +526,36 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
       }
     });
   });
+
+  // --- USER PHOTO BUTTON (PLUS SIGN) ---
+  const userPhotoBtn = document.getElementById('user-photo-btn');
+  const userPhotoPlusBtn = document.getElementById('user-photo-plus-btn');
+  if (userPhotoBtn && userPhotoPlusBtn) {
+    userPhotoPlusBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Create a file input dynamically
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment'; // For mobile camera
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.click();
+      input.onchange = function(e) {
+        const file = input.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            userPhotoBtn.style.backgroundImage = `url('${evt.target.result}')`;
+            userPhotoBtn.style.backgroundSize = 'cover';
+            userPhotoBtn.textContent = '';
+          };
+          reader.readAsDataURL(file);
+        }
+        document.body.removeChild(input);
+      };
+    });
+  }
 
   // --- HOME BUTTON DOUBLE TAP (optional) ---
   let homeTapTimeout = null;
@@ -430,4 +615,87 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
   }
 
   // Patch into camera code: after photo taken, call uploadImageToBackend(img.src)
+
+  // --- LOGIN MODAL LOGIC ---
+  // Show login modal on page load
+  const loginModal = document.getElementById('login-modal');
+  loginModal.style.display = 'block';
+
+  // Remove the temporary test button if it exists
+  const tempLoginBtn = document.querySelector('button[style*="z-index: 3000"]');
+  if (tempLoginBtn) tempLoginBtn.remove();
+
+  // Disable main app interaction until login
+  const mainContainer = document.querySelector('.main-container');
+  if (mainContainer) mainContainer.style.pointerEvents = 'none';
+  // Optionally, add a blur effect
+  if (mainContainer) mainContainer.style.filter = 'blur(3px)';
+
+  // Ocean barrier logic
+  function showOceanBarrierThenDashboard() {
+    const oceanBarrier = document.getElementById('ocean-barrier');
+    oceanBarrier.style.display = 'block';
+    setTimeout(() => {
+      oceanBarrier.style.display = 'none';
+      loginModal.style.display = 'none';
+      if (mainContainer) {
+        mainContainer.style.pointerEvents = '';
+        mainContainer.style.filter = '';
+      }
+    }, 1500);
+  }
+
+  // Login form submit
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+          showOceanBarrierThenDashboard();
+      } else {
+        document.getElementById('login-error').textContent = data.error || 'Login failed.';
+        document.getElementById('login-error').style.display = 'block';
+      }
+    })
+    .catch(err => {
+      document.getElementById('login-error').textContent = 'Login error: ' + err.message;
+      document.getElementById('login-error').style.display = 'block';
+    });
+    });
+  }
+  // Sign-in button
+  const signInBtn = document.getElementById('sign-in-btn');
+  if (signInBtn) {
+    signInBtn.addEventListener('click', function() {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+      fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showOceanBarrierThenDashboard();
+        } else {
+          document.getElementById('login-error').textContent = data.error || 'Login failed.';
+          document.getElementById('login-error').style.display = 'block';
+        }
+      })
+      .catch(err => {
+        document.getElementById('login-error').textContent = 'Login error: ' + err.message;
+        document.getElementById('login-error').style.display = 'block';
+      });
+    });
+  }
 }); 

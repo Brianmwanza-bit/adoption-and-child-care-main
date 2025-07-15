@@ -146,3 +146,38 @@ Here’s what I found about your backend error handling:
 - Update the error-handling middleware for richer responses.
 
 Let’s start with these changes. 
+
+Absolutely! Here’s how you can set the ocean image as the background for your primary frontend using the file explorer:
+
+### Step-by-Step File Explorer Path
+
+1. **Save the Image:**
+   - Save your ocean image as `c9.jpg`.
+
+2. **Navigate to the Correct Directory:**
+   - Open your project folder in your file explorer.
+   - Go to:  
+     ```
+     adoption-and-child-care-main/
+       └── src/
+           └── icons/
+     ```
+   - Place your `c9.jpg` file inside the `icons` folder.
+
+3. **Verify the CSS Reference:**
+   - The CSS in your project already points to this image:
+     ```
+     background: url('icons/c9.jpg') no-repeat center center fixed !important;
+     ```
+   - This means as long as `c9.jpg` is in the `src/icons/` directory, it will be used as the background.
+
+---
+
+**Summary of the path:**
+```
+adoption-and-child-care-main/src/icons/c9.jpg
+```
+
+If you follow these steps, your ocean image will appear as the background for your primary frontend. If you need to change the image, just replace `c9.jpg` in that folder.
+
+Let me know if you need help with any other file paths or setup! 

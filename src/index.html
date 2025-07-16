@@ -35,11 +35,36 @@
       .user-modal-title {
         color: #fff;
       }
+      /* Registration modal styles */
+      #register-modal .modal-content {
+        color: #fff;
+        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('icons/c8.jpg') no-repeat center center;
+        background-size: cover;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+        border-radius: 2.2em;
+        border: 6px solid #222;
+        padding: 2.2em 1.2em 2em 1.2em;
+        max-width: 370px;
+        min-width: 280px;
+        width: 95vw;
+        min-height: 340px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        box-sizing: border-box;
+      }
+      #register-success {
+        color: #b2ff59;
+        margin-top: 1em;
+        display: none;
+      }
     </style>
 </head>
 <body class="luminous-darkgreen-bg">
     
-    <div class="main-container">
+    <div class="main-container" style="display:none;">
         <div class="logo">ADOPTION AND CHILD CARE<br>TRACKING SYSTEM</div>
         <div class="features-grid">
             <button class="feature-card" type="button" data-feature="court">
@@ -167,6 +192,35 @@
         </form>
         <button id="sign-in-btn" type="button">Sign In</button>
         <div id="login-error" class="login-error"></div>
+      </div>
+    </div>
+    <!-- REGISTRATION MODAL -->
+    <div id="register-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" id="close-register-modal">&times;</span>
+        <h2>Sign Up</h2>
+        <form id="register-form">
+          <div class="form-row">
+            <label for="register-role">Role:</label>
+            <select id="register-role" name="role" required>
+              <option value="">Select Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Caseworker">Caseworker</option>
+              <option value="Guardian">Guardian</option>
+              <option value="Judge">Judge</option>
+              <option value="Lawyer">Lawyer</option>
+              <option value="Medical Expert">Medical Expert</option>
+              <option value="Police">Police</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="register-email">Email:</label>
+            <input type="email" id="register-email" name="email" required placeholder="Email">
+          </div>
+          <button type="submit">Register</button>
+        </form>
+        <div id="register-error" class="login-error"></div>
+        <div id="register-success">Registration successful! You can now log in.</div>
       </div>
     </div>
     <div id="ocean-barrier" class="ocean-barrier"></div>

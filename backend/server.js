@@ -26,6 +26,109 @@ const db = new sqlite3.Database(path.join(__dirname, 'adoption_child_care.db'), 
     process.exit(1);
   } else {
     console.log('Connected to SQLite database.');
+    // --- Ensure users table exists ---
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL,
+      email TEXT NOT NULL,
+      photo TEXT
+    )`, (err) => {
+      if (err) {
+        console.error('Failed to create users table:', err.message);
+        process.exit(1);
+      } else {
+        // Add photo column if missing (for upgrades)
+        db.get("PRAGMA table_info(users)", (err, columns) => {
+          if (!columns.some(col => col.name === 'photo')) {
+            db.run('ALTER TABLE users ADD COLUMN photo TEXT');
+          }
+        });
+        console.log('Users table ready.');
+      }
+    });
+
+    // --- Ensure all other tables exist ---
+    db.serialize(() => {
+      db.run(`CREATE TABLE IF NOT EXISTS children (
+        child_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        dob TEXT,
+        gender TEXT,
+        guardian_id INTEGER
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS guardians (
+        guardian_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT,
+        address TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS court_cases (
+        case_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        case_number TEXT,
+        status TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS placements (
+        placement_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        guardian_id INTEGER,
+        start_date TEXT,
+        end_date TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS medical_records (
+        record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        description TEXT,
+        date TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS case_reports (
+        report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        case_id INTEGER,
+        report_text TEXT,
+        date TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS money_records (
+        money_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        amount REAL,
+        date TEXT,
+        description TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS education_records (
+        record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        school TEXT,
+        grade TEXT,
+        year TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS documents (
+        document_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        child_id INTEGER,
+        file_name TEXT,
+        file_type TEXT,
+        file_path TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        table_name TEXT,
+        record_id INTEGER,
+        action TEXT,
+        user_id INTEGER,
+        timestamp TEXT
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS permissions (
+        permission_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS user_permissions (
+        user_id INTEGER,
+        permission_id INTEGER,
+        PRIMARY KEY (user_id, permission_id)
+      )`);
+      console.log('All tables checked/created.');
+    });
   }
 });
 
@@ -60,16 +163,16 @@ function formatError(code, message, details) {
 // --- AUTH ---
 app.post('/register', async (req, res, next) => {
   try {
-  const { username, password, role, email } = req.body;
+  const { username, password, role, email, photo } = req.body;
     if (!username || !password || !role || !email) {
       return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'role', 'email'] }));
     }
   const password_hash = await bcrypt.hash(password, 10);
-    db.run('INSERT INTO users (username, password_hash, role, email) VALUES (?, ?, ?, ?)',
-    [username, password_hash, role, email],
+    db.run('INSERT INTO users (username, password_hash, role, email, photo) VALUES (?, ?, ?, ?, ?)',
+    [username, password_hash, role, email, photo || null],
       function (err) {
         if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-        res.json({ success: true, id: this.lastID, username, role, email });
+        res.json({ success: true, id: this.lastID, username, role, email, photo: photo || null });
       }
     );
   } catch (err) {
@@ -89,11 +192,32 @@ app.post('/login', async (req, res, next) => {
     const valid = await bcrypt.compare(password, user.password_hash);
       if (!valid) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
     const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET, { expiresIn: '1h' });
-      res.json({ success: true, token });
+      res.json({ success: true, token, user: { user_id: user.user_id, username: user.username, role: user.role, email: user.email, photo: user.photo } });
   });
   } catch (err) {
     next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
   }
+});
+
+// Endpoint to update user photo (expects { photo: base64 or file path })
+app.put('/users/:id/photo', authenticateToken, (req, res, next) => {
+  const user_id = req.params.id;
+  const { photo } = req.body;
+  if (!photo) return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing photo'));
+  db.run('UPDATE users SET photo = ? WHERE user_id = ?', [photo, user_id], function (err) {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    if (this.changes === 0) return res.status(404).json(formatError('NOT_FOUND', 'User not found'));
+    res.json({ success: true, message: 'Photo updated' });
+  });
+});
+
+app.post('/user-exists', (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ exists: false, error: 'Missing username' });
+  db.get('SELECT 1 FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) return res.status(500).json({ exists: false, error: err.message });
+    res.json({ exists: !!row });
+  });
 });
 
 // --- CRUD Endpoints for All Tables ---

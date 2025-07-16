@@ -7,6 +7,187 @@ if (!localStorage.getItem('authToken') && window.location.pathname !== '/') {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // --- SECURE LOGIN FLOW ---
+  function setUserPhoto(photo) {
+    const userPhotoBtn = document.getElementById('user-photo-btn');
+    if (userPhotoBtn) {
+      if (photo) {
+        userPhotoBtn.style.backgroundImage = `url('${photo}')`;
+        userPhotoBtn.style.backgroundSize = 'cover';
+        userPhotoBtn.style.backgroundPosition = 'center';
+        userPhotoBtn.textContent = '';
+        let img = userPhotoBtn.querySelector('img');
+        if (!img) {
+          img = document.createElement('img');
+          img.alt = 'User Photo';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          img.style.borderRadius = '50%';
+          img.style.position = 'absolute';
+          img.style.top = '0';
+          img.style.left = '0';
+          img.style.zIndex = '0';
+          userPhotoBtn.appendChild(img);
+        }
+        img.src = photo;
+      } else {
+        userPhotoBtn.style.backgroundImage = '';
+        userPhotoBtn.textContent = 'Users';
+        let img = userPhotoBtn.querySelector('img');
+        if (img) img.remove();
+      }
+    }
+  }
+  function showLoginOnly() {
+    document.querySelector('.main-container').style.display = 'none';
+    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    document.getElementById('login-modal').style.display = 'block';
+  }
+  function showAppAfterLogin(user) {
+    document.querySelector('.main-container').style.display = '';
+    document.getElementById('login-modal').style.display = 'none';
+    if (user && user.photo) {
+      localStorage.setItem('userPhoto', user.photo);
+      setUserPhoto(user.photo);
+    }
+  }
+  // Check login state on load
+  if (!localStorage.getItem('authToken')) {
+    showLoginOnly();
+  } else {
+    // Try to load photo from localStorage
+    const photo = localStorage.getItem('userPhoto');
+    setUserPhoto(photo);
+    showAppAfterLogin();
+  }
+
+  // --- SIGN IN BUTTON VISIBILITY LOGIC ---
+  const loginUsernameInput = document.getElementById('login-username');
+  const signInBtn = document.getElementById('sign-in-btn');
+  if (loginUsernameInput && signInBtn) {
+    async function checkUserExists() {
+      const username = loginUsernameInput.value.trim();
+      if (!username) {
+        signInBtn.style.display = 'none';
+        return;
+      }
+      try {
+        const res = await fetch('http://localhost:3000/user-exists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (data.exists) {
+          signInBtn.style.display = 'none';
+        } else {
+          signInBtn.style.display = 'block';
+        }
+      } catch (err) {
+        signInBtn.style.display = 'none';
+      }
+    }
+    loginUsernameInput.addEventListener('input', checkUserExists);
+    loginUsernameInput.addEventListener('blur', checkUserExists);
+    // Initial check
+    checkUserExists();
+  }
+  // Intercept login form submit
+  function handleLogin(e) {
+    if (e) e.preventDefault();
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const API_BASE = 'http://localhost:3000'; // Assuming API_BASE is defined elsewhere or needs to be re-defined
+    fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        localStorage.setItem('authToken', data.token);
+        if (data.user && data.user.photo) {
+          localStorage.setItem('userPhoto', data.user.photo);
+          setUserPhoto(data.user.photo);
+        } else {
+          localStorage.removeItem('userPhoto');
+          setUserPhoto(null);
+        }
+        showAppAfterLogin(data.user);
+      } else {
+        document.getElementById('login-error').textContent = data.error || 'Login failed.';
+        document.getElementById('login-error').style.display = 'block';
+      }
+    })
+    .catch(err => {
+      document.getElementById('login-error').textContent = 'Login error: ' + err.message;
+      document.getElementById('login-error').style.display = 'block';
+    });
+  }
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  if (signInBtn) {
+    // --- REGISTRATION LOGIC ---
+    const registerModal = document.getElementById('register-modal');
+    const registerForm = document.getElementById('register-form');
+    const registerError = document.getElementById('register-error');
+    const registerSuccess = document.getElementById('register-success');
+    const closeRegisterModal = document.getElementById('close-register-modal');
+    signInBtn.addEventListener('click', function() {
+      // Prefill username/email if possible
+      document.getElementById('register-email').value = '';
+      document.getElementById('register-role').value = '';
+      registerError.textContent = '';
+      registerSuccess.style.display = 'none';
+      registerModal.style.display = 'flex';
+    });
+    closeRegisterModal.addEventListener('click', function() {
+      registerModal.style.display = 'none';
+    });
+    registerForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const role = document.getElementById('register-role').value;
+      const email = document.getElementById('register-email').value.trim();
+      if (!username || !password || !role || !email) {
+        registerError.textContent = 'All fields are required.';
+        registerError.style.display = 'block';
+        return;
+      }
+      try {
+        const res = await fetch('http://localhost:3000/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role, email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          registerError.textContent = '';
+          registerError.style.display = 'none';
+          registerSuccess.style.display = 'block';
+          signInBtn.style.display = 'none';
+          if (data.photo) {
+            localStorage.setItem('userPhoto', data.photo);
+            setUserPhoto(data.photo);
+          }
+          setTimeout(() => {
+            registerModal.style.display = 'none';
+            registerSuccess.style.display = 'none';
+          }, 1500);
+        } else {
+          registerError.textContent = data.error?.message || 'Registration failed.';
+          registerError.style.display = 'block';
+        }
+      } catch (err) {
+        registerError.textContent = 'Registration error: ' + err.message;
+        registerError.style.display = 'block';
+      }
+    });
+    signInBtn.addEventListener('click', handleLogin);
+  }
+
   // --- NAV BUTTONS ---
 document.getElementById('about-btn').addEventListener('click', function() {
     const aboutText = `The Adoption and Child Care Tracking System is a digital solution designed to streamline the management of adoption services and child welfare processes. It serves as a centralized platform where information about children awaiting adoption, ongoing cases, and care arrangements can be securely stored and accessed by authorized users. The system helps professionals stay organized and ensures that critical details about each child's background, legal status, and personal needs are readily available.\n\nOne of the system's core functions is maintaining detailed child profiles. These profiles include personal data, health records, educational progress, legal documents, and social histories. By gathering this information in one place, the platform reduces paperwork and minimizes the risk of losing important records. This holistic view of a child's circumstances helps social workers, legal professionals, and caregivers make well-informed decisions that prioritize each child's best interests.\n\nAnother key feature is case tracking. The system allows users to monitor the progress of adoption processes, legal proceedings, and care placements. Alerts and notifications keep staff updated about upcoming court dates, document deadlines, or required assessments. This proactive approach ensures that cases move forward without unnecessary delays and that children spend less time waiting for permanent, stable homes.\n\nMoreover, the platform supports collaboration among multiple stakeholders. Different user roles can be set up so that social workers, legal advisors, medical staff, and administrative personnel can securely share information while maintaining data privacy. This improves communication and fosters a coordinated approach to addressing the complex needs of children involved in adoption and child care services.\n\nOverall, the Adoption and Child Care Tracking System is an innovative tool that enhances efficiency, accountability, and transparency in child welfare work. By integrating data management with process monitoring and stakeholder collaboration, it helps organizations provide higher-quality services, protect sensitive information, and, most importantly, ensure that children receive timely, appropriate care and support on their journey toward permanent families.`;
@@ -52,6 +233,7 @@ document.getElementById('close-video-modal').addEventListener('click', function(
   document.getElementById('search-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const query = document.getElementById('search-query').value;
+    const API_BASE = 'http://localhost:3000'; // Assuming API_BASE is defined elsewhere or needs to be re-defined
     fetch(`${API_BASE}/children?search=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
@@ -474,87 +656,62 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
     }
   });
 
-  // --- USERS BUTTON (TOP CENTER) ---
-  document.getElementById('users-top-btn').addEventListener('click', function() {
-    const userModal = document.getElementById('user-modal');
-    const userRolesBlock = document.getElementById('user-roles-block');
-      // List of roles
-      const roles = [
-        'Admin',
-        'Caseworker',
-        'Guardian',
-        'Judge',
-        'Lawyer',
-        'Medical Expert',
-        'Police'
-      ];
-    userRolesBlock.innerHTML = roles.map(role =>
-      `<button class='user-role-btn' type='button'>${role}</button>`
-      ).join('');
-    userModal.style.display = 'block';
-    document.querySelectorAll('.user-role-btn').forEach((btn, idx) => {
-        btn.addEventListener('click', function() {
-          alert(roles[idx] + ' button clicked!');
-        });
-      });
-    });
-  document.getElementById('close-user-modal').addEventListener('click', function() {
-    document.getElementById('user-modal').style.display = 'none';
-  });
-
-  // --- USER MODAL ---
-  document.getElementById('close-user-modal')?.addEventListener('click', function() {
-    document.getElementById('user-modal').style.display = 'none';
-  });
-  // User role buttons
-  const userRoleActions = {
-    'Admin': () => alert('Admin button clicked!'),
-    'Caseworker': () => alert('Caseworker button clicked!'),
-    'Guardian': () => alert('Guardian button clicked!'),
-    'Judge': () => alert('Judge button clicked!'),
-    'Lawyer': () => alert('Lawyer button clicked!'),
-    'Medical Expert': () => alert('Medical Expert button clicked!'),
-    'Police': () => alert('Police button clicked!')
-  };
-  document.querySelectorAll('.user-role-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const role = btn.textContent.trim();
-      if (userRoleActions[role]) {
-        userRoleActions[role]();
-      } else {
-        alert(role + ' button clicked!');
-      }
-    });
-  });
-
-  // --- USER PHOTO BUTTON (PLUS SIGN) ---
+  // --- USER PHOTO BUTTON (PLUS SIGN) and BLUE DOT (LOGIN MODAL) ---
   const userPhotoBtn = document.getElementById('user-photo-btn');
   const userPhotoPlusBtn = document.getElementById('user-photo-plus-btn');
   if (userPhotoBtn && userPhotoPlusBtn) {
+    // Ensure the blue button always opens the user roles modal
+    userPhotoBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openUserRolesModal();
+    });
+    // The plus button always opens the file picker for photo upload
     userPhotoPlusBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      // Create a file input dynamically
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
-      input.capture = 'environment'; // For mobile camera
+      input.capture = 'environment';
       input.style.display = 'none';
       document.body.appendChild(input);
       input.click();
-      input.onchange = function(e) {
+      input.onchange = async function(e) {
         const file = input.files[0];
         if (file) {
           const reader = new FileReader();
-          reader.onload = function(evt) {
-            userPhotoBtn.style.backgroundImage = `url('${evt.target.result}')`;
-            userPhotoBtn.style.backgroundSize = 'cover';
-            userPhotoBtn.textContent = '';
+          reader.onload = async function(evt) {
+            // Save to backend
+            const photoData = evt.target.result;
+            try {
+              const token = localStorage.getItem('authToken');
+              const user = JSON.parse(atob(token.split('.')[1]));
+              const userId = user.user_id;
+              const res = await fetch(`${API_BASE}/users/${userId}/photo`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ photo: photoData })
+              });
+              const data = await res.json();
+              if (data.success) {
+                localStorage.setItem('userPhoto', photoData);
+                setUserPhoto(photoData);
+              } else {
+                alert('Photo upload failed: ' + (data.error?.message || 'Unknown error'));
+              }
+            } catch (err) {
+              alert('Photo upload error: ' + err.message);
+            }
           };
           reader.readAsDataURL(file);
         }
         document.body.removeChild(input);
       };
     });
+    userPhotoPlusBtn.style.zIndex = '2';
+    userPhotoBtn.style.position = 'relative';
   }
 
   // --- HOME BUTTON DOUBLE TAP (optional) ---
@@ -616,86 +773,49 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
 
   // Patch into camera code: after photo taken, call uploadImageToBackend(img.src)
 
-  // --- LOGIN MODAL LOGIC ---
-  // Show login modal on page load
-  const loginModal = document.getElementById('login-modal');
-  loginModal.style.display = 'block';
-
-  // Remove the temporary test button if it exists
-  const tempLoginBtn = document.querySelector('button[style*="z-index: 3000"]');
-  if (tempLoginBtn) tempLoginBtn.remove();
-
-  // Disable main app interaction until login
-  const mainContainer = document.querySelector('.main-container');
-  if (mainContainer) mainContainer.style.pointerEvents = 'none';
-  // Optionally, add a blur effect
-  if (mainContainer) mainContainer.style.filter = 'blur(3px)';
-
-  // Ocean barrier logic
-  function showOceanBarrierThenDashboard() {
-    const oceanBarrier = document.getElementById('ocean-barrier');
-    oceanBarrier.style.display = 'block';
-    setTimeout(() => {
-      oceanBarrier.style.display = 'none';
-      loginModal.style.display = 'none';
-      if (mainContainer) {
-        mainContainer.style.pointerEvents = '';
-        mainContainer.style.filter = '';
-      }
-    }, 1500);
+  // --- USER ROLES MODAL LOGIC (Reusable) ---
+  function openUserRolesModal() {
+    // Open a new tab for the user roles modal
+    const win = window.open('', '_blank', 'width=400,height=600');
+    const roles = [
+      'Admin',
+      'Caseworker',
+      'Guardian',
+      'Judge',
+      'Lawyer',
+      'Medical Expert',
+      'Police'
+    ];
+    const modalHtml = `
+      <html><head><title>User Roles</title>
+      <style>
+        body { font-family: Arial, sans-serif; background: #fff; color: #222; margin: 0; padding: 2em; }
+        h2 { text-align: center; color: #0074D9; }
+        .roles-list { display: flex; flex-direction: column; gap: 1em; margin-top: 2em; }
+        .user-role-btn { background: #005fa3; color: #fff; border: none; border-radius: 0.5em; padding: 1em; font-size: 1.1em; cursor: pointer; transition: background 0.2s; }
+        .user-role-btn:hover { background: #0074D9; }
+      </style>
+      </head><body>
+        <h2>Select User Role</h2>
+        <div class="roles-list">
+          ${roles.map(role => `<button class='user-role-btn' type='button'>${role}</button>`).join('')}
+        </div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.user-role-btn').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                window.close();
+              });
+    });
+    });
+        <\/script>
+      </body></html>
+    `;
+    win.document.write(modalHtml);
+    win.document.close();
   }
-
-  // Login form submit
-  const loginForm = document.getElementById('login-form');
-  if (loginForm) {
-    loginForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    fetch(`${API_BASE}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-          showOceanBarrierThenDashboard();
-      } else {
-        document.getElementById('login-error').textContent = data.error || 'Login failed.';
-        document.getElementById('login-error').style.display = 'block';
-      }
-    })
-    .catch(err => {
-      document.getElementById('login-error').textContent = 'Login error: ' + err.message;
-      document.getElementById('login-error').style.display = 'block';
-    });
-    });
-  }
-  // Sign-in button
-  const signInBtn = document.getElementById('sign-in-btn');
-  if (signInBtn) {
-    signInBtn.addEventListener('click', function() {
-      const username = document.getElementById('login-username').value;
-      const password = document.getElementById('login-password').value;
-      fetch(`${API_BASE}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          showOceanBarrierThenDashboard();
-        } else {
-          document.getElementById('login-error').textContent = data.error || 'Login failed.';
-          document.getElementById('login-error').style.display = 'block';
-        }
-      })
-      .catch(err => {
-        document.getElementById('login-error').textContent = 'Login error: ' + err.message;
-        document.getElementById('login-error').style.display = 'block';
-      });
-    });
+  // --- BLUE DOT (LOGIN MODAL) ---
+  if (userPhotoBtn) {
+    userPhotoBtn.addEventListener('click', openUserRolesModal);
   }
 }); 

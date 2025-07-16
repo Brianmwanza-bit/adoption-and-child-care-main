@@ -420,7 +420,7 @@ body.luminous-darkgreen-bg::before, .main-container::before {
   height: 70px;
   margin: 0 auto 1em auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* changed from center to flex-start for top alignment */
   justify-content: center;
 }
 .user-photo-btn-wrapper .users-circle-btn {
@@ -454,6 +454,12 @@ body.luminous-darkgreen-bg::before, .main-container::before {
 .user-photo-plus-btn:hover {
   background: #2d6a4f;
   box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+}
+#login-modal .modal-content h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
 }
 @media (max-width: 600px) {
   .modal-content {

@@ -122,5 +122,41 @@ object SyncManager {
             workRequest
         )
     }
+    fun scheduleFamilyProfileSync(context: Context) {
+        val workRequest = PeriodicWorkRequestBuilder<FamilyProfileSyncWorker>(15, TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "family_profile_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+    fun scheduleFosterTasksSync(context: Context) {
+        val workRequest = PeriodicWorkRequestBuilder<FosterTasksSyncWorker>(15, TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "foster_tasks_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+    fun scheduleFosterMatchesSync(context: Context) {
+        val workRequest = PeriodicWorkRequestBuilder<FosterMatchesSyncWorker>(15, TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "foster_matches_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
+    fun scheduleBackgroundChecksSync(context: Context) {
+        val workRequest = PeriodicWorkRequestBuilder<BackgroundChecksSyncWorker>(15, TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "background_checks_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+    }
     // Add similar methods for other entities/tables as needed
 } 

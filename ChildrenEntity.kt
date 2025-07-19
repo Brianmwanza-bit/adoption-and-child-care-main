@@ -8,5 +8,6 @@ data class ChildrenEntity(
     val name: String,
     val dob: String?,
     val gender: String?,
-    val guardian_id: Int?
+    val guardian_id: Int?,
+    val photoBlob: ByteArray? = null
 ) 

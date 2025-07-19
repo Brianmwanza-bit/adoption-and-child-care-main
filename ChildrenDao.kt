@@ -1,4 +1,5 @@
 import androidx.room.*
+import androidx.lifecycle.LiveData
 
 @Dao
 interface ChildrenDao {
@@ -22,4 +23,7 @@ interface ChildrenDao {
 
     @Query("DELETE FROM children")
     suspend fun clearAll()
+
+    @Query("SELECT * FROM children")
+    fun getAllLive(): LiveData<List<ChildrenEntity>>
 } 

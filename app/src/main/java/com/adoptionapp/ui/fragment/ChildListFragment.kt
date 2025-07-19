@@ -14,6 +14,17 @@ import com.adoptionapp.ui.adapter.ChildAdapter
 import com.adoptionapp.viewmodel.ChildViewModel
 import com.adoptionapp.viewmodel.ChildViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.MediaStore
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import androidx.activity.result.contract.ActivityResultContracts
+import com.adoptionapp.ChildrenEntity
 
 class ChildListFragment : Fragment() {
     private val viewModel: ChildViewModel by viewModels {
@@ -24,6 +35,20 @@ class ChildListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var addButton: FloatingActionButton
     private lateinit var syncButton: FloatingActionButton
+
+    private var selectedPhotoBytes: ByteArray? = null
+
+    private val photoPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            val inputStream = requireContext().contentResolver.openInputStream(it)
+            val bytes = inputStream?.readBytes()
+            selectedPhotoBytes = bytes
+            // Show preview if dialog is open
+            currentPhotoPreview?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes?.size ?: 0))
+        }
+    }
+
+    private var currentPhotoPreview: ImageView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -74,23 +99,43 @@ class ChildListFragment : Fragment() {
     }
 
     private fun showAddChildDialog() {
-        // Show dialog to add child
-        // This would open a dialog fragment or navigate to add child screen
-        // For now, we'll create a simple child and add it
-        val newChild = com.adoptionapp.data.entity.Child(
-            id = 0,
-            name = "New Child",
-            age = 5,
-            gender = "Unknown",
-            dateOfBirth = "2020-01-01",
-            medicalHistory = "",
-            specialNeeds = "",
-            photoUrl = "",
-            status = "Available",
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+        val dialogView = layoutInflater.inflate(R.layout.dialog_child, null)
+        val nameInput = dialogView.findViewById<EditText>(R.id.childNameInput)
+        val ageInput = dialogView.findViewById<EditText>(R.id.childAgeInput)
+        val genderInput = dialogView.findViewById<EditText>(R.id.childGenderInput)
+        val dobInput = dialogView.findViewById<EditText>(R.id.childDobInput)
+        val medicalHistoryInput = dialogView.findViewById<EditText>(R.id.childMedicalHistoryInput)
+        val specialNeedsInput = dialogView.findViewById<EditText>(R.id.childSpecialNeedsInput)
+        val photoPickerButton = dialogView.findViewById<Button>(R.id.childPhotoPickerButton)
+        val photoPreview = dialogView.findViewById<ImageView>(R.id.childPhotoPreview)
+        val saveButton = dialogView.findViewById<Button>(R.id.saveChildButton)
+        currentPhotoPreview = photoPreview
+        selectedPhotoBytes = null
+        photoPickerButton.setOnClickListener {
+            photoPickerLauncher.launch("image/*")
+        }
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .setTitle("Add Child")
+            .setNegativeButton("Cancel", null)
+            .create()
+        saveButton.setOnClickListener {
+            val name = nameInput.text.toString()
+            val dob = dobInput.text.toString()
+            val gender = genderInput.text.toString()
+            val age = ageInput.text.toString().toIntOrNull()
+            // guardian_id, medicalHistory, specialNeeds are optional for now
+            val newChild = ChildrenEntity(
+                name = name,
+                dob = dob,
+                gender = gender,
+                guardian_id = null,
+                photoBlob = selectedPhotoBytes
         )
         viewModel.addChild(newChild)
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun showEditChildDialog(child: com.adoptionapp.data.entity.Child) {

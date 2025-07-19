@@ -6,33 +6,33 @@
     android:padding="20dp">
 
     <EditText
-        android:id="@+id/editDocumentType"
+        android:id="@+id/editChildName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Document Type"
-        android:inputType="text" />
+        android:hint="Child Name"
+        android:inputType="textPersonName" />
 
     <EditText
-        android:id="@+id/editDocumentDescription"
+        android:id="@+id/editChildAge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Description"
-        android:inputType="text" />
+        android:hint="Age"
+        android:inputType="number" />
 
     <Button
-        android:id="@+id/pickFileButton"
+        android:id="@+id/pickPhotoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pick File or Photo"
+        android:text="Pick Photo"
         android:layout_marginTop="12dp" />
 
     <ImageView
-        android:id="@+id/filePreviewImage"
+        android:id="@+id/photoPreviewImage"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_file" />
+        android:src="@drawable/ic_person" />
 
 </LinearLayout> 

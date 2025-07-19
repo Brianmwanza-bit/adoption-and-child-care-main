@@ -204,3 +204,37 @@ adoption-and-child-care-main/src/icons/c9.jpg
 If you follow these steps, your ocean image will appear as the background for your primary frontend. If you need to change the image, just replace `c9.jpg` in that folder.
 
 Let me know if you need help with any other file paths or setup! 
+
+# Deployment Checklist
+
+## Environment Variables
+- DB_HOST, DB_USER, DB_PASS, DB_NAME
+- JWT_SECRET
+- PORT (default: 50000)
+
+## Steps
+1. Install dependencies: `npm install`
+2. Set environment variables (see above)
+3. Run database migrations if needed
+4. Start server with PM2:
+   ```sh
+   pm2 start server.js --name adoption-backend
+   pm2 save
+   pm2 startup
+   ```
+5. (Optional) Set up Nginx/Apache as a reverse proxy for HTTPS
+6. Monitor logs:
+   ```sh
+   pm2 logs adoption-backend
+   ```
+7. For HTTPS directly in Node.js, use the `https` module and provide SSL certs
+
+## Example .env file
+```
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=yourpassword
+DB_NAME=adoption_child_care
+JWT_SECRET=your_jwt_secret
+PORT=50000
+``` 

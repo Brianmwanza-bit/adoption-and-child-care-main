@@ -13,5 +13,6 @@ data class DocumentsEntity(
     val file_path: String,
     val description: String?,
     val uploaded_at: String?,
-    val uploaded_by: Int?
+    val uploaded_by: Int?,
+    val fileBlob: ByteArray? = null
 ) 

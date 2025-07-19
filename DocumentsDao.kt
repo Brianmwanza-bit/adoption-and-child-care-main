@@ -1,4 +1,5 @@
 import androidx.room.*
+import androidx.lifecycle.LiveData
 
 @Dao
 interface DocumentsDao {
@@ -22,4 +23,7 @@ interface DocumentsDao {
 
     @Query("DELETE FROM documents")
     suspend fun clearAll()
+
+    @Query("SELECT * FROM documents")
+    fun getAllLive(): LiveData<List<DocumentsEntity>>
 } 

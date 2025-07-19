@@ -1,35 +1,35 @@
 package com.adoptionapp.repository
 
 import androidx.lifecycle.LiveData
-import com.adoptionapp.data.dao.ChildDao
-import com.adoptionapp.data.entity.Child
+import com.adoptionapp.ChildrenEntity
+import com.adoptionapp.data.dao.ChildrenDao
 import com.adoptionapp.network.ChildApi
 import com.adoptionapp.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class ChildRepository(
-    private val childDao: ChildDao,
+    private val childDao: ChildrenDao,
     private val childApi: ChildApi,
     private val syncManager: SyncManager
 ) {
-    val allChildren: LiveData<List<Child>> = childDao.getAllChildren()
+    val allChildren: LiveData<List<ChildrenEntity>> = childDao.getAllLive()
 
-    suspend fun insert(child: Child) {
+    suspend fun insert(child: ChildrenEntity) {
         withContext(Dispatchers.IO) {
             childDao.insert(child)
             syncManager.scheduleSyncChildren()
         }
     }
 
-    suspend fun update(child: Child) {
+    suspend fun update(child: ChildrenEntity) {
         withContext(Dispatchers.IO) {
             childDao.update(child)
             syncManager.scheduleSyncChildren()
         }
     }
 
-    suspend fun delete(child: Child) {
+    suspend fun delete(child: ChildrenEntity) {
         withContext(Dispatchers.IO) {
             childDao.delete(child)
             syncManager.scheduleSyncChildren()
@@ -48,9 +48,9 @@ class ChildRepository(
         }
     }
 
-    suspend fun getChildById(id: Int): Child? {
+    suspend fun getChildById(id: Int): ChildrenEntity? {
         return withContext(Dispatchers.IO) {
-            childDao.getChildById(id)
+            childDao.getById(id)
         }
     }
 } 

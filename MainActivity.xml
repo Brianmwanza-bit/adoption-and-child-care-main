@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Logo/Header -->
+    <TextView
+        android:id="@+id/logoText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="ADOPTION AND CHILD CARE\nTRACKING SYSTEM"
+        android:textAlignment="center"
+        android:textColor="#FFF700"
+        android:background="#C77DFF"
+        android:textSize="24sp"
+        android:fontFamily="sans-serif-medium"
+        android:padding="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Features Grid -->
+    <GridLayout
+        android:id="@+id/featuresGrid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:columnCount="2"
+        android:rowCount="7"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/logoText"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <!-- Feature buttons will be added programmatically -->
+    </GridLayout>
+
+    <!-- Bottom Navigation -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#FAFAFAEE"
+        android:padding="8dp"
+        android:elevation="4dp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:text="🏠" android:textSize="24sp" />
+            <TextView android:text="Home" android:textSize="12sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:text="📷" android:textSize="24sp" />
+            <TextView android:text="Camera" android:textSize="12sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:text="🔍" android:textSize="24sp" />
+            <TextView android:text="Search" android:textSize="12sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView android:text="ℹ️" android:textSize="24sp" />
+            <TextView android:text="About" android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Login Modal (as a FrameLayout overlay) -->
+    <FrameLayout
+        android:id="@+id/loginModal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFF"
+            android:padding="24dp"
+            android:layout_gravity="center"
+            android:elevation="8dp"
+            android:layout_margin="32dp"
+            android:gravity="center">
+            <TextView android:text="Login" android:textSize="20sp" android:textStyle="bold" android:gravity="center" />
+            <EditText android:id="@+id/loginUsername" android:hint="Username" android:inputType="text" android:layout_marginTop="16dp" />
+            <EditText android:id="@+id/loginPassword" android:hint="Password" android:inputType="textPassword" android:layout_marginTop="8dp" />
+            <Button android:id="@+id/loginButton" android:text="Login" android:layout_marginTop="16dp" />
+            <Button android:id="@+id/signInButton" android:text="Sign In" android:layout_marginTop="8dp" />
+            <TextView android:id="@+id/loginError" android:textColor="#D32F2F" android:visibility="gone" android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Registration Modal (as a FrameLayout overlay) -->
+    <FrameLayout
+        android:id="@+id/registerModal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFF"
+            android:padding="24dp"
+            android:layout_gravity="center"
+            android:elevation="8dp"
+            android:layout_margin="32dp"
+            android:gravity="center">
+            <TextView android:text="Sign Up" android:textSize="20sp" android:textStyle="bold" android:gravity="center" />
+            <EditText android:id="@+id/registerRole" android:hint="Role" android:inputType="text" android:layout_marginTop="16dp" />
+            <EditText android:id="@+id/registerEmail" android:hint="Email" android:inputType="textEmailAddress" android:layout_marginTop="8dp" />
+            <Button android:id="@+id/registerButton" android:text="Register" android:layout_marginTop="16dp" />
+            <TextView android:id="@+id/registerError" android:textColor="#D32F2F" android:visibility="gone" android:layout_marginTop="8dp" />
+            <TextView android:id="@+id/registerSuccess" android:textColor="#388E3C" android:visibility="gone" android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Additional modals (search, camera, users, etc.) can be added similarly -->
+
+</androidx.constraintlayout.widget.ConstraintLayout> 

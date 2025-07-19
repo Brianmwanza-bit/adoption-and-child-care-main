@@ -39,24 +39,124 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
+  function clearUserData() {
+    // Remove user info from localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userPhoto');
+    // Clear user info from UI
+    const userPhotoImg = document.getElementById('user-photo-img');
+    if (userPhotoImg) userPhotoImg.src = '';
+    const userName = document.getElementById('user-name');
+    if (userName) userName.textContent = '';
+    const loginUsername = document.getElementById('login-username');
+    if (loginUsername) loginUsername.value = '';
+    const loginPassword = document.getElementById('login-password');
+    if (loginPassword) loginPassword.value = '';
+  }
+
   function showLoginOnly() {
-    document.querySelector('.main-container').style.display = 'none';
+    // Hide all main app content
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) mainContainer.style.display = 'none';
+    // Hide all modals except login
     document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    document.getElementById('login-modal').style.display = 'block';
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'block';
+    // Hide bottom nav
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    // Clear login fields and error
+    const loginError = document.getElementById('login-error');
+    if (loginError) loginError.textContent = '';
+    // Always clear login fields
+    const loginUsername = document.getElementById('login-username');
+    if (loginUsername) loginUsername.value = '';
+    const loginPassword = document.getElementById('login-password');
+    if (loginPassword) loginPassword.value = '';
+    // Also clear browser autofill by resetting the form
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) loginForm.reset();
+    clearUserData();
+    // Always clear user photo on login modal
+    setUserPhoto(null);
+    // Show user photo in login modal if available
+    const loginUserPhotoFrame = document.getElementById('login-user-photo-frame');
+    if (loginUserPhotoFrame) {
+      const photo = localStorage.getItem('userPhoto');
+      if (photo) {
+        loginUserPhotoFrame.innerHTML = `<img src="${photo}" alt="User Photo">`;
+      } else {
+        loginUserPhotoFrame.innerHTML = '';
+      }
+    }
   }
   function showAppAfterLogin(user) {
-    document.querySelector('.main-container').style.display = '';
-    document.getElementById('login-modal').style.display = 'none';
+    const mainContainer = document.querySelector('.main-container');
+    const loginModal = document.getElementById('login-modal');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    // Fade out login modal
+    if (loginModal) {
+      loginModal.classList.add('fade-out');
+      setTimeout(() => {
+      loginModal.style.display = 'none';
+        loginModal.classList.remove('fade-out');
+        // Show spinner
+        if (mainContainer) mainContainer.style.display = 'none';
+        if (loadingSpinner) loadingSpinner.style.display = 'flex';
+        if (user && user.username) {
+          alert(`Welcome, ${user.username}!`);
+        }
+        setTimeout(() => {
+          if (loadingSpinner) loadingSpinner.style.display = 'none';
+          if (mainContainer) {
+            mainContainer.style.display = 'flex';
+            mainContainer.classList.add('fade-in');
+            setTimeout(() => {
+              mainContainer.classList.remove('fade-in');
+            }, 500);
+          }
+    // Set user photo from backend response or localStorage
     if (user && user.photo) {
       localStorage.setItem('userPhoto', user.photo);
       setUserPhoto(user.photo);
+    } else {
+      const photo = localStorage.getItem('userPhoto');
+      setUserPhoto(photo);
+    }
+          // Show bottom nav if present
+          const bottomNav = document.querySelector('.bottom-nav');
+          if (bottomNav) bottomNav.style.display = '';
+        }, 2000);
+      }, 500); // match fade-out duration
+    } else {
+      // fallback if no modal
+      if (mainContainer) mainContainer.style.display = 'none';
+      if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    if (user && user.username) {
+      alert(`Welcome, ${user.username}!`);
+      }
+      setTimeout(() => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        if (mainContainer) mainContainer.style.display = 'flex';
+        // Set user photo from backend response or localStorage
+        if (user && user.photo) {
+          localStorage.setItem('userPhoto', user.photo);
+          setUserPhoto(user.photo);
+        } else {
+          const photo = localStorage.getItem('userPhoto');
+          setUserPhoto(photo);
+        }
+        // Show bottom nav if present
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (bottomNav) bottomNav.style.display = '';
+      }, 2000);
     }
   }
   // Check login state on load
   if (!localStorage.getItem('authToken')) {
     showLoginOnly();
   } else {
-    // Try to load photo from localStorage
+    // User is considered signed in
     const photo = localStorage.getItem('userPhoto');
     setUserPhoto(photo);
     showAppAfterLogin();
@@ -66,67 +166,75 @@ document.addEventListener('DOMContentLoaded', function() {
   const loginUsernameInput = document.getElementById('login-username');
   const signInBtn = document.getElementById('sign-in-btn');
   if (loginUsernameInput && signInBtn) {
-    async function checkUserExists() {
-      const username = loginUsernameInput.value.trim();
-      if (!username) {
-        signInBtn.style.display = 'none';
-        return;
-      }
-      try {
-        const res = await fetch('http://localhost:3000/user-exists', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if (data.exists) {
-          signInBtn.style.display = 'none';
-        } else {
+    // Always show the Sign In button
           signInBtn.style.display = 'block';
-        }
-      } catch (err) {
-        signInBtn.style.display = 'none';
-      }
-    }
-    loginUsernameInput.addEventListener('input', checkUserExists);
-    loginUsernameInput.addEventListener('blur', checkUserExists);
-    // Initial check
-    checkUserExists();
+    // Remove any listeners that hide/show the button
   }
   // Intercept login form submit
-  function handleLogin(e) {
-    if (e) e.preventDefault();
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    const API_BASE = 'http://localhost:3000'; // Assuming API_BASE is defined elsewhere or needs to be re-defined
-    fetch(`${API_BASE}/login`, {
+  const loginForm = document.getElementById('login-form');
+  const loginButton = document.getElementById('login-btn');
+  const loginUsername = document.getElementById('login-username');
+  const loginPassword = document.getElementById('login-password');
+  const loginError = document.getElementById('login-error');
+
+  async function handleLogin(event) {
+    if (event) event.preventDefault();
+    const username = loginUsername.value.trim();
+    const password = loginPassword.value;
+    if (!username || !password) {
+      loginError.textContent = 'Please enter both username and password.';
+      loginError.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
         localStorage.setItem('authToken', data.token);
-        if (data.user && data.user.photo) {
-          localStorage.setItem('userPhoto', data.user.photo);
-          setUserPhoto(data.user.photo);
-        } else {
-          localStorage.removeItem('userPhoto');
-          setUserPhoto(null);
-        }
         showAppAfterLogin(data.user);
+        // Fetch user dashboard data here if needed
       } else {
-        document.getElementById('login-error').textContent = data.error || 'Login failed.';
-        document.getElementById('login-error').style.display = 'block';
+        loginError.textContent = data.error?.message || 'Login failed.';
+        loginError.style.display = 'block';
+        loginUsername.value = '';
+        loginPassword.value = '';
+        loginUsername.focus();
+        showLoginOnly();
       }
-    })
-    .catch(err => {
-      document.getElementById('login-error').textContent = 'Login error: ' + err.message;
-      document.getElementById('login-error').style.display = 'block';
+    } catch (err) {
+      loginError.textContent = 'Network error.';
+      loginError.style.display = 'block';
+      loginUsername.value = '';
+      loginPassword.value = '';
+      loginUsername.focus();
+      showLoginOnly();
+    }
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLogin);
+  }
+  if (loginButton) {
+    loginButton.addEventListener('click', handleLogin);
+  }
+  if (loginUsername) {
+    loginUsername.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        handleLogin(e);
+      }
     });
   }
-  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  if (loginPassword) {
+    loginPassword.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        handleLogin(e);
+      }
+    });
+  }
   if (signInBtn) {
     // --- REGISTRATION LOGIC ---
     const registerModal = document.getElementById('register-modal');
@@ -136,31 +244,93 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeRegisterModal = document.getElementById('close-register-modal');
     signInBtn.addEventListener('click', function() {
       // Prefill username/email if possible
-      document.getElementById('register-email').value = '';
+      document.getElementById('register-username').value = '';
+      document.getElementById('register-password').value = '';
+      document.getElementById('register-phone').value = '';
+      document.getElementById('register-id').value = '';
       document.getElementById('register-role').value = '';
+      document.getElementById('register-email').value = '';
       registerError.textContent = '';
       registerSuccess.style.display = 'none';
       registerModal.style.display = 'flex';
+      // Clear photo preview and file
+      window.registerPhotoFile = null;
+      const registerUserPhotoBtn = document.getElementById('register-user-photo-btn');
+      if (registerUserPhotoBtn) {
+        registerUserPhotoBtn.style.backgroundImage = '';
+        registerUserPhotoBtn.textContent = 'Users';
+      }
     });
     closeRegisterModal.addEventListener('click', function() {
       registerModal.style.display = 'none';
     });
+    // --- SIGNUP PHOTO BUTTONS (BLUE DOT & PLUS) ---
+    const registerUserPhotoBtn = document.getElementById('register-user-photo-btn');
+    const registerUserPhotoPlusBtn = document.getElementById('register-user-photo-plus-btn');
+    let registerPhotoDataUrl = null;
+    if (registerUserPhotoBtn && registerUserPhotoPlusBtn) {
+      registerUserPhotoBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Optionally open a modal for role selection or photo preview
+        alert('You can upload a photo using the + button.');
+      });
+      registerUserPhotoPlusBtn.addEventListener('click', function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          window.registerPhotoFile = file; // Store the File object globally for form submission
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            registerPhotoDataUrl = e.target.result;
+            // Show preview on the blue dot
+            registerUserPhotoBtn.style.backgroundImage = `url('${registerPhotoDataUrl}')`;
+            registerUserPhotoBtn.style.backgroundSize = 'cover';
+            registerUserPhotoBtn.style.backgroundPosition = 'center';
+            registerUserPhotoBtn.textContent = '';
+          };
+          reader.readAsDataURL(file);
+        };
+        input.click();
+      });
+    }
+
+    // --- REGISTRATION LOGIC ---
+    if (registerForm) {
     registerForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
-      const role = document.getElementById('register-role').value;
+      const username = document.getElementById('register-username').value.trim();
+      const password = document.getElementById('register-password').value;
+      const phone = document.getElementById('register-phone').value.trim();
+      const id_number = document.getElementById('register-id').value.trim();
+      const role = document.getElementById('register-role').value.toLowerCase();
       const email = document.getElementById('register-email').value.trim();
-      if (!username || !password || !role || !email) {
+      if (!username || !password || !phone || !id_number || !role || !email) {
         registerError.textContent = 'All fields are required.';
         registerError.style.display = 'block';
         return;
       }
       try {
-        const res = await fetch('http://localhost:3000/register', {
+          let formData = new FormData();
+          formData.append('username', username);
+          formData.append('password', password);
+          formData.append('phone', phone);
+          formData.append('id_number', id_number);
+          formData.append('role', role);
+          formData.append('email', email);
+          // Use the file from the file input if available
+          const fileInput = document.createElement('input');
+          fileInput.type = 'file';
+          fileInput.accept = 'image/*';
+          // If a photo was selected via the + button, use the stored File object
+          if (window.registerPhotoFile) {
+            formData.append('photo', window.registerPhotoFile);
+          }
+        const res = await fetch(`${API_BASE}/register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, role, email })
+            body: formData
         });
         const data = await res.json();
         if (data.success) {
@@ -177,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
             registerSuccess.style.display = 'none';
           }, 1500);
         } else {
-          registerError.textContent = data.error?.message || 'Registration failed.';
+          registerError.textContent = data.error && data.error.message ? data.error.message : 'Registration failed.';
           registerError.style.display = 'block';
         }
       } catch (err) {
@@ -185,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         registerError.style.display = 'block';
       }
     });
-    signInBtn.addEventListener('click', handleLogin);
+    }
   }
 
   // --- NAV BUTTONS ---
@@ -233,7 +403,7 @@ document.getElementById('close-video-modal').addEventListener('click', function(
   document.getElementById('search-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const query = document.getElementById('search-query').value;
-    const API_BASE = 'http://localhost:3000'; // Assuming API_BASE is defined elsewhere or needs to be re-defined
+    const API_BASE = 'http://localhost:50000'; // Assuming API_BASE is defined elsewhere or needs to be re-defined
     fetch(`${API_BASE}/children?search=${encodeURIComponent(query)}`)
       .then(res => res.json())
       .then(data => {
@@ -455,7 +625,8 @@ document.getElementById('record-video-btn').addEventListener('click', function()
 });
 
   // --- FEATURE BUTTONS ---
-  const API_BASE = 'http://localhost:3000';
+  // Define API_BASE at the top for all API calls
+  const API_BASE = "http://192.168.43.244:50000";
   const featureTableMap = {
     'court': 'court_cases',
     'children': 'children',
@@ -666,38 +837,28 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
       openUserRolesModal();
     });
     // The plus button always opens the file picker for photo upload
-    userPhotoPlusBtn.addEventListener('click', function(e) {
-      e.preventDefault();
+    userPhotoPlusBtn.addEventListener('click', function() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
-      input.capture = 'environment';
-      input.style.display = 'none';
-      document.body.appendChild(input);
-      input.click();
-      input.onchange = async function(e) {
-        const file = input.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = async function(evt) {
-            // Save to backend
-            const photoData = evt.target.result;
-            try {
-              const token = localStorage.getItem('authToken');
-              const user = JSON.parse(atob(token.split('.')[1]));
-              const userId = user.user_id;
-              const res = await fetch(`${API_BASE}/users/${userId}/photo`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ photo: photoData })
+      input.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('photo', file);
+        try {
+          const token = localStorage.getItem('authToken');
+          const res = await fetch(`${API_BASE}/upload-photo`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
               });
               const data = await res.json();
-              if (data.success) {
-                localStorage.setItem('userPhoto', photoData);
-                setUserPhoto(photoData);
+          if (data.success && data.photoUrl) {
+            localStorage.setItem('userPhoto', data.photoUrl);
+            setUserPhoto(data.photoUrl);
               } else {
                 alert('Photo upload failed: ' + (data.error?.message || 'Unknown error'));
               }
@@ -705,10 +866,7 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
               alert('Photo upload error: ' + err.message);
             }
           };
-          reader.readAsDataURL(file);
-        }
-        document.body.removeChild(input);
-      };
+      input.click();
     });
     userPhotoPlusBtn.style.zIndex = '2';
     userPhotoBtn.style.position = 'relative';
@@ -816,6 +974,36 @@ document.querySelectorAll('.feature-card').forEach(function(btn) {
   }
   // --- BLUE DOT (LOGIN MODAL) ---
   if (userPhotoBtn) {
-    userPhotoBtn.addEventListener('click', openUserRolesModal);
+    userPhotoPlusBtn.addEventListener('click', function() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('photo', file);
+        try {
+          const token = localStorage.getItem('authToken');
+          const res = await fetch(`${API_BASE}/upload-photo`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success && data.photoUrl) {
+            localStorage.setItem('userPhoto', data.photoUrl);
+            setUserPhoto(data.photoUrl);
+          } else {
+            alert('Photo upload failed: ' + (data.error?.message || 'Unknown error'));
+          }
+        } catch (err) {
+          alert('Photo upload error: ' + err.message);
+        }
+      };
+      input.click();
+    });
   }
 }); 

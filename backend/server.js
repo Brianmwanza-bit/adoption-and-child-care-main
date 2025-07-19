@@ -1,6 +1,7 @@
 // Adoption & Child Care Backend Server
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+// const sqlite3 = require('sqlite3').verbose();
+const mysql = require('mysql2');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -8,126 +9,133 @@ const multer = require('multer');
 const helmet = require('helmet');
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 50000;
 const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-app.use(cors());
+app.use(cors({ origin: '*', credentials: true }));
 app.use(helmet());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../src')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// REMOVE static file serving from here
+// app.use(express.static(path.join(__dirname, '../src')));
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// SQLite connection
-const db = new sqlite3.Database(path.join(__dirname, 'adoption_child_care.db'), (err) => {
+// MySQL connection
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'adoption_and_childcare_tracking_system_db',
+  multipleStatements: true
+});
+db.connect((err) => {
   if (err) {
-    console.error('Failed to connect to SQLite:', err.message);
+    console.error('Failed to connect to MySQL:', err.message);
     process.exit(1);
   } else {
-    console.log('Connected to SQLite database.');
+    console.log('Connected to MySQL database.');
     // --- Ensure users table exists ---
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL,
-      email TEXT NOT NULL,
-      photo TEXT
-    )`, (err) => {
+    const createTablesSQL = `
+      CREATE TABLE IF NOT EXISTS users (
+        user_id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        id_number VARCHAR(50),
+        role VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        photo VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS children (
+        child_id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        dob VARCHAR(255),
+        gender VARCHAR(255),
+        guardian_id INT
+      );
+      CREATE TABLE IF NOT EXISTS guardians (
+        guardian_id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(255),
+        address VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS court_cases (
+        case_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        case_number VARCHAR(255),
+        status VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS placements (
+        placement_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        guardian_id INT,
+        start_date VARCHAR(255),
+        end_date VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS medical_records (
+        record_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        description TEXT,
+        date VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS case_reports (
+        report_id INT AUTO_INCREMENT PRIMARY KEY,
+        case_id INT,
+        report_text TEXT,
+        date VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS money_records (
+        money_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        amount DOUBLE,
+        date VARCHAR(255),
+        description TEXT
+      );
+      CREATE TABLE IF NOT EXISTS education_records (
+        record_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        school VARCHAR(255),
+        grade VARCHAR(255),
+        year VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS documents (
+        document_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        file_name VARCHAR(255),
+        file_type VARCHAR(255),
+        file_path VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        log_id INT AUTO_INCREMENT PRIMARY KEY,
+        table_name VARCHAR(255),
+        record_id INT,
+        action VARCHAR(255),
+        user_id INT,
+        timestamp VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS permissions (
+        permission_id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS user_permissions (
+        user_id INT,
+        permission_id INT,
+        PRIMARY KEY (user_id, permission_id)
+      );
+    `;
+    db.query(createTablesSQL, (err) => {
       if (err) {
-        console.error('Failed to create users table:', err.message);
+        console.error('Failed to create tables:', err.message);
         process.exit(1);
       } else {
-        // Add photo column if missing (for upgrades)
-        db.get("PRAGMA table_info(users)", (err, columns) => {
-          if (!columns.some(col => col.name === 'photo')) {
-            db.run('ALTER TABLE users ADD COLUMN photo TEXT');
-          }
-        });
-        console.log('Users table ready.');
-      }
-    });
-
-    // --- Ensure all other tables exist ---
-    db.serialize(() => {
-      db.run(`CREATE TABLE IF NOT EXISTS children (
-        child_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        dob TEXT,
-        gender TEXT,
-        guardian_id INTEGER
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS guardians (
-        guardian_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        phone TEXT,
-        address TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS court_cases (
-        case_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        case_number TEXT,
-        status TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS placements (
-        placement_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        guardian_id INTEGER,
-        start_date TEXT,
-        end_date TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS medical_records (
-        record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        description TEXT,
-        date TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS case_reports (
-        report_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        case_id INTEGER,
-        report_text TEXT,
-        date TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS money_records (
-        money_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        amount REAL,
-        date TEXT,
-        description TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS education_records (
-        record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        school TEXT,
-        grade TEXT,
-        year TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS documents (
-        document_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        child_id INTEGER,
-        file_name TEXT,
-        file_type TEXT,
-        file_path TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
-        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        table_name TEXT,
-        record_id INTEGER,
-        action TEXT,
-        user_id INTEGER,
-        timestamp TEXT
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS permissions (
-        permission_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
-      )`);
-      db.run(`CREATE TABLE IF NOT EXISTS user_permissions (
-        user_id INTEGER,
-        permission_id INTEGER,
-        PRIMARY KEY (user_id, permission_id)
-      )`);
       console.log('All tables checked/created.');
+      }
     });
   }
 });
@@ -135,10 +143,11 @@ const db = new sqlite3.Database(path.join(__dirname, 'adoption_child_care.db'), 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads'));
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
 const upload = multer({ storage: storage });
@@ -161,18 +170,26 @@ function formatError(code, message, details) {
 }
 
 // --- AUTH ---
-app.post('/register', async (req, res, next) => {
+app.post('/register', upload.single('photo'), async (req, res, next) => {
   try {
-  const { username, password, role, email, photo } = req.body;
-    if (!username || !password || !role || !email) {
-      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'role', 'email'] }));
+    // If multipart/form-data, fields are in req.body, file in req.file
+    const { username, password, phone, id_number, role, email } = req.body;
+    const roleLower = role && role.toLowerCase();
+    if (!username || !password || !phone || !id_number || !role || !email) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'phone', 'id_number', 'role', 'email'] }));
+    }
+    let photoPath = null;
+    if (req.file) {
+      photoPath = `/uploads/${req.file.filename}`;
+    } else if (req.body.photo) {
+      photoPath = req.body.photo;
     }
   const password_hash = await bcrypt.hash(password, 10);
-    db.run('INSERT INTO users (username, password_hash, role, email, photo) VALUES (?, ?, ?, ?, ?)',
-    [username, password_hash, role, email, photo || null],
-      function (err) {
+    db.query('INSERT INTO users (username, password_hash, phone, id_number, role, email, photo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username, password_hash, phone, id_number, roleLower, email, photoPath],
+      function (err, results) {
         if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-        res.json({ success: true, id: this.lastID, username, role, email, photo: photo || null });
+        res.json({ success: true, id: results.insertId, username, role: roleLower, email, phone, id_number, photo: photoPath });
       }
     );
   } catch (err) {
@@ -186,13 +203,16 @@ app.post('/login', async (req, res, next) => {
     if (!username || !password) {
       return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing username or password'));
     }
-    db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+    // Get the user and their role from users table ONLY
+    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      const user = results[0];
       if (!user) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
     const valid = await bcrypt.compare(password, user.password_hash);
       if (!valid) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
     const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET, { expiresIn: '1h' });
-      res.json({ success: true, token, user: { user_id: user.user_id, username: user.username, role: user.role, email: user.email, photo: user.photo } });
+      // Always include photo in the user object
+      res.json({ success: true, token, user: { user_id: user.user_id, username: user.username, role: user.role, email: user.email, photo: user.photo || null } });
   });
   } catch (err) {
     next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
@@ -204,19 +224,33 @@ app.put('/users/:id/photo', authenticateToken, (req, res, next) => {
   const user_id = req.params.id;
   const { photo } = req.body;
   if (!photo) return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing photo'));
-  db.run('UPDATE users SET photo = ? WHERE user_id = ?', [photo, user_id], function (err) {
+  db.query('UPDATE users SET photo = ? WHERE user_id = ?', [photo, user_id], function (err, results) {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    if (this.changes === 0) return res.status(404).json(formatError('NOT_FOUND', 'User not found'));
+    if (results.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', 'User not found'));
     res.json({ success: true, message: 'Photo updated' });
+  });
+});
+
+app.post('/upload-photo', authenticateToken, upload.single('photo'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: { message: 'No file uploaded' } });
+  }
+  const photoUrl = `/uploads/${req.file.filename}`;
+  const userId = req.user.user_id;
+  db.query('UPDATE users SET photo = ? WHERE user_id = ?', [photoUrl, userId], function (err, results) {
+    if (err) {
+      return res.status(500).json({ success: false, error: { message: 'Failed to update user photo in database' } });
+    }
+    res.json({ success: true, photoUrl });
   });
 });
 
 app.post('/user-exists', (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ exists: false, error: 'Missing username' });
-  db.get('SELECT 1 FROM users WHERE username = ?', [username], (err, row) => {
+  db.query('SELECT 1 FROM users WHERE username = ?', [username], (err, results) => {
     if (err) return res.status(500).json({ exists: false, error: err.message });
-    res.json({ exists: !!row });
+    res.json({ exists: !!results.length });
   });
 });
 
@@ -240,15 +274,16 @@ dbTables = [
 dbTables.forEach(table => {
   // Get all
   app.get(`/${table.name}`, authenticateToken, (req, res, next) => {
-    db.all(`SELECT * FROM ${table.name}`, (err, results) => {
+    db.query(`SELECT * FROM ${table.name}`, (err, results) => {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       res.json({ success: true, data: results });
     });
   });
   // Get one
   app.get(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
-    db.get(`SELECT * FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, result) => {
+    db.query(`SELECT * FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, results) => {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      const result = results[0];
       if (!result) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
       res.json({ success: true, data: result });
     });
@@ -258,9 +293,9 @@ dbTables.forEach(table => {
     const keys = Object.keys(req.body);
     const values = Object.values(req.body);
     const placeholders = keys.map(() => '?').join(', ');
-    db.run(`INSERT INTO ${table.name} (${keys.join(', ')}) VALUES (${placeholders})`, values, function (err) {
+    db.query(`INSERT INTO ${table.name} (${keys.join(', ')}) VALUES (${placeholders})`, values, function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-      res.json({ success: true, id: this.lastID, ...req.body });
+      res.json({ success: true, id: results.insertId, ...req.body });
     });
   });
   // Update
@@ -268,81 +303,43 @@ dbTables.forEach(table => {
     const keys = Object.keys(req.body);
     const values = Object.values(req.body);
     const setClause = keys.map(key => `${key} = ?`).join(', ');
-    db.run(`UPDATE ${table.name} SET ${setClause} WHERE ${table.pk} = ?`, [...values, req.params.id], function (err) {
+    db.query(`UPDATE ${table.name} SET ${setClause} WHERE ${table.pk} = ?`, [...values, req.params.id], function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-      if (this.changes === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      if (results.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
       res.json({ success: true, message: 'Updated' });
     });
   });
   // Delete
   app.delete(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
-    db.run(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], function (err) {
+    db.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-      if (this.changes === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      if (results.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
       res.json({ success: true, message: 'Deleted' });
     });
   });
 });
 
-// --- File Upload for Documents ---
-app.post('/documents/upload', authenticateToken, upload.single('file'), (req, res, next) => {
-  try {
-  const { child_id } = req.body;
-  const file = req.file;
-    if (!file) return res.status(400).json(formatError('VALIDATION_ERROR', 'No file uploaded'));
-    db.run(
-    'INSERT INTO documents (child_id, file_name, file_type, file_path) VALUES (?, ?, ?, ?)',
-    [child_id, file.originalname, file.mimetype, file.path],
-      function (err) {
-        if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-        res.json({ success: true, id: this.lastID, file: file.filename });
-    }
-  );
-  } catch (err) {
-    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
-  }
-});
+// Place static file serving AFTER all API routes
+app.use(express.static(path.join(__dirname, '../src')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- Get Children by Guardian (Stored Procedure) ---
-app.get('/children/by-guardian/:guardianId', authenticateToken, (req, res, next) => {
-  db.all('SELECT * FROM children WHERE guardian_id = ?', [req.params.guardianId], (err, results) => {
-    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json({ success: true, data: results });
-  });
-});
-// --- Permissions Management ---
-app.post('/permissions/assign', authenticateToken, (req, res, next) => {
-  const { user_id, permission_id } = req.body;
-  db.run('INSERT INTO user_permissions (user_id, permission_id) VALUES (?, ?)', [user_id, permission_id], function (err) {
-    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json({ success: true, message: 'Permission assigned' });
-  });
-});
-app.delete('/permissions/revoke', authenticateToken, (req, res, next) => {
-  const { user_id, permission_id } = req.body;
-  db.run('DELETE FROM user_permissions WHERE user_id = ? AND permission_id = ?', [user_id, permission_id], function (err) {
-    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json({ success: true, message: 'Permission revoked' });
-  });
-});
-
-// --- Get Audit Logs for a Table/Record ---
-app.get('/audit_logs/:table/:record_id', authenticateToken, (req, res, next) => {
-  db.all('SELECT * FROM audit_logs WHERE table_name = ? AND record_id = ?', [req.params.table, req.params.record_id], (err, results) => {
-    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json({ success: true, data: results });
-  });
-});
-
-// --- Error Handling Middleware ---
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
-  const code = err.code || 'INTERNAL_ERROR';
-  const message = err.message || 'Something went wrong!';
-  const details = err.details || undefined;
-  res.status(500).json(formatError(code, message, details));
+  console.error(err);
+  // If headers already sent, delegate to default Express handler
+  if (res.headersSent) {
+    return next(err);
+  }
+  // Always respond with JSON
+  res.status(err.status || 500).json({
+    success: false,
+    error: {
+      code: err.code || 'INTERNAL_ERROR',
+      message: err.message || 'Internal server error',
+      details: err.details || null
+    }
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT}`);
 }); 

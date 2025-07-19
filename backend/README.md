@@ -8,18 +8,41 @@ This directory contains the backend server and database for the Adoption and Chi
 - `package.json` and `package-lock.json`: Node.js dependencies.
 
 ## Usage
-1. Install dependencies:
-   ```bash
+1. **Install dependencies:**
+   ```sh
+   cd backend
    npm install
    ```
-2. Start the server:
-   ```bash
+2. **Start the server:**
+   ```sh
    node server.js
    ```
+   or
+   ```sh
+   npm start
+   ```
+   (Do not use '&&' to chain commands.)
+
+3. **Stop the server:**
+   - Press `Ctrl+C` in the terminal where the server is running.
 
 ---
 
-*Add more backend documentation as needed.* 
+## API Usage for Mobile Sync
+- All endpoints require a valid JWT token (except `/register`, `/login`, `/user-exists`).
+- CORS is enabled for all origins.
+- Standard REST endpoints for all tables:
+  - `GET /table` (all records)
+  - `GET /table/:id` (single record)
+  - `POST /table` (create)
+  - `PUT /table/:id` (update)
+  - `DELETE /table/:id` (delete)
+- Example tables: `children`, `users`, `guardians`, etc.
+- Use the `/login` endpoint to obtain a JWT token for API calls.
+
+---
+
+*Add more backend documentation as needed.*
 
 You **do** have a full HTML frontend in `src/index.html` with supporting CSS and JavaScript.  
 However, if you are running the frontend and cannot access it via port 60870, the issue is likely with **how you are serving the frontend files**.

@@ -39,11 +39,11 @@ app.use('/api', apiLimiter); // If your routes are not prefixed with /api, use a
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'NUN',
-  password: 'NUN',
-  database: 'adoption_and_childcare_tracking_system_db',
-  port: 3306, // Change to 80 or 8080 if your MySQL server uses a non-standard port
+  host: 'localhost', // Official remote DB host
+  user: 'root',      // Update to your phpMyAdmin username if different
+  password: '',      // Update to your phpMyAdmin password if set
+  database: 'adoption_and_childcare_tracking_system_db', // Official remote DB for the project
+  port: 3306,        // Default MySQL port
   multipleStatements: true
 });
 db.connect((err) => {

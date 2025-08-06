@@ -7,6 +7,10 @@ import com.adoptionapp.network.ChildApi
 import com.adoptionapp.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import com.adoptionapp.RetrofitClient
 
 class ChildRepository(
     private val childDao: ChildrenDao,
@@ -42,8 +46,8 @@ class ChildRepository(
                 val remoteChildren = childApi.getChildren()
                 childDao.replaceAll(remoteChildren)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }
@@ -51,6 +55,23 @@ class ChildRepository(
     suspend fun getChildById(id: Int): ChildrenEntity? {
         return withContext(Dispatchers.IO) {
             childDao.getById(id)
+        }
+    }
+
+    suspend fun insertWithPhoto(child: ChildrenEntity, photo: ByteArray?) {
+        withContext(Dispatchers.IO) {
+            childDao.insert(child)
+            if (photo != null) {
+                val requestFile = RequestBody.create("image/*".toMediaTypeOrNull(), photo)
+                val body = MultipartBody.Part.createFormData("photo", "photo.png", requestFile)
+                try {
+                    val token = "Bearer " + (/* get token from storage or context */ "")
+                    RetrofitClient.apiService.uploadChildPhoto(token, child.child_id, body)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            syncManager.scheduleSyncChildren()
         }
     }
 } 

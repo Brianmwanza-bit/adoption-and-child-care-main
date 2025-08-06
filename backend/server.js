@@ -14,6 +14,9 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
+const rateLimit = require('express-rate-limit');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 
 const app = express();
 const PORT = process.env.PORT || 50000;
@@ -26,12 +29,21 @@ app.use(express.json());
 // app.use(express.static(path.join(__dirname, '../src')));
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Apply rate limiting to all API routes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many requests, please try again later.' } }
+});
+app.use('/api', apiLimiter); // If your routes are not prefixed with /api, use app.use(apiLimiter);
+
 // MySQL connection
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  password: '',
+  user: 'NUN',
+  password: 'NUN',
   database: 'adoption_and_childcare_tracking_system_db',
+  port: 3306, // Change to 80 or 8080 if your MySQL server uses a non-standard port
   multipleStatements: true
 });
 db.connect((err) => {
@@ -167,6 +179,14 @@ db.connect((err) => {
         completed_at DATETIME,
         FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
+      CREATE TABLE IF NOT EXISTS notifications (
+        notification_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        message TEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+      );
     `;
     db.query(createTablesSQL, (err) => {
       if (err) {
@@ -228,6 +248,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 // JWT middleware
 function authenticateToken(req, res, next) {
@@ -256,10 +277,11 @@ function requireRole(...roles) {
   };
 }
 
-// --- Audit Logging Helper ---
-function logAudit(table, recordId, action, userId) {
-  db.query('INSERT INTO audit_logs (table_name, record_id, action, user_id, timestamp) VALUES (?, ?, ?, ?, ?)',
-    [table, recordId, action, userId, new Date().toISOString()]);
+// Helper to log audit actions
+function logAudit(table, record_id, action, user_id) {
+  db.query('INSERT INTO audit_logs (table_name, record_id, action, user_id, timestamp) VALUES (?, ?, ?, ?, NOW())',
+    [table, record_id, action, user_id],
+    (err) => { if (err) console.error('Audit log error:', err.message); });
 }
 
 // Utility for standardized error responses
@@ -410,6 +432,7 @@ dbTables.forEach(table => {
     const placeholders = keys.map(() => '?').join(', ');
     db.query(`INSERT INTO ${table.name} (${keys.join(', ')}) VALUES (${placeholders})`, values, function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      logAudit(table.name, results.insertId, 'create', req.user.user_id);
       res.json({ success: true, id: results.insertId, ...req.body });
     });
   });
@@ -421,6 +444,7 @@ dbTables.forEach(table => {
     db.query(`UPDATE ${table.name} SET ${setClause} WHERE ${table.pk} = ?`, [...values, req.params.id], function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       if (results.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      logAudit(table.name, req.params.id, 'update', req.user.user_id);
       res.json({ success: true, message: 'Updated' });
     });
   });
@@ -429,6 +453,7 @@ dbTables.forEach(table => {
     db.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       if (results.affectedRows === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name.slice(0, -1)} not found`));
+      logAudit(table.name, req.params.id, 'delete', req.user.user_id);
       res.json({ success: true, message: 'Deleted' });
     });
   });
@@ -877,17 +902,39 @@ app.get('/analytics/pending-background-checks', authenticateToken, requireRole('
 });
 
 // --- Notification Endpoints ---
-app.get('/notifications/history', authenticateToken, requireRole('admin'), (req, res, next) => {
-  db.query(`SELECT * FROM notifications ORDER BY sent_at DESC LIMIT 50`, (err, rows) => {
+// Create notification
+app.post('/notifications', authenticateToken, (req, res, next) => {
+  const { user_id, message } = req.body;
+  if (!user_id || !message) return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Missing user_id or message' } });
+  db.query('INSERT INTO notifications (user_id, message) VALUES (?, ?)', [user_id, message], (err, result) => {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json(rows);
+    res.json({ success: true, notification_id: result.insertId });
   });
 });
-
-app.get('/notifications/unread-count', authenticateToken, requireRole('admin'), (req, res, next) => {
-  db.query(`SELECT COUNT(*) as unread FROM notifications WHERE is_read=0`, (err, rows) => {
+// Fetch notifications for current user
+app.get('/notifications', authenticateToken, (req, res, next) => {
+  const userId = req.user.user_id;
+  db.query('SELECT * FROM notifications WHERE user_id=? ORDER BY sent_at DESC LIMIT 50', [userId], (err, rows) => {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
-    res.json(rows[0]);
+    res.json({ success: true, data: rows });
+  });
+});
+// Mark notification as read
+app.put('/notifications/:id/read', authenticateToken, (req, res, next) => {
+  const userId = req.user.user_id;
+  const notificationId = req.params.id;
+  db.query('UPDATE notifications SET is_read=1 WHERE notification_id=? AND user_id=?', [notificationId, userId], (err, result) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Notification not found' } });
+    res.json({ success: true });
+  });
+});
+// Get unread count for current user
+app.get('/notifications/unread-count', authenticateToken, (req, res, next) => {
+  const userId = req.user.user_id;
+  db.query('SELECT COUNT(*) as unread FROM notifications WHERE user_id=? AND is_read=0', [userId], (err, rows) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+    res.json({ success: true, unread: rows[0].unread });
   });
 });
 

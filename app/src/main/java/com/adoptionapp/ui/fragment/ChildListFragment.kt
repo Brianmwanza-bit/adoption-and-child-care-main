@@ -25,6 +25,8 @@ import android.widget.EditText
 import android.widget.ImageView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.adoptionapp.ChildrenEntity
+import com.google.android.material.snackbar.Snackbar
+import android.Manifest
 
 class ChildListFragment : Fragment() {
     private val viewModel: ChildViewModel by viewModels {
@@ -35,6 +37,8 @@ class ChildListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var addButton: FloatingActionButton
     private lateinit var syncButton: FloatingActionButton
+    private lateinit var progressBar: View
+    private lateinit var errorText: View
 
     private var selectedPhotoBytes: ByteArray? = null
 
@@ -46,6 +50,20 @@ class ChildListFragment : Fragment() {
             // Show preview if dialog is open
             currentPhotoPreview?.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes?.size ?: 0))
         }
+    }
+
+    private val requestStoragePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Snackbar.make(requireView(), "Storage permission required to upload photos.", Snackbar.LENGTH_LONG).show()
+        }
+    }
+
+    private fun requestPhotoPermissionsAndPick() {
+        requestStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+        // Optionally, also request CAMERA if needed
+        // requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
     private var currentPhotoPreview: ImageView? = null
@@ -64,10 +82,21 @@ class ChildListFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerView)
         addButton = view.findViewById(R.id.addButton)
         syncButton = view.findViewById(R.id.syncButton)
+        progressBar = view.findViewById(R.id.progressBar)
+        errorText = view.findViewById(R.id.errorText)
 
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
+
+        viewModel.loading.asLiveData().observe(viewLifecycleOwner) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+        viewModel.error.asLiveData().observe(viewLifecycleOwner) { errorMsg ->
+            if (!errorMsg.isNullOrEmpty()) {
+                Snackbar.make(requireView(), errorMsg, Snackbar.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun setupRecyclerView() {

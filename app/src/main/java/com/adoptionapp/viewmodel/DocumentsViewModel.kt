@@ -13,4 +13,8 @@ class DocumentsViewModel(private val repository: DocumentsRepository) : ViewMode
     fun insert(document: DocumentsEntity) = viewModelScope.launch {
         repository.insert(document)
     }
+
+    fun insertWithFile(document: DocumentsEntity, fileBytes: ByteArray?) = viewModelScope.launch {
+        repository.insertWithFile(document, fileBytes)
+    }
 } 

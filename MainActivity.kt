@@ -67,6 +67,20 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.ui.graphics.Color
+import com.adoptionapp.ui.compose.DashboardScreen
+import com.adoptionapp.ui.compose.AnalyticsScreen
+import com.adoptionapp.ui.compose.NotificationsScreen
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.ui.graphics.Bitmap
+import androidx.compose.ui.graphics.ImageDecoder
+import androidx.compose.ui.graphics.MediaStore
+import androidx.activity.result.contract.ActivityResultContracts
+import android.os.Build
+import androidx.compose.ui.graphics.asAndroidBitmap
+import com.adoptionapp.repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mainContainer: ConstraintLayout
@@ -84,6 +98,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var registerButton: Button
     private lateinit var registerError: TextView
     private lateinit var registerSuccess: TextView
+
+    private val userRepository by lazy {
+        // TODO: Replace with actual DAO and API instances as needed
+        UserRepository(/* userDao = */ TODO(), /* userApi = */ TODO(), /* syncManager = */ TODO())
+    }
+    private val uiScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,13 +167,20 @@ class MainActivity : AppCompatActivity() {
                 loginError.text = "Please enter both username and password."
                 loginError.visibility = View.VISIBLE
             } else {
-                // TODO: Replace with real backend call
-                if (username == "admin" && password == "admin") {
+                uiScope.launch {
+                    try {
+                        val response = userRepository.login(this@MainActivity, username, password)
+                        if (response.isSuccessful && response.body()?.success == true) {
                     showDashboard()
-                    onLoginSuccess("dummy_token") // Example: Call this after successful login
+                            onLoginSuccess(response.body()?.token ?: "")
                 } else {
-                    loginError.text = "Invalid credentials."
+                            loginError.text = response.body()?.let { it.toString() } ?: "Invalid credentials."
                     loginError.visibility = View.VISIBLE
+                        }
+                    } catch (e: Exception) {
+                        loginError.text = "Login failed: ${e.localizedMessage}"
+                        loginError.visibility = View.VISIBLE
+                    }
                 }
             }
         }
@@ -163,15 +190,31 @@ class MainActivity : AppCompatActivity() {
         registerButton.setOnClickListener {
             val role = registerRole.text.toString().trim()
             val email = registerEmail.text.toString().trim()
-            if (role.isEmpty() || email.isEmpty()) {
+            val username = loginUsername.text.toString().trim()
+            val password = loginPassword.text.toString()
+            if (role.isEmpty() || email.isEmpty() || username.isEmpty() || password.isEmpty()) {
                 registerError.text = "Please fill all fields."
                 registerError.visibility = View.VISIBLE
                 registerSuccess.visibility = View.GONE
             } else {
-                // TODO: Replace with real backend call
+                uiScope.launch {
+                    try {
+                        val response = userRepository.register(this@MainActivity, username, password, email, role)
+                        if (response.isSuccessful && response.body()?.success == true) {
                 registerError.visibility = View.GONE
                 registerSuccess.text = "Registration successful! You can now log in."
                 registerSuccess.visibility = View.VISIBLE
+                        } else {
+                            registerError.text = response.body()?.let { it.toString() } ?: "Registration failed."
+                            registerError.visibility = View.VISIBLE
+                            registerSuccess.visibility = View.GONE
+                        }
+                    } catch (e: Exception) {
+                        registerError.text = "Registration failed: ${e.localizedMessage}"
+                        registerError.visibility = View.VISIBLE
+                        registerSuccess.visibility = View.GONE
+                    }
+                }
             }
         }
         // Hide modals when clicking outside (optional, not implemented here)
@@ -211,27 +254,46 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun MainNavHost(userRole: String) {
     val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination = when (userRole) {
-            "admin" -> "admin_dashboard"
-            "case_worker" -> "case_worker_dashboard"
-            "family" -> "family_dashboard"
-            else -> "login"
+    var selectedTab by remember { mutableStateOf("dashboard") }
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = selectedTab == "dashboard",
+                    onClick = { selectedTab = "dashboard"; navController.navigate("dashboard") },
+                    icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
+                    label = { Text("Dashboard") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == "analytics",
+                    onClick = { selectedTab = "analytics"; navController.navigate("analytics") },
+                    icon = { Icon(Icons.Default.BarChart, contentDescription = "Analytics") },
+                    label = { Text("Analytics") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == "notifications",
+                    onClick = { selectedTab = "notifications"; navController.navigate("notifications") },
+                    icon = { Icon(Icons.Default.Notifications, contentDescription = "Notifications") },
+                    label = { Text("Notifications") }
+                )
+            }
         }
-    ) {
-        composable("login") { LoginScreen(navController) }
-        composable("admin_dashboard") { AdminDashboardScreen() }
-        composable("case_worker_dashboard") { CaseWorkerDashboardScreen(navController) }
-        composable("family_dashboard") { FamilyDashboardScreen(navController) }
-        composable("children") { ChildrenScreen() } // Added ChildrenScreen to navigation
-        composable("placements") { PlacementsScreen() } // Added PlacementsScreen to navigation
-        composable("documents") { DocumentsScreen() } // Added DocumentsScreen to navigation
-        composable("foster_tasks") { FosterTasksScreen() } // Added FosterTasksScreen to navigation
-        composable("family_profiles") { FamilyProfilesScreen() } // Added FamilyProfilesScreen to navigation
-        composable("background_checks") { BackgroundChecksScreen() } // Added BackgroundChecksScreen to navigation
-        composable("analytics") { AnalyticsScreen() }
-        composable("notifications") { NotificationsScreen() }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = "dashboard",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("dashboard") { DashboardScreen() }
+            composable("analytics") { AnalyticsScreen() }
+            composable("notifications") { NotificationsScreen() }
+            composable("children") { ChildrenScreen() }
+            composable("placements") { PlacementsScreen() }
+            composable("documents") { DocumentsScreen() }
+            composable("foster_tasks") { FosterTasksScreen() }
+            composable("family_profiles") { FamilyProfilesScreen() }
+            composable("background_checks") { BackgroundChecksScreen() }
+        }
     }
 }
 
@@ -388,6 +450,17 @@ fun ChildDialog(
     var specialNeeds by remember { mutableStateOf(child?.specialNeeds ?: "") }
     var status by remember { mutableStateOf(child?.status ?: "Available") }
     val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            }
+            onPhotoChange(bitmap)
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (child == null) "Add Child" else "Edit Child") },
@@ -401,11 +474,12 @@ fun ChildDialog(
                 OutlinedTextField(value = specialNeeds, onValueChange = { specialNeeds = it }, label = { Text("Special Needs") })
                 OutlinedTextField(value = status, onValueChange = { status = it }, label = { Text("Status") })
                 Spacer(Modifier.height(8.dp))
-                // TODO: Add photo picker and preview here
                 if (photoBitmap != null) {
                     Image(bitmap = photoBitmap.asImageBitmap(), contentDescription = "Photo", modifier = Modifier.size(64.dp))
                 }
-                // Button to pick photo (implementation depends on your image picker setup)
+                Button(onClick = { launcher.launch("image/*") }) {
+                    Text("Pick Photo")
+                }
             }
         },
         confirmButton = {
@@ -423,6 +497,15 @@ fun ChildDialog(
                     createdAt = child?.createdAt ?: System.currentTimeMillis(),
                     updatedAt = System.currentTimeMillis()
                 )
+                // Convert Bitmap to ByteArray
+                val photoBytes = photoBitmap?.let {
+                    val stream = java.io.ByteArrayOutputStream()
+                    it.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                    stream.toByteArray()
+                }
+                // Call new ViewModel method for photo upload
+                val viewModel: ChildViewModel = viewModel()
+                viewModel.addChildWithPhoto(childObj, photoBytes)
                 onSave(childObj)
             }) { Text("Save") }
         },
@@ -598,6 +681,17 @@ fun DocumentDialog(
     var filePath by remember { mutableStateOf(document?.file_path ?: "") }
     var description by remember { mutableStateOf(document?.description ?: "") }
     var uploadedBy by remember { mutableStateOf(document?.uploaded_by?.toString() ?: "") }
+    val context = LocalContext.current
+    var fileBytes by remember { mutableStateOf<ByteArray?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            val fileName = uri.lastPathSegment ?: "selected_file"
+            onFilePick(fileName)
+            // Read file as ByteArray
+            val inputStream = context.contentResolver.openInputStream(uri)
+            fileBytes = inputStream?.readBytes()
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (document == null) "Add Document" else "Edit Document") },
@@ -612,8 +706,7 @@ fun DocumentDialog(
                 OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") })
                 OutlinedTextField(value = uploadedBy, onValueChange = { uploadedBy = it }, label = { Text("Uploaded By") })
                 Spacer(Modifier.height(8.dp))
-                // File/photo picker placeholder
-                Button(onClick = { onFilePick("sample_photo.jpg") }) {
+                Button(onClick = { launcher.launch("*/*") }) {
                     Text(if (selectedFileName.isEmpty()) "Pick File/Photo" else selectedFileName)
                 }
             }
@@ -622,16 +715,13 @@ fun DocumentDialog(
             TextButton(onClick = {
                 val docObj = DocumentsEntity(
                     document_id = document?.document_id ?: 0,
-                    child_id = childId.toIntOrNull() ?: 0,
                     document_type = documentType,
-                    file_name = fileName,
-                    file_type = fileType,
-                    file_size = fileSize.toIntOrNull(),
-                    file_path = filePath,
                     description = description,
-                    uploaded_at = document?.uploaded_at ?: "",
-                    uploaded_by = uploadedBy.toIntOrNull()
+                    fileBlob = fileBytes
                 )
+                // Call new ViewModel method for file upload
+                val viewModel: DocumentsViewModel = viewModel()
+                viewModel.insertWithFile(docObj, fileBytes)
                 onSave(docObj)
             }) { Text("Save") }
         },

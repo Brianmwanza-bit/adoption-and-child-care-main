@@ -42,8 +42,8 @@ class GuardianRepository(
                 val remoteGuardians = guardianApi.getGuardians()
                 guardianDao.replaceAll(remoteGuardians)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }

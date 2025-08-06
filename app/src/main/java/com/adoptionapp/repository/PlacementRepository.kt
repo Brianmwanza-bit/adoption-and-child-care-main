@@ -42,8 +42,8 @@ class PlacementRepository(
                 val remotePlacements = placementApi.getPlacements()
                 placementDao.replaceAll(remotePlacements)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }

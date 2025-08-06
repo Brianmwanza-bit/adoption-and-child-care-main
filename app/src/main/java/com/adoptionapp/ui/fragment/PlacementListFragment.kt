@@ -14,6 +14,9 @@ import com.adoptionapp.ui.adapter.PlacementAdapter
 import com.adoptionapp.viewmodel.PlacementViewModel
 import com.adoptionapp.viewmodel.PlacementViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
+import android.Manifest
+import androidx.activity.result.contract.ActivityResultContracts
 
 class PlacementListFragment : Fragment() {
     private val viewModel: PlacementViewModel by viewModels {
@@ -24,6 +27,16 @@ class PlacementListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var addButton: FloatingActionButton
     private lateinit var syncButton: FloatingActionButton
+    private lateinit var progressBar: View
+    private lateinit var errorText: View
+
+    private val requestLocationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (!isGranted) {
+            Snackbar.make(requireView(), "Location permission required for map features.", Snackbar.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,10 +52,21 @@ class PlacementListFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerView)
         addButton = view.findViewById(R.id.addButton)
         syncButton = view.findViewById(R.id.syncButton)
+        progressBar = view.findViewById(R.id.progressBar)
+        errorText = view.findViewById(R.id.errorText)
 
         setupRecyclerView()
         setupObservers()
         setupClickListeners()
+
+        viewModel.loading.asLiveData().observe(viewLifecycleOwner) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+        viewModel.error.asLiveData().observe(viewLifecycleOwner) { errorMsg ->
+            if (!errorMsg.isNullOrEmpty()) {
+                Snackbar.make(requireView(), errorMsg, Snackbar.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun setupRecyclerView() {
@@ -94,5 +118,9 @@ class PlacementListFragment : Fragment() {
     private fun showEditPlacementDialog(placement: com.adoptionapp.data.entity.Placement) {
         // Show dialog to edit placement
         // This would open a dialog fragment or navigate to edit placement screen
+    }
+
+    private fun requestLocationPermission() {
+        requestLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 } 

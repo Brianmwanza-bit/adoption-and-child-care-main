@@ -1,5 +1,7 @@
 import retrofit2.Response
 import retrofit2.http.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
 data class AnalyticsSummaryResponse(
     val user_count: Int,
@@ -216,4 +218,21 @@ interface ApiService {
 
     @GET("notifications/unread-count")
     suspend fun getUnreadNotificationCount(@Header("Authorization") token: String): UnreadCountResponse
+
+    // --- FILE/PHOTO UPLOADS ---
+    @Multipart
+    @POST("children/{id}/photo")
+    suspend fun uploadChildPhoto(
+        @Header("Authorization") token: String,
+        @Path("id") childId: Int,
+        @Part photo: MultipartBody.Part
+    ): Response<Unit>
+
+    @Multipart
+    @POST("documents/{id}/file")
+    suspend fun uploadDocumentFile(
+        @Header("Authorization") token: String,
+        @Path("id") documentId: Int,
+        @Part file: MultipartBody.Part
+    ): Response<Unit>
 } 

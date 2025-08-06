@@ -42,8 +42,8 @@ class MedicalRecordRepository(
                 val remoteMedicalRecords = medicalRecordApi.getMedicalRecords()
                 medicalRecordDao.replaceAll(remoteMedicalRecords)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }

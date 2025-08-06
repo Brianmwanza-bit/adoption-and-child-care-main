@@ -7,6 +7,14 @@ import com.adoptionapp.network.UserApi
 import com.adoptionapp.sync.SyncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.content.Context
+import com.adoptionapp.TokenManager
+import com.adoptionapp.ApiService
+import retrofit2.Response
+import com.adoptionapp.data.model.LoginRequest
+import com.adoptionapp.data.model.LoginResponse
+import com.adoptionapp.data.model.RegisterRequest
+import com.adoptionapp.data.model.RegisterResponse
 
 class UserRepository(
     private val userDao: UserDao,
@@ -42,8 +50,8 @@ class UserRepository(
                 val remoteUsers = userApi.getUsers()
                 userDao.replaceAll(remoteUsers)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }
@@ -57,6 +65,26 @@ class UserRepository(
     suspend fun getUserByEmail(email: String): User? {
         return withContext(Dispatchers.IO) {
             userDao.getUserByEmail(email)
+        }
+    }
+
+    suspend fun login(context: Context, username: String, password: String): Response<LoginResponse> {
+        return withContext(Dispatchers.IO) {
+            val response = (userApi as? ApiService)?.login(LoginRequest(username, password))
+            if (response != null && response.isSuccessful) {
+                val token = response.body()?.token
+                if (!token.isNullOrEmpty()) {
+                    TokenManager.saveToken(context, token)
+                }
+            }
+            response!!
+        }
+    }
+
+    suspend fun register(context: Context, username: String, password: String, email: String, role: String): Response<RegisterResponse> {
+        return withContext(Dispatchers.IO) {
+            val response = (userApi as? ApiService)?.register(RegisterRequest(username, password, email, role))
+            response!!
         }
     }
 } 

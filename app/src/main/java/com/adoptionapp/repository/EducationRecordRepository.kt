@@ -42,8 +42,8 @@ class EducationRecordRepository(
                 val remoteEducationRecords = educationRecordApi.getEducationRecords()
                 educationRecordDao.replaceAll(remoteEducationRecords)
             } catch (e: Exception) {
-                // Handle network errors, keep local data
-                e.printStackTrace()
+                // Propagate error to ViewModel
+                throw e
             }
         }
     }

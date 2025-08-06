@@ -17,6 +17,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
+import com.adoptionapp.ui.compose.MapScreen
+import com.adoptionapp.ui.compose.BackgroundChecksScreen
+import com.adoptionapp.ui.compose.UserManagementScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,14 +27,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             NavHost(navController, startDestination = "admin_dashboard") {
-                composable("admin_dashboard") { AdminDashboardScreen() }
+                composable("admin_dashboard") { AdminDashboardScreen(navController) }
+                composable("map") { MapScreen() }
+                composable("background_checks") { BackgroundChecksScreen() }
+                composable("user_management") { UserManagementScreen() }
             }
         }
     }
 }
 
 @Composable
-fun AdminDashboardScreen() {
+fun AdminDashboardScreen(navController: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var roleStats by remember { mutableStateOf(listOf<Pair<String, Int>>()) }
@@ -85,5 +91,17 @@ fun AdminDashboardScreen() {
         Text("Pending Background Checks: $pendingChecks")
         Spacer(Modifier.height(8.dp))
         Text("Unread Notifications: $unreadNotifications")
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = { navController.navigate("map") }, modifier = Modifier.fillMaxWidth()) {
+            Text("View Map")
+        }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = { navController.navigate("background_checks") }, modifier = Modifier.fillMaxWidth()) {
+            Text("Background Checks")
+        }
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = { navController.navigate("user_management") }, modifier = Modifier.fillMaxWidth()) {
+            Text("User Management")
+        }
     }
 } 

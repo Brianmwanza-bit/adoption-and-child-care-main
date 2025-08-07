@@ -1,4 +1,4 @@
-package com.yourdomain.adoptionchildcare
+package com.example.adoptionchildcare
 
 import android.os.Bundle
 import android.view.View

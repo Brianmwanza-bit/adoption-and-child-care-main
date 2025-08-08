@@ -1,6 +1,8 @@
-package com.example.adoptionchildcare
+package com.yourdomain.adoptionchildcare
 
 import android.os.Bundle
+import com.yourdomain.adoptionchildcare.config.AppConfig
+import com.yourdomain.adoptionchildcare.Logger
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -82,6 +84,31 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * Main Activity for the Adoption and Child Care Application
+ * 
+ * This activity serves as the primary entry point for the app and provides:
+ * - User authentication (login/register)
+ * - Dashboard with key features
+ * - Navigation to different modules
+ * - Real-time data synchronization
+ * 
+ * Features:
+ * - Secure user authentication
+ * - Child records management
+ * - Guardian profiles
+ * - Document management
+ * - Case tracking
+ * - Background checks
+ * - Placement monitoring
+ * - Medical records
+ * - Education tracking
+ * - Financial management
+ * - Analytics and reporting
+ * 
+ * @author Adoption App Team
+ * @version 1.0
+ */
 class MainActivity : AppCompatActivity() {
     private lateinit var mainContainer: ConstraintLayout
     private lateinit var featuresGrid: GridLayout
@@ -105,9 +132,50 @@ class MainActivity : AppCompatActivity() {
     }
     private val uiScope = CoroutineScope(Dispatchers.Main)
 
+    /**
+     * Initialize the main activity and set up the user interface
+     * 
+     * This method:
+     * - Sets up the main layout and UI components
+     * - Initializes the database and repositories
+     * - Sets up authentication and user session
+     * - Configures navigation and event handlers
+     * - Starts background sync processes
+     * 
+     * @param savedInstanceState The saved instance state
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Log app startup
+        Logger.logStartup("MainActivity", "Initializing")
+        
+        try {
         setContentView(R.layout.MainActivity)
+        
+        Logger.logStartup("MainActivity", "Layout set successfully")
+        
+        // Initialize UI components
+        initializeUI()
+        
+        // Initialize database and repositories
+        initializeDatabase()
+        
+        // Set up authentication
+        setupAuthentication()
+        
+        // Configure navigation
+        setupNavigation()
+        
+        // Start background sync
+        startBackgroundSync()
+        
+        Logger.logStartup("MainActivity", "Initialization complete")
+        
+        } catch (e: Exception) {
+            Logger.logError("MainActivity", e, "Failed to initialize main activity")
+            ErrorHandler.handleException(e)
+        }
 
         mainContainer = findViewById(R.id.main_container)
         featuresGrid = findViewById(R.id.featuresGrid)

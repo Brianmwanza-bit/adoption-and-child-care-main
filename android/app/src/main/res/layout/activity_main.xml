@@ -3,57 +3,109 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="@color/colorPrimary">
+
+    <!-- App Logo/Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Adoption &amp; Child Care"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:layout_marginBottom="8dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Adoption &amp; Child Care App"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="32dp" />
+        android:text="Compassionate platform for families and caregivers"
+        android:textSize="16sp"
+        android:textColor="@color/white"
+        android:layout_marginBottom="48dp"
+        android:gravity="center" />
 
+    <!-- Login/Register Buttons -->
     <Button
         android:id="@+id/loginButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:text="Login"
-        android:layout_marginBottom="16dp" />
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:background="@color/white"
+        android:textColor="@color/colorPrimary"
+        android:layout_marginBottom="16dp"
+        android:elevation="4dp" />
 
     <Button
         android:id="@+id/registerButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:text="Register"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"
+        android:textColor="@color/white"
         android:layout_marginBottom="32dp" />
 
-    <Button
-        android:id="@+id/childrenButton"
+    <!-- Hidden Dashboard (shown after login) -->
+    <LinearLayout
+        android:id="@+id/dashboardLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Children Management"
-        android:layout_marginBottom="8dp" />
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:background="@color/white"
+        android:padding="16dp"
+        android:elevation="8dp">
 
-    <Button
-        android:id="@+id/usersButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Users Management"
-        android:layout_marginBottom="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome to Dashboard"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
+            android:layout_marginBottom="16dp" />
 
-    <Button
-        android:id="@+id/documentsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Documents Management"
-        android:layout_marginBottom="8dp" />
+        <Button
+            android:id="@+id/childrenButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Children Management"
+            android:layout_marginBottom="8dp" />
 
-    <Button
-        android:id="@+id/reportsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Reports"
-        android:layout_marginBottom="8dp" />
+        <Button
+            android:id="@+id/usersButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Users Management"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/documentsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Documents Management"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/reportsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Reports"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/logoutButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:background="@color/colorAccent"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
 
 </LinearLayout>

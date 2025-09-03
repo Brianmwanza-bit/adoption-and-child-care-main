@@ -1,49 +1,87 @@
 ﻿package com.yourdomain.adoptionchildcare
 
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-
+    
+    // UI Components
+    private lateinit var loginButton: Button
+    private lateinit var registerButton: Button
+    private lateinit var dashboardLayout: LinearLayout
+    private lateinit var childrenButton: Button
+    private lateinit var usersButton: Button
+    private lateinit var documentsButton: Button
+    private lateinit var reportsButton: Button
+    private lateinit var logoutButton: Button
+    
+    // Authentication state
+    private var isLoggedIn = false
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         
-        setupUI()
+        initializeViews()
+        setupClickListeners()
+        showLoginScreen()
     }
     
-    private fun setupUI() {
-        val loginButton = findViewById<Button>(R.id.loginButton)
-        val registerButton = findViewById<Button>(R.id.registerButton)
-        val childrenButton = findViewById<Button>(R.id.childrenButton)
-        val usersButton = findViewById<Button>(R.id.usersButton)
-        val documentsButton = findViewById<Button>(R.id.documentsButton)
-        val reportsButton = findViewById<Button>(R.id.reportsButton)
-        
-        loginButton?.setOnClickListener {
+    private fun initializeViews() {
+        loginButton = findViewById(R.id.loginButton)
+        registerButton = findViewById(R.id.registerButton)
+        dashboardLayout = findViewById(R.id.dashboardLayout)
+        childrenButton = findViewById(R.id.childrenButton)
+        usersButton = findViewById(R.id.usersButton)
+        documentsButton = findViewById(R.id.documentsButton)
+        reportsButton = findViewById(R.id.reportsButton)
+        logoutButton = findViewById(R.id.logoutButton)
+    }
+    
+    private fun setupClickListeners() {
+        loginButton.setOnClickListener {
             showLoginDialog()
         }
         
-        registerButton?.setOnClickListener {
+        registerButton.setOnClickListener {
             showRegisterDialog()
         }
         
-        childrenButton?.setOnClickListener {
+        childrenButton.setOnClickListener {
             Toast.makeText(this, "Children Management Screen", Toast.LENGTH_SHORT).show()
         }
         
-        usersButton?.setOnClickListener {
+        usersButton.setOnClickListener {
             Toast.makeText(this, "Users Management Screen", Toast.LENGTH_SHORT).show()
         }
         
-        documentsButton?.setOnClickListener {
+        documentsButton.setOnClickListener {
             Toast.makeText(this, "Documents Management Screen", Toast.LENGTH_SHORT).show()
         }
         
-        reportsButton?.setOnClickListener {
+        reportsButton.setOnClickListener {
             Toast.makeText(this, "Reports Screen", Toast.LENGTH_SHORT).show()
         }
+        
+        logoutButton.setOnClickListener {
+            logout()
+        }
+    }
+    
+    private fun showLoginScreen() {
+        loginButton.visibility = View.VISIBLE
+        registerButton.visibility = View.VISIBLE
+        dashboardLayout.visibility = View.GONE
+        isLoggedIn = false
+    }
+    
+    private fun showDashboard() {
+        loginButton.visibility = View.GONE
+        registerButton.visibility = View.GONE
+        dashboardLayout.visibility = View.VISIBLE
+        isLoggedIn = true
     }
     
     private fun showLoginDialog() {
@@ -57,14 +95,20 @@ class MainActivity : AppCompatActivity() {
         val alertDialog = dialog.create()
         
         loginBtn.setOnClickListener {
-            val username = usernameEdit.text.toString()
-            val password = passwordEdit.text.toString()
+            val username = usernameEdit.text.toString().trim()
+            val password = passwordEdit.text.toString().trim()
             
-            if (username.isNotEmpty() && password.isNotEmpty()) {
-                Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
-                alertDialog.dismiss()
-            } else {
+            if (username.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            } else {
+                // Simulate login validation
+                if (validateLogin(username, password)) {
+                    Toast.makeText(this, "Login successful! Welcome $username", Toast.LENGTH_SHORT).show()
+                    alertDialog.dismiss()
+                    showDashboard()
+                } else {
+                    Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show()
+                }
             }
         }
         
@@ -83,18 +127,45 @@ class MainActivity : AppCompatActivity() {
         val alertDialog = dialog.create()
         
         registerBtn.setOnClickListener {
-            val email = emailEdit.text.toString()
-            val password = passwordEdit.text.toString()
+            val email = emailEdit.text.toString().trim()
+            val password = passwordEdit.text.toString().trim()
             
-            if (email.isNotEmpty() && password.isNotEmpty()) {
-                Toast.makeText(this, "Registration successful", Toast.LENGTH_SHORT).show()
-                alertDialog.dismiss()
-            } else {
+            if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            } else if (!isValidEmail(email)) {
+                Toast.makeText(this, "Please enter a valid email", Toast.LENGTH_SHORT).show()
+            } else if (password.length < 6) {
+                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+            } else {
+                // Simulate registration
+                Toast.makeText(this, "Registration successful! You can now login", Toast.LENGTH_SHORT).show()
+                alertDialog.dismiss()
             }
         }
         
         alertDialog.setView(dialogView)
         alertDialog.show()
+    }
+    
+    private fun validateLogin(username: String, password: String): Boolean {
+        // Simple validation - in real app, this would check against database
+        return username.isNotEmpty() && password.length >= 6
+    }
+    
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+    
+    private fun logout() {
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show()
+        showLoginScreen()
+    }
+    
+    override fun onBackPressed() {
+        if (isLoggedIn) {
+            logout()
+        } else {
+            super.onBackPressed()
+        }
     }
 }

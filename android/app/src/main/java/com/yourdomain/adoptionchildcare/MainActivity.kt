@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     
@@ -19,6 +21,10 @@ class MainActivity : AppCompatActivity() {
     
     // Authentication state
     private var isLoggedIn = false
+    private var currentUser: User? = null
+    
+    // Repository for database operations
+    private val userRepository = UserRepository()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         }
         
         usersButton.setOnClickListener {
-            Toast.makeText(this, "Users Management Screen", Toast.LENGTH_SHORT).show()
+            showUsersList()
         }
         
         documentsButton.setOnClickListener {
@@ -75,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         registerButton.visibility = View.VISIBLE
         dashboardLayout.visibility = View.GONE
         isLoggedIn = false
+        currentUser = null
     }
     
     private fun showDashboard() {
@@ -91,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         val usernameEdit = dialogView.findViewById<EditText>(R.id.usernameEdit)
         val passwordEdit = dialogView.findViewById<EditText>(R.id.passwordEdit)
         val loginBtn = dialogView.findViewById<Button>(R.id.loginBtn)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBar)
         
         val alertDialog = dialog.create()
         
@@ -101,13 +109,32 @@ class MainActivity : AppCompatActivity() {
             if (username.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
             } else {
-                // Simulate login validation
-                if (validateLogin(username, password)) {
-                    Toast.makeText(this, "Login successful! Welcome $username", Toast.LENGTH_SHORT).show()
-                    alertDialog.dismiss()
-                    showDashboard()
-                } else {
-                    Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show()
+                // Show progress and disable button
+                progressBar.visibility = View.VISIBLE
+                loginBtn.isEnabled = false
+                loginBtn.text = "Logging in..."
+                
+                // Perform login with database
+                lifecycleScope.launch {
+                    val result = userRepository.login(username, password)
+                    
+                    runOnUiThread {
+                        progressBar.visibility = View.GONE
+                        loginBtn.isEnabled = true
+                        loginBtn.text = "Login"
+                        
+                        result.fold(
+                            onSuccess = { user ->
+                                currentUser = user
+                                Toast.makeText(this@MainActivity, "Login successful! Welcome ${user.username}", Toast.LENGTH_SHORT).show()
+                                alertDialog.dismiss()
+                                showDashboard()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(this@MainActivity, "Login failed: ${error.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -123,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         val emailEdit = dialogView.findViewById<EditText>(R.id.emailEdit)
         val passwordEdit = dialogView.findViewById<EditText>(R.id.passwordEdit)
         val registerBtn = dialogView.findViewById<Button>(R.id.registerBtn)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBar)
         
         val alertDialog = dialog.create()
         
@@ -137,9 +165,32 @@ class MainActivity : AppCompatActivity() {
             } else if (password.length < 6) {
                 Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
             } else {
-                // Simulate registration
-                Toast.makeText(this, "Registration successful! You can now login", Toast.LENGTH_SHORT).show()
-                alertDialog.dismiss()
+                // Show progress and disable button
+                progressBar.visibility = View.VISIBLE
+                registerBtn.isEnabled = false
+                registerBtn.text = "Registering..."
+                
+                // Perform registration with database
+                lifecycleScope.launch {
+                    val username = email.substringBefore("@") // Use email prefix as username
+                    val result = userRepository.register(username, email, password)
+                    
+                    runOnUiThread {
+                        progressBar.visibility = View.GONE
+                        registerBtn.isEnabled = true
+                        registerBtn.text = "Register"
+                        
+                        result.fold(
+                            onSuccess = { user ->
+                                Toast.makeText(this@MainActivity, "Registration successful! You can now login", Toast.LENGTH_SHORT).show()
+                                alertDialog.dismiss()
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(this@MainActivity, "Registration failed: ${error.message}", Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
+                }
             }
         }
         
@@ -147,9 +198,20 @@ class MainActivity : AppCompatActivity() {
         alertDialog.show()
     }
     
-    private fun validateLogin(username: String, password: String): Boolean {
-        // Simple validation - in real app, this would check against database
-        return username.isNotEmpty() && password.length >= 6
+    private fun showUsersList() {
+        lifecycleScope.launch {
+            val result = userRepository.getAllUsers()
+            
+            result.fold(
+                onSuccess = { users ->
+                    val userNames = users.joinToString("\n") { "${it.username} (${it.email})" }
+                    Toast.makeText(this@MainActivity, "Users in database:\n$userNames", Toast.LENGTH_LONG).show()
+                },
+                onFailure = { error ->
+                    Toast.makeText(this@MainActivity, "Failed to fetch users: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            )
+        }
     }
     
     private fun isValidEmail(email: String): Boolean {

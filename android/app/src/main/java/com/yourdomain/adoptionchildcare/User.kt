@@ -3,32 +3,29 @@
 import com.google.gson.annotations.SerializedName
 
 data class User(
-    @SerializedName("id")
-    val id: Int? = null,
+    @SerializedName("user_id")
+    val userId: Int? = null,
     
     @SerializedName("username")
     val username: String,
     
-    @SerializedName("email")
-    val email: String,
-    
-    @SerializedName("password")
-    val password: String,
-    
-    @SerializedName("full_name")
-    val fullName: String? = null,
-    
-    @SerializedName("phone")
-    val phone: String? = null,
+    @SerializedName("password_hash")
+    val passwordHash: String? = null,
     
     @SerializedName("role")
     val role: String? = "user",
     
+    @SerializedName("email")
+    val email: String? = null,
+    
     @SerializedName("created_at")
     val createdAt: String? = null,
     
-    @SerializedName("updated_at")
-    val updatedAt: String? = null
+    @SerializedName("last_login")
+    val lastLogin: String? = null,
+    
+    @SerializedName("is_active")
+    val isActive: Boolean? = true
 )
 
 data class LoginRequest(
@@ -43,17 +40,14 @@ data class RegisterRequest(
     @SerializedName("username")
     val username: String,
     
-    @SerializedName("email")
-    val email: String,
-    
     @SerializedName("password")
     val password: String,
     
-    @SerializedName("full_name")
-    val fullName: String? = null,
+    @SerializedName("email")
+    val email: String? = null,
     
-    @SerializedName("phone")
-    val phone: String? = null
+    @SerializedName("role")
+    val role: String? = "user"
 )
 
 data class ApiResponse<T>(
@@ -61,8 +55,11 @@ data class ApiResponse<T>(
     val success: Boolean,
     
     @SerializedName("message")
-    val message: String,
+    val message: String? = null,
     
     @SerializedName("data")
-    val data: T? = null
+    val data: T? = null,
+    
+    @SerializedName("error")
+    val error: String? = null
 )

@@ -8,11 +8,8 @@ import java.util.concurrent.TimeUnit
 
 object NetworkClient {
     
-    // Your database server URL - replace with actual server IP/domain
-    // For localhost testing: "http://10.0.2.2:80" (Android emulator)
-    // For remote server: "http://your-server-ip:port"
-    // For your phpMyAdmin server: "http://your-server-ip/phpmyadmin/"
-    private const val BASE_URL = "http://localhost/"
+    // Updated to use existing backend server
+    private const val BASE_URL = "http://localhost:50000/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

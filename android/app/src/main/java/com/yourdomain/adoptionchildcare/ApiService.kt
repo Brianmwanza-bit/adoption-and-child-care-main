@@ -5,21 +5,21 @@ import retrofit2.http.*
 
 interface ApiService {
     
-    @POST("api/auth/login")
+    @POST("login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<ApiResponse<User>>
     
-    @POST("api/auth/register")
+    @POST("register")
     suspend fun register(@Body registerRequest: RegisterRequest): Response<ApiResponse<User>>
     
-    @GET("api/users/{id}")
+    @GET("users/{id}")
     suspend fun getUser(@Path("id") userId: Int): Response<ApiResponse<User>>
     
-    @GET("api/users")
+    @GET("users")
     suspend fun getAllUsers(): Response<ApiResponse<List<User>>>
     
-    @PUT("api/users/{id}")
+    @PUT("users/{id}")
     suspend fun updateUser(@Path("id") userId: Int, @Body user: User): Response<ApiResponse<User>>
     
-    @DELETE("api/users/{id}")
+    @DELETE("users/{id}")
     suspend fun deleteUser(@Path("id") userId: Int): Response<ApiResponse<String>>
 }

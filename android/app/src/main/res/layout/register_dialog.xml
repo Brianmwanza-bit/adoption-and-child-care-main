@@ -27,6 +27,30 @@
         android:layout_height="wrap_content"
         android:hint="Password"
         android:inputType="textPassword"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/phoneEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Phone"
+        android:inputType="phone"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/idNumberEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="ID Number"
+        android:inputType="text"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/roleEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Role (e.g., user, admin, case_worker)"
+        android:inputType="text"
         android:layout_marginBottom="16dp" />
 
     <ProgressBar

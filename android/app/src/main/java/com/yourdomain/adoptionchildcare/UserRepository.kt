@@ -31,10 +31,17 @@ class UserRepository {
         }
     }
     
-    suspend fun register(username: String, password: String, email: String? = null): Result<User> {
+    suspend fun register(username: String, password: String, email: String, phone: String, idNumber: String, role: String): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                val registerRequest = RegisterRequest(username, password, email)
+                val registerRequest = RegisterRequest(
+                    username = username,
+                    password = password,
+                    email = email,
+                    phone = phone,
+                    idNumber = idNumber,
+                    role = role
+                )
                 val response = apiService.register(registerRequest)
                 
                 if (response.isSuccessful) {

@@ -44,10 +44,16 @@ data class RegisterRequest(
     val password: String,
     
     @SerializedName("email")
-    val email: String? = null,
+    val email: String,
+    
+    @SerializedName("phone")
+    val phone: String,
+    
+    @SerializedName("id_number")
+    val idNumber: String,
     
     @SerializedName("role")
-    val role: String? = "user"
+    val role: String = "user"
 )
 
 data class ApiResponse<T>(

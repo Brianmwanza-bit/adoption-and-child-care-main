@@ -12,6 +12,11 @@ android {
         versionCode 5
         versionName "1.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Optional: set from command line with -PBASE_URL=http://192.168.1.23:50000/
+        buildConfigField "String", "BASE_URL_OVERRIDE", "\"${project.hasProperty('BASE_URL') ? project.getProperties().get('BASE_URL') : ''}\""
+    }
+    buildFeatures {
+        buildConfig true
     }
     buildTypes {
         release {

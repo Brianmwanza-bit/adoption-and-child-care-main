@@ -1,253 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
     android:background="#F5F5F5">
 
-    <LinearLayout
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:text="Welcome to Adoption &amp; Child Care"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2E7D32"
+        android:gravity="center"
+        android:layout_marginBottom="32dp" />
 
-        <!-- Welcome Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="4dp">
+    <Button
+        android:id="@+id/loginButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="LOGIN"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"
+        android:background="#2E7D32"
+        android:textColor="@android:color/white" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
+    <Button
+        android:id="@+id/registerButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="REGISTER"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:background="@android:color/transparent"
+        android:textColor="#2E7D32" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Welcome to Adoption &amp; Child Care"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="#2E7D32"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="16dp" />
-
-                <!-- Profile Photo Section -->
-                <RelativeLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="20dp">
-
-                    <!-- Profile Photo Circle -->
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/profilePhoto"
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
-                        android:src="@drawable/ic_person_placeholder"
-                        android:background="#E0E0E0"
-                        android:scaleType="centerCrop" />
-
-                    <!-- Add Photo Button -->
-                    <ImageButton
-                        android:id="@+id/addPhotoButton"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_alignBottom="@id/profilePhoto"
-                        android:layout_alignEnd="@id/profilePhoto"
-                        android:layout_marginBottom="0dp"
-                        android:layout_marginEnd="-8dp"
-                        android:src="@drawable/ic_add"
-                        android:background="#2E7D32"
-                        android:scaleType="centerInside" />
-
-                </RelativeLayout>
-
-                <!-- Login/Register Buttons -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="8dp">
-
-                    <!-- Login Button -->
-                    <Button
-                        android:id="@+id/loginButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:text="LOGIN"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="12dp"
-                        android:background="#2E7D32"
-                        android:textColor="@android:color/white" />
-
-                    <!-- Register Button -->
-                    <Button
-                        android:id="@+id/registerButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:text="REGISTER"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:background="@android:color/transparent"
-                        android:textColor="#2E7D32"
-                        android:backgroundTint="@android:color/transparent" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Quick Actions Grid -->
-        <GridLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:columnCount="2"
-            android:rowCount="2">
-
-            <!-- Children Management Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_children"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Children"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Users Management Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_users"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Users"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Documents Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_documents"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Documents"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <!-- Reports Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_reports"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Reports"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32" />
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-        </GridLayout>
-
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

@@ -52,18 +52,17 @@
                         android:scaleType="centerCrop" />
 
                     <!-- Add Photo Button -->
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    <ImageButton
                         android:id="@+id/addPhotoButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:layout_alignBottom="@id/profilePhoto"
                         android:layout_alignEnd="@id/profilePhoto"
                         android:layout_marginBottom="0dp"
                         android:layout_marginEnd="-8dp"
                         android:src="@drawable/ic_add"
-                        app:fabSize="mini"
-                        app:backgroundTint="#2E7D32"
-                        app:tint="@android:color/white" />
+                        android:background="#2E7D32"
+                        android:scaleType="centerInside" />
 
                 </RelativeLayout>
 
@@ -75,7 +74,7 @@
                     android:layout_marginTop="8dp">
 
                     <!-- Login Button -->
-                    <com.google.android.material.button.MaterialButton
+                    <Button
                         android:id="@+id/loginButton"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
@@ -83,22 +82,20 @@
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:layout_marginBottom="12dp"
-                        app:backgroundTint="#2E7D32"
-                        app:cornerRadius="8dp" />
+                        android:background="#2E7D32"
+                        android:textColor="@android:color/white" />
 
                     <!-- Register Button -->
-                    <com.google.android.material.button.MaterialButton
+                    <Button
                         android:id="@+id/registerButton"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:text="REGISTER"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:backgroundTint="@android:color/transparent"
+                        android:background="@android:color/transparent"
                         android:textColor="#2E7D32"
-                        app:strokeColor="#2E7D32"
-                        app:strokeWidth="2dp"
-                        app:cornerRadius="8dp" />
+                        android:backgroundTint="@android:color/transparent" />
 
                 </LinearLayout>
 

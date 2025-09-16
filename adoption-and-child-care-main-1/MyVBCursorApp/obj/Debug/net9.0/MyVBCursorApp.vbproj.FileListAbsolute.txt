@@ -1,0 +1,15 @@
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\bin\Debug\net9.0\MyVBCursorApp.exe
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\bin\Debug\net9.0\MyVBCursorApp.deps.json
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\bin\Debug\net9.0\MyVBCursorApp.runtimeconfig.json
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\bin\Debug\net9.0\MyVBCursorApp.dll
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\bin\Debug\net9.0\MyVBCursorApp.pdb
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.AssemblyInfoInputs.cache
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.AssemblyInfo.vb
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.vbproj.CoreCompileInputs.cache
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.dll
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\refint\MyVBCursorApp.dll
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.pdb
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.genruntimeconfig.cache
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\ref\MyVBCursorApp.dll
+C:\Users\brian\Desktop\project\adoption-and-child-care-main\MyVBCursorApp\obj\Debug\net9.0\MyVBCursorApp.sourcelink.json

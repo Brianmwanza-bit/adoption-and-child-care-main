@@ -1,0 +1,25 @@
+name: Android CI
+
+on:
+  push:
+    paths:
+      - 'MyVBCursorApp/**'
+      - '.github/workflows/android-ci.yml'
+  pull_request:
+    paths:
+      - 'MyVBCursorApp/**'
+      - '.github/workflows/android-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
+        working-directory: MyVBCursorApp 

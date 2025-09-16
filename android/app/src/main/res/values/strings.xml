@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<<<<<<< HEAD
     <string name="app_name">Adoption &amp; Child Care</string>
     <string name="title_activity_main">Adoption &amp; Child Care</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>
+=======
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="app_name">Adoption &amp; Child Care</string>
+    <string name="title_activity_main">AdoptionChildCare</string>
+    <string name="package_name">com.yourdomain.adoptionchildcare</string>
+    <string name="custom_url_scheme">com.yourdomain.adoptionchildcare</string>
+</resources>
+>>>>>>> 94fde7d (UI color and glassy effect updates)

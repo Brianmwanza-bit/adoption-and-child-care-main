@@ -1,0 +1,25 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "kotlin.languageServer.enabled": true,
+    "android.sdk.path": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk",
+    "java.home": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk\\jbr",
+    "files.associations": {
+        "*.kt": "kotlin",
+        "*.gradle": "groovy",
+        "*.gradle.kts": "kotlin"
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass"
+            ]
+        }
+    }
+}

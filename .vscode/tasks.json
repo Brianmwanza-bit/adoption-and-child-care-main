@@ -2,21 +2,151 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build-debug",
+      "label": "Android: Clean Build",
       "type": "shell",
-      "command": "./gradlew assembleDebug",
+      "command": "gradlew.bat",
+      "args": [
+        "clean"
+      ],
       "group": "build",
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}/android"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
       }
     },
     {
-      "label": "install-debug",
+      "label": "Android: Build Debug APK",
       "type": "shell",
-      "command": "./gradlew installDebug",
+      "command": "gradlew.bat",
+      "args": [
+        "assembleDebug"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/android"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Android: Build Release APK",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": [
+        "assembleRelease"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/android"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Android: Install Debug APK",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": [
+        "installDebug"
+      ],
+      "group": "none",
+      "options": {
+        "cwd": "${workspaceFolder}/android"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Capacitor: Sync",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "sync",
+        "android"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Capacitor: Open Android Studio",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "cap",
+        "open",
+        "android"
+      ],
       "group": "none",
       "options": {
         "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Backend: Start Server",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "start"
+      ],
+      "group": "none",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Backend: Install Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "install"
+      ],
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
       }
     }
   ]

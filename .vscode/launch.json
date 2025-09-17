@@ -2,11 +2,32 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Attach to Gradle Daemon",
+      "name": "Debug Android App",
       "type": "java",
-      "request": "attach",
-      "hostName": "localhost",
-      "port": 5005
+      "request": "launch",
+      "mainClass": "com.yourdomain.adoptionchildcare.MainActivity",
+      "projectName": "android",
+      "cwd": "${workspaceFolder}/android"
+    },
+    {
+      "name": "Debug Backend Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/server.js",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    {
+      "name": "Debug Backend Node.js",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/index.js",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "NODE_ENV": "development"
+      }
     }
   ]
 }

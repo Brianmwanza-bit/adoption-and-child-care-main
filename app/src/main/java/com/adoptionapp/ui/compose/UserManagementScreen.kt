@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adoptionapp.viewmodel.UserManagementViewModel
-import com.adoptionapp.UsersEntity
+import com.adoptionapp.entity.UsersEntity
 
 @Composable
 fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
@@ -18,19 +18,20 @@ fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
     val users by viewModel.users.collectAsState()
     val loading by viewModel.loading.collectAsState(initial = false)
     val error by viewModel.error.collectAsState(initial = null)
-    var showDialog by remember { mutableStateOf(false) }
+    var showRegistrationDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     var editUser by remember { mutableStateOf<UsersEntity?>(null) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    fun openDialog(user: UsersEntity?) {
+    fun openEditDialog(user: UsersEntity?) {
         editUser = user
         username = user?.username ?: ""
         password = ""
         role = user?.role ?: ""
-        showDialog = true
+        showEditDialog = true
     }
 
     Column(
@@ -56,7 +57,7 @@ fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
                     ) {
                         Text("User: ${user.username} (${user.role})")
                         Row {
-                            Button(onClick = { openDialog(user) }, modifier = Modifier.padding(end = 8.dp)) {
+                            Button(onClick = { openEditDialog(user) }, modifier = Modifier.padding(end = 8.dp)) {
                                 Text("Edit")
                             }
                             Button(onClick = { viewModel.deleteUser(user.user_id) }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
@@ -66,16 +67,37 @@ fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
                     }
                 }
             }
-            Button(onClick = { openDialog(null) }, modifier = Modifier.align(Alignment.End)) {
+            Button(onClick = { showRegistrationDialog = true }, modifier = Modifier.align(Alignment.End)) {
                 Text("Add User")
             }
         }
         SnackbarHost(hostState = snackbarHostState)
     }
-    if (showDialog) {
+    
+    // Registration Dialog
+    if (showRegistrationDialog) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            RegistrationScreen(
+                onRegistrationComplete = {
+                    showRegistrationDialog = false
+                    LaunchedEffect(Unit) {
+                        snackbarHostState.showSnackbar("User registered successfully!")
+                    }
+                },
+                onCancel = { showRegistrationDialog = false },
+                viewModel = viewModel
+            )
+        }
+    }
+    
+    // Edit Dialog
+    if (showEditDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(if (editUser == null) "Add User" else "Edit User") },
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("Edit User") },
             text = {
                 Column {
                     OutlinedTextField(
@@ -98,7 +120,7 @@ fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
             },
             confirmButton = {
                 Button(onClick = {
-                    if (username.isNotBlank() && (editUser != null || password.isNotBlank()) && role.isNotBlank()) {
+                    if (username.isNotBlank() && password.isNotBlank() && role.isNotBlank()) {
                         val user = UsersEntity(
                             user_id = editUser?.user_id ?: 0,
                             username = username,
@@ -106,17 +128,17 @@ fun UserManagementScreen(viewModel: UserManagementViewModel = viewModel()) {
                             role = role
                         )
                         viewModel.addOrUpdateUser(user)
-                        showDialog = false
+                        showEditDialog = false
                         LaunchedEffect(Unit) {
-                            snackbarHostState.showSnackbar(if (editUser == null) "User added" else "User updated")
+                            snackbarHostState.showSnackbar("User updated")
                         }
                     }
                 }) {
-                    Text("Submit")
+                    Text("Update")
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
+                Button(onClick = { showEditDialog = false }) {
                     Text("Cancel")
                 }
             }

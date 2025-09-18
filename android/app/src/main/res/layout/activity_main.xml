@@ -5,42 +5,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-<<<<<<< HEAD
     <!-- Main Content -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <!-- Toolbar -->
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="#2E7D32"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-
-        <!-- Content Frame -->
-        <FrameLayout
-            android:id="@+id/content_frame"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-=======
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="@color/colorPrimary">
 
+        <!-- Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:title="Adoption &amp; Child Care" />
+            app:title="Adoption &amp; Child Care"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
+        <!-- Content -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -70,12 +52,21 @@
                     android:id="@+id/welcomeText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome to Adoption &amp; Child Care Dashboard\nConnected to PC Database"
+                    android:text="Welcome to Adoption &amp; Child Care Dashboard\nRoom Database Active"
                     android:textSize="14sp"
                     android:textColor="@color/colorPrimary"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center" />
+
+                <TextView
+                    android:id="@+id/statusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Room Database: Ready | Can sync with PC Database"
+                    android:textSize="12sp"
+                    android:textColor="@color/colorAccent"
                     android:layout_marginBottom="16dp"
                     android:gravity="center" />
->>>>>>> 94fde7d (UI color and glassy effect updates)
 
                 <Button
                     android:id="@+id/childrenButton"
@@ -117,7 +108,6 @@
         </ScrollView>
     </LinearLayout>
 
-<<<<<<< HEAD
     <!-- Navigation Drawer -->
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
@@ -125,17 +115,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="#FFFFFF"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/nav_menu" />
+        app:menu="@menu/activity_main_drawer" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
-=======
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/navigation_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        app:menu="@menu/drawer_menu" />
-
-</androidx.drawerlayout.widget.DrawerLayout>
->>>>>>> 94fde7d (UI color and glassy effect updates)

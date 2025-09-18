@@ -1,25 +1,12 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "kotlin.languageServer.enabled": true,
-    "android.sdk.path": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk",
-    "java.home": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk\\jbr",
+    "android.sdk": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk",
+    "java.home": "C:\\Program Files\\Android\\Android Studio\\jbr",
+    "gradle.nestedProjects": true,
     "files.associations": {
-        "*.kt": "kotlin",
         "*.gradle": "groovy",
         "*.gradle.kts": "kotlin"
     },
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": true
-    },
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "terminal.integrated.profiles.windows": {
-        "PowerShell": {
-            "source": "PowerShell",
-            "args": [
-                "-ExecutionPolicy",
-                "Bypass"
-            ]
-        }
-    }
+    "android.projectPath": "android",
+    "android.buildVariant": "debug",
+    "android.deviceId": "0526725063013381"
 }

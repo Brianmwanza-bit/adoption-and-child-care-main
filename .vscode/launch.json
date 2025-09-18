@@ -1,33 +1,14 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug Android App",
-      "type": "java",
-      "request": "launch",
-      "mainClass": "com.yourdomain.adoptionchildcare.MainActivity",
-      "projectName": "android",
-      "cwd": "${workspaceFolder}/android"
-    },
-    {
-      "name": "Debug Backend Server",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/backend/server.js",
-      "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "NODE_ENV": "development"
-      }
-    },
-    {
-      "name": "Debug Backend Node.js",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/backend/index.js",
-      "cwd": "${workspaceFolder}/backend",
-      "env": {
-        "NODE_ENV": "development"
-      }
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Android: Launch App",
+            "type": "android",
+            "request": "launch",
+            "appSrcRoot": "${workspaceFolder}/android/app/src/main",
+            "apkFile": "${workspaceFolder}/android/app/build/outputs/apk/debug/app-debug.apk",
+            "adbPath": "C:\\Users\\BRIAN MWANZA\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+            "deviceId": "0526725063013381"
+        }
+    ]
 }

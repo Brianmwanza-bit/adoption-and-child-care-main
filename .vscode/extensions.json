@@ -1,11 +1,8 @@
 {
     "recommendations": [
-        "fwcd.kotlin",
         "vscjava.vscode-java-pack",
+        "redhat.java",
         "vscjava.vscode-gradle",
-        "DiemasMichiels.emulate",
-        "ms-vscode.vscode-json",
-        "bradlc.vscode-tailwindcss",
-        "esbenp.prettier-vscode"
+        "ms-vscode.vscode-json"
     ]
 }

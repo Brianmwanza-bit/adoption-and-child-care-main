@@ -8,5 +8,6 @@
     },
     "android.projectPath": "android",
     "android.buildVariant": "debug",
-    "android.deviceId": "0526725063013381"
+    "android.deviceId": "0526725063013381",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

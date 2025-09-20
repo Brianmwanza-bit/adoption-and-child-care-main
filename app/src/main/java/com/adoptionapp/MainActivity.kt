@@ -22,6 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.adoptionapp.ui.compose.*
 import com.adoptionapp.data.session.SessionManager
+import com.adoptionapp.data.db.DatabaseInitializer
 
 private enum class AppRoute(val route: String, val label: String) {
     LOGIN("login", "Login"),
@@ -61,6 +62,11 @@ class MainActivity : ComponentActivity() {
             var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
             var currentUser by remember { mutableStateOf(if (session.isLoggedIn()) session.username() else "John Doe") }
             var currentRole by remember { mutableStateOf(if (session.isLoggedIn()) session.role() else "Admin") }
+
+            // Initialize database with sample data
+            LaunchedEffect(Unit) {
+                DatabaseInitializer.initializeDatabase(context)
+            }
 
             val imagePickerLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()

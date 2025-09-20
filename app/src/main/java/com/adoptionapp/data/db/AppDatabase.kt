@@ -4,17 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.adoptionapp.data.db.dao.ChildDao
-import com.adoptionapp.data.db.dao.DocumentDao
-import com.adoptionapp.data.db.dao.PlacementDao
-import com.adoptionapp.data.db.dao.FamilyDao
-import com.adoptionapp.data.db.dao.AdoptionApplicationDao
-import com.adoptionapp.data.db.dao.HomeStudyDao
-import com.adoptionapp.data.db.dao.CaseReportDao
-import com.adoptionapp.data.db.dao.EducationRecordDao
-import com.adoptionapp.data.db.dao.MedicalRecordDao
-import com.adoptionapp.data.db.dao.MoneyRecordDao
-import com.adoptionapp.data.db.dao.UserDao
+import com.adoptionapp.data.db.dao.*
 import com.adoptionapp.data.db.entities.AuditLogEntity
 import com.adoptionapp.data.db.entities.CaseReportEntity
 import com.adoptionapp.data.db.entities.ChildEntity
@@ -66,6 +56,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun educationRecordDao(): EducationRecordDao
     abstract fun medicalRecordDao(): MedicalRecordDao
     abstract fun moneyRecordDao(): MoneyRecordDao
+    abstract fun auditLogDao(): AuditLogDao
+    abstract fun courtCaseDao(): CourtCaseDao
+    abstract fun guardianDao(): GuardianDao
+    abstract fun permissionDao(): PermissionDao
+    abstract fun userPermissionDao(): UserPermissionDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

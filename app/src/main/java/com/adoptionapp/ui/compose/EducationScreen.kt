@@ -13,45 +13,45 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.adoptionapp.data.db.AppDatabase
-import com.adoptionapp.data.db.entities.PlacementEntity
+import com.adoptionapp.data.db.entities.EducationRecordEntity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun PlacementsScreen() {
+fun EducationScreen() {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
-    var items by remember { mutableStateOf<List<PlacementEntity>>(emptyList()) }
+    var records by remember { mutableStateOf<List<EducationRecordEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
     var childId by remember { mutableStateOf(TextFieldValue("")) }
-    var startDate by remember { mutableStateOf(TextFieldValue("")) }
-    var type by remember { mutableStateOf(TextFieldValue("")) }
+    var school by remember { mutableStateOf(TextFieldValue("")) }
+    var grade by remember { mutableStateOf(TextFieldValue("")) }
 
     LaunchedEffect(Unit) {
-        db.placementDao().observeAll().collectLatest { list -> items = list }
+        db.educationRecordDao().observeAll().collectLatest { list -> records = list }
     }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Placement")
+                Icon(Icons.Default.Add, contentDescription = "Add Education Record")
             }
         }
     ) { padding ->
     Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Placements", style = MaterialTheme.typography.headlineSmall)
+        Text(text = "Education", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
-        if (items.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No placements yet") }
+        if (records.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No education records yet") }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(items) { p ->
+                items(records) { e ->
                     ElevatedCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Placement #${p.placementId}")
-                            Text("Child ID: ${p.childId}")
-                            p.placementType?.let { Text("Type: $it", style = MaterialTheme.typography.bodySmall) }
+                            Text("Record #${e.educationId}")
+                            Text("Child ID: ${e.childId}")
+                            e.schoolName?.let { Text("School: $it", style = MaterialTheme.typography.bodySmall) }
                         }
                     }
                 }
@@ -60,30 +60,30 @@ fun PlacementsScreen() {
         if (showCreate) {
             AlertDialog(
                 onDismissRequest = { showCreate = false },
-                title = { Text("Add Placement") },
+                title = { Text("Add Education Record") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") })
-                        OutlinedTextField(value = startDate, onValueChange = { startDate = it }, label = { Text("Start date (YYYY-MM-DD)") })
-                        OutlinedTextField(value = type, onValueChange = { type = it }, label = { Text("Placement type (optional)") })
+                        OutlinedTextField(value = school, onValueChange = { school = it }, label = { Text("School name") })
+                        OutlinedTextField(value = grade, onValueChange = { grade = it }, label = { Text("Grade (optional)") })
                     }
                 },
                 confirmButton = {
                     TextButton(onClick = {
                         val cid = childId.text.toIntOrNull()
-                        if (cid != null && startDate.text.isNotBlank()) {
+                        if (cid != null && school.text.isNotBlank()) {
                             scope.launch {
-                                db.placementDao().insert(
-                                    PlacementEntity(
+                                db.educationRecordDao().insert(
+                                    EducationRecordEntity(
                                         childId = cid,
-                                        startDate = startDate.text,
-                                        placementType = type.text.ifBlank { null }
+                                        schoolName = school.text,
+                                        grade = grade.text.ifBlank { null }
                                     )
                                 )
                                 showCreate = false
                                 childId = TextFieldValue("")
-                                startDate = TextFieldValue("")
-                                type = TextFieldValue("")
+                                school = TextFieldValue("")
+                                grade = TextFieldValue("")
                             }
                         }
                     }) { Text("Save") }

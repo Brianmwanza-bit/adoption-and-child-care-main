@@ -27,12 +27,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adoptionapp.viewmodel.UserManagementViewModel
 import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import com.adoptionapp.data.db.AppDatabase
+import com.adoptionapp.data.db.entities.UserEntity
+import com.adoptionapp.data.security.Security
+import com.adoptionapp.data.session.SessionManager
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: UserManagementViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val session = remember { SessionManager(context) }
+    val db = remember { AppDatabase.getInstance(context) }
+    val scope = rememberCoroutineScope()
     var showLoginPopup by remember { mutableStateOf(false) }
     var showRegisterPopup by remember { mutableStateOf(false) }
     var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
@@ -182,13 +192,15 @@ fun LoginScreen(
     if (showLoginPopup) {
         LoginPopupBlock(
             profilePhotoUri = profilePhotoUri,
-            onLoginSuccess = {
+            onLoginSuccess = { user ->
+                session.saveSession(user)
                 showLoginPopup = false
                 onLoginSuccess()
             },
             onCancel = { showLoginPopup = false },
             onImagePicker = { imagePickerLauncher.launch("image/*") },
-            viewModel = viewModel
+            viewModel = viewModel,
+            db = db
         )
     }
 
@@ -202,7 +214,8 @@ fun LoginScreen(
             },
             onCancel = { showRegisterPopup = false },
             onImagePicker = { imagePickerLauncher.launch("image/*") },
-            viewModel = viewModel
+            viewModel = viewModel,
+            db = db
         )
     }
 }
@@ -210,16 +223,19 @@ fun LoginScreen(
 @Composable
 fun LoginPopupBlock(
     profilePhotoUri: Uri?,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (UserEntity) -> Unit,
     onCancel: () -> Unit,
     onImagePicker: () -> Unit,
-    viewModel: UserManagementViewModel
+    viewModel: UserManagementViewModel,
+    db: AppDatabase
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var shake by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -341,11 +357,22 @@ fun LoginPopupBlock(
                                 shake = true
                             } else {
                                 isLoading = true
-                                // TODO: Implement actual login logic
-                                LaunchedEffect(Unit) {
-                                    kotlinx.coroutines.delay(1000)
-                                    isLoading = false
-                                    onLoginSuccess()
+                                scope.launch {
+                                    try {
+                                        val userDao = db.userDao()
+                                        val userByEmail = userDao.findByEmail(email)
+                                        val user = userByEmail ?: userDao.findByUsername(email)
+                                        val hashed = Security.hashPassword(password)
+                                        if (user != null && user.passwordHash == hashed) {
+                                            onLoginSuccess(user)
+                                        } else {
+                                            errorMessage = "Invalid credentials"
+                                        }
+                                    } catch (e: Exception) {
+                                        errorMessage = e.message ?: "Login failed"
+                                    } finally {
+                                        isLoading = false
+                                    }
                                 }
                             }
                         },
@@ -378,7 +405,8 @@ fun RegisterPopupBlock(
     onRegisterSuccess: () -> Unit,
     onCancel: () -> Unit,
     onImagePicker: () -> Unit,
-    viewModel: UserManagementViewModel
+    viewModel: UserManagementViewModel,
+    db: AppDatabase
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -558,11 +586,27 @@ fun RegisterPopupBlock(
                                 errorMessage = "Password must be at least 6 characters"
                             } else {
                                 isLoading = true
-                                // TODO: Implement actual registration logic
-                                LaunchedEffect(Unit) {
-                                    kotlinx.coroutines.delay(1000)
-                                    isLoading = false
-                                    onRegisterSuccess()
+                                scope.launch {
+                                    try {
+                                        val userDao = db.userDao()
+                                        val existing = userDao.findByEmail(email) ?: userDao.findByUsername(username)
+                                        if (existing != null) {
+                                            errorMessage = "User already exists"
+                                        } else {
+                                            val entity = UserEntity(
+                                                username = username,
+                                                passwordHash = Security.hashPassword(password),
+                                                role = occupation,
+                                                email = email
+                                            )
+                                            val id = userDao.insert(entity).toInt()
+                                            if (id > 0) onRegisterSuccess() else errorMessage = "Registration failed"
+                                        }
+                                    } catch (e: Exception) {
+                                        errorMessage = e.message ?: "Registration failed"
+                                    } finally {
+                                        isLoading = false
+                                    }
                                 }
                             }
                         },

@@ -1,6 +1,7 @@
 package com.adoptionapp.ui.compose
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -12,100 +13,83 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.adoptionapp.viewmodel.NotificationsViewModel
+import com.adoptionapp.data.db.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class DashboardCard(
     val title: String,
     val icon: ImageVector,
     val count: Int,
     val summary: String,
-    val color: Color
+    val color: Color,
+    val route: String? = null
 )
 
 @Composable
-fun DashboardScreen(notificationsViewModel: NotificationsViewModel = viewModel()) {
+fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: NotificationsViewModel = viewModel()) {
     val loading by notificationsViewModel.loading.collectAsState()
     val error by notificationsViewModel.error.collectAsState()
     val unreadCount by notificationsViewModel.unreadCount.collectAsState()
 
+    val context = LocalContext.current
+
+    var childrenCount by remember { mutableStateOf(0) }
+    var familiesCount by remember { mutableStateOf(0) }
+    var adoptionAppsCount by remember { mutableStateOf(0) }
+    var homeStudiesCount by remember { mutableStateOf(0) }
+    var documentsCount by remember { mutableStateOf(0) }
+    var placementsCount by remember { mutableStateOf(0) }
+    var reportsCount by remember { mutableStateOf(0) }
+    var educationCount by remember { mutableStateOf(0) }
+    var medicalCount by remember { mutableStateOf(0) }
+    var financeCount by remember { mutableStateOf(0) }
+
     LaunchedEffect(Unit) {
         notificationsViewModel.loadNotifications()
+        val db = AppDatabase.getInstance(context)
+        withContext(Dispatchers.IO) {
+            val c = db.childDao().count()
+            val f = db.familyDao().count()
+            val aa = db.adoptionApplicationDao().count()
+            val hs = db.homeStudyDao().count()
+            val d = db.documentDao().count()
+            val p = db.placementDao().count()
+            val r = db.caseReportDao().count()
+            val e = db.educationRecordDao().count()
+            val m = db.medicalRecordDao().count()
+            val fin = db.moneyRecordDao().count()
+            withContext(Dispatchers.Main) {
+                childrenCount = c
+                familiesCount = f
+                adoptionAppsCount = aa
+                homeStudiesCount = hs
+                documentsCount = d
+                placementsCount = p
+                reportsCount = r
+                educationCount = e
+                medicalCount = m
+                financeCount = fin
+            }
+        }
     }
 
     val dashboardCards = listOf(
-        DashboardCard(
-            title = "Children",
-            icon = Icons.Default.ChildCare,
-            count = 24,
-            summary = "Last added: Sarah (Age 8)",
-            color = Color(0xFF4CAF50)
-        ),
-        DashboardCard(
-            title = "Families",
-            icon = Icons.Default.FamilyRestroom,
-            count = 12,
-            summary = "Active families",
-            color = Color(0xFF2196F3)
-        ),
-        DashboardCard(
-            title = "Placements",
-            icon = Icons.Default.Home,
-            count = 18,
-            summary = "Current placements",
-            color = Color(0xFF9C27B0)
-        ),
-        DashboardCard(
-            title = "Tasks",
-            icon = Icons.Default.Assignment,
-            count = 8,
-            summary = "Upcoming tasks",
-            color = Color(0xFFFF9800)
-        ),
-        DashboardCard(
-            title = "Documents",
-            icon = Icons.Default.Description,
-            count = 45,
-            summary = "Recent uploads",
-            color = Color(0xFF607D8B)
-        ),
-        DashboardCard(
-            title = "Reports & Cases",
-            icon = Icons.Default.Assessment,
-            count = 6,
-            summary = "Active cases",
-            color = Color(0xFFE91E63)
-        ),
-        DashboardCard(
-            title = "Finance",
-            icon = Icons.Default.AttachMoney,
-            count = 32,
-            summary = "Recent transactions",
-            color = Color(0xFF4CAF50)
-        ),
-        DashboardCard(
-            title = "Background Checks",
-            icon = Icons.Default.Security,
-            count = 4,
-            summary = "Pending checks",
-            color = Color(0xFFFF5722)
-        ),
-        DashboardCard(
-            title = "Education",
-            icon = Icons.Default.School,
-            count = 15,
-            summary = "Education records",
-            color = Color(0xFF3F51B5)
-        ),
-        DashboardCard(
-            title = "Medical",
-            icon = Icons.Default.LocalHospital,
-            count = 7,
-            summary = "Next follow-ups",
-            color = Color(0xFFF44336)
-        )
+        DashboardCard("Children", Icons.Default.ChildCare, childrenCount, "Total children", Color(0xFF4CAF50), route = "children_list"),
+        DashboardCard("Families", Icons.Default.FamilyRestroom, familiesCount, "Registered families", Color(0xFF2196F3), route = "families"),
+        DashboardCard("Adoption Applications", Icons.Default.Folder, adoptionAppsCount, "Applications submitted", Color(0xFF9C27B0), route = "adoption_applications"),
+        DashboardCard("Home Studies", Icons.Default.AssignmentTurnedIn, homeStudiesCount, "Home studies", Color(0xFFFF9800), route = "home_studies"),
+        DashboardCard("Documents", Icons.Default.Description, documentsCount, "Files uploaded", Color(0xFF607D8B), route = "documents"),
+        DashboardCard("Placements", Icons.Default.Home, placementsCount, "Active placements", Color(0xFF8BC34A), route = "placements"),
+        DashboardCard("Reports & Cases", Icons.Default.Assessment, reportsCount, "Case reports", Color(0xFFE91E63), route = "reports"),
+        DashboardCard("Education", Icons.Default.School, educationCount, "Education records", Color(0xFF3F51B5), route = "education"),
+        DashboardCard("Medical", Icons.Default.LocalHospital, medicalCount, "Medical records", Color(0xFFF44336), route = "medical"),
+        DashboardCard("Finance", Icons.Default.AttachMoney, financeCount, "Transactions", Color(0xFF4CAF50), route = "finance")
     )
 
     Column(
@@ -140,7 +124,9 @@ fun DashboardScreen(notificationsViewModel: NotificationsViewModel = viewModel()
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(dashboardCards) { card ->
-                    DashboardCardItem(card = card)
+                    DashboardCardItem(card = card, onClick = {
+                        card.route?.let { onNavigate(it) }
+                    })
                 }
             }
         }
@@ -148,11 +134,11 @@ fun DashboardScreen(notificationsViewModel: NotificationsViewModel = viewModel()
 }
 
 @Composable
-fun DashboardCardItem(card: DashboardCard) {
+fun DashboardCardItem(card: DashboardCard, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .aspectRatio(1f),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
@@ -185,7 +171,8 @@ fun DashboardCardItem(card: DashboardCard) {
             Text(
                 text = card.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable(enabled = card.route != null) { onClick() }
             )
             
             Text(

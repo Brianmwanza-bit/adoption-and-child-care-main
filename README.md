@@ -1,9 +1,25 @@
-# adoption and child care main
-mobile app
+# Adoption & Child Care (Android)
+Android app built with Jetpack Compose, Navigation, and Room. It supports adoption workflows and child-care management with a drawer layout, role-based dashboard cards, and local authentication with session persistence.
+
+## Key Highlights
+- Jetpack Compose UI with `ModalNavigationDrawer` and top-right Search.
+- Room database (unified) for Users, Children, Families, Adoption Applications, Home Studies, Documents, Placements, Case Reports, Education, Medical, Finance.
+- Login/Register wired to Room with SHA-256 password hashing; `SessionManager` persists session.
+- Dashboard: square cards in two columns, showing live counts from Room; cards navigate to lists.
+- Settings: profile (username/email/role) + app toggles (notifications, Wi‑Fi-only sync) persisted.
+
+## Build & Run
+- Android Studio ▶ or CLI: `./gradlew assembleDebug`
+- Min SDK 24; target SDK 36.
+
+## Structure (selected)
+- `app/src/main/java/com/adoptionapp/MainActivity.kt` — App shell, routes, drawer, search.
+- `app/src/main/java/com/adoptionapp/ui/compose/DashboardScreen.kt` — 2-column square cards + Room counts.
+- `app/src/main/java/com/adoptionapp/ui/compose/LoginScreen.kt` — Room-backed register/login + session.
+- `app/src/main/java/com/adoptionapp/ui/compose/SettingsScreen.kt` — Profile + preferences.
+- `app/src/main/java/com/adoptionapp/data/db/` — Room DB, DAOs, Entities.
 
 *A compassionate platform bridging adoptive families, children in need, and caregivers.*
-
-![App Preview](https://screenshots/demo.png)
 
 ## 📌 Key Features
 - **Adoption Matching:** Create and browse detailed profiles for children and families. Use advanced filters to find the best matches and connect securely.

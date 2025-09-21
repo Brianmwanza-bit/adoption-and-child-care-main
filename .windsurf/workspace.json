@@ -1,0 +1,46 @@
+{
+  "name": "Adoption and Child Care App",
+  "type": "android-kotlin",
+  "settings": {
+    "kotlin.compiler.jvmTarget": "1.8",
+    "android.gradle.version": "8.13",
+    "android.compileSdk": 34,
+    "android.minSdk": 24,
+    "android.targetSdk": 34
+  },
+  "extensions": {
+    "recommended": [
+      "kotlin-language-server",
+      "android-studio-integration",
+      "git-integration"
+    ]
+  },
+  "tasks": {
+    "build": {
+      "command": "gradlew build",
+      "group": "build"
+    },
+    "clean": {
+      "command": "gradlew clean",
+      "group": "build"
+    },
+    "assembleDebug": {
+      "command": "gradlew assembleDebug",
+      "group": "build"
+    },
+    "installDebug": {
+      "command": "gradlew installDebug",
+      "group": "build"
+    }
+  },
+  "launch": {
+    "configurations": [
+      {
+        "name": "Launch Android App",
+        "type": "android",
+        "request": "launch",
+        "program": "${workspaceFolder}/app"
+      }
+    ]
+  }
+}

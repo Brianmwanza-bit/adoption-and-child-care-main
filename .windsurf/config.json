@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "Adoption and Child Care App",
+    "type": "android",
+    "language": "kotlin",
+    "framework": "jetpack-compose"
+  },
+  "ide": {
+    "primary": "android-studio",
+    "secondary": "windsurf"
+  },
+  "git": {
+    "repository": "https://github.com/Brianmwanza-bit/adoption-and-child-care-main.git",
+    "branch": "main"
+  },
+  "build": {
+    "gradle_version": "8.13",
+    "kotlin_version": "1.9.10",
+    "compose_version": "1.5.4"
+  },
+  "paths": {
+    "source": "app/src/main/java/com/yourdomain/adoptionchildcare",
+    "resources": "app/src/main/res",
+    "manifest": "app/src/main/AndroidManifest.xml"
+  }
+}

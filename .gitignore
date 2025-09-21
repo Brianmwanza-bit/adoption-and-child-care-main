@@ -1,6 +1,42 @@
+# Node.js
 node_modules/
 .env
 .DS_Store
 npm-debug.log
 package-lock.json
-.vscode/ 
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+build/
+.gradle/
+local.properties
+proguard/
+*.log
+
+# Gradle
+.gradle/
+gradle/
+wrapper/
+daemon/
+caches/
+native/
+kotlin-profile/
+.kotlin/
+.tmp/
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/

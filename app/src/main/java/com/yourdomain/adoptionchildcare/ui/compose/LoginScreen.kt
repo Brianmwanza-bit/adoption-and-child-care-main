@@ -597,7 +597,8 @@ fun RegisterPopupBlock(
                                                 username = username,
                                                 passwordHash = Security.hashPassword(password),
                                                 role = occupation,
-                                                email = email
+                                                email = email,
+                                                profilePhotoUri = profilePhotoUri?.toString()
                                             )
                                             val id = userDao.insert(entity).toInt()
                                             if (id > 0) onRegisterSuccess() else errorMessage = "Registration failed"

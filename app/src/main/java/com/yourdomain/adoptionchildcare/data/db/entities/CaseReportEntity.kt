@@ -13,6 +13,7 @@ data class CaseReportEntity(
     @ColumnInfo(name = "report_date") val reportDate: String,
     @ColumnInfo(name = "report_title") val reportTitle: String,
     @ColumnInfo(name = "report_type") val reportType: String? = null,
+    @ColumnInfo(name = "adoption_status") val adoptionStatus: String? = null,
     @ColumnInfo(name = "content") val content: String,
     @ColumnInfo(name = "is_confidential") val isConfidential: Boolean = false,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,

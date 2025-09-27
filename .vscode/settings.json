@@ -9,5 +9,6 @@
     "android.projectPath": "android",
     "android.buildVariant": "debug",
     "android.deviceId": "0526725063013381",
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "chat.agent.maxRequests": 2000
 }

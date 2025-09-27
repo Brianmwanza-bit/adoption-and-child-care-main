@@ -78,13 +78,24 @@ fun CaseReportsScreen() {
                         val uid = userId.text.toIntOrNull()
                         if (cid != null && uid != null && date.text.isNotBlank() && title.text.isNotBlank() && content.text.isNotBlank()) {
                             scope.launch {
-                                db.caseReportDao().insert(
+                                val newId = db.caseReportDao().insert(
                                     CaseReportEntity(
                                         childId = cid,
                                         userId = uid,
                                         reportDate = date.text,
                                         reportTitle = title.text,
-                                        content = content.text
+                                        content = content.text,
+                                        adoptionStatus = null
+                                    )
+                                )
+                                // insert audit log indicating the source call card
+                                db.auditLogDao().insert(
+                                    com.yourdomain.adoptionchildcare.data.db.entities.AuditLogEntity(
+                                        tableName = "case_reports",
+                                        recordId = newId.toInt(),
+                                        action = "CREATE",
+                                        changedBy = uid,
+                                        callCard = "CaseReports"
                                     )
                                 )
                                 showCreate = false

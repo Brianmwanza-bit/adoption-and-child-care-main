@@ -15,6 +15,7 @@ data class AuditLogEntity(
     @ColumnInfo(name = "changed_at") val changedAt: String? = null,
     @ColumnInfo(name = "ip_address") val ipAddress: String? = null,
     @ColumnInfo(name = "user_agent") val userAgent: String? = null,
+    @ColumnInfo(name = "call_card") val callCard: String? = null,
     @ColumnInfo(name = "old_data") val oldData: String? = null,
     @ColumnInfo(name = "new_data") val newData: String? = null
 )

@@ -17,6 +17,7 @@ data class FamilyEntity(
     @ColumnInfo(name = "state") val state: String? = null,
     @ColumnInfo(name = "country") val country: String? = null,
     @ColumnInfo(name = "status") val status: String? = "Active",
+    @ColumnInfo(name = "adoption_eligibility") val adoptionEligibility: String? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null
 )

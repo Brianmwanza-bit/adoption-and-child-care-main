@@ -131,6 +131,17 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
             }
         }
     }
+
+    // Footer bar
+    BottomFooterBar(onSelect = { route ->
+        // map footer buttons to routes
+        when (route) {
+            "home" -> onNavigate("dashboard")
+            "info" -> onNavigate("about")
+            "messages" -> onNavigate("messages")
+            "tasks" -> onNavigate("tasks")
+        }
+    })
 }
 
 @Composable
@@ -181,5 +192,41 @@ fun DashboardCardItem(card: DashboardCard, onClick: () -> Unit = {}) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
         }
+    }
+}
+
+@Composable
+fun BottomFooterBar(onSelect: (String) -> Unit = {}) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        color = Color(0xFF1976D2)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FooterButton(icon = Icons.Default.Home, label = "Home", onClick = { onSelect("home") })
+            FooterButton(icon = Icons.Default.Info, label = "Info", onClick = { onSelect("info") })
+            FooterButton(icon = Icons.Default.Email, label = "Messages", onClick = { onSelect("messages") })
+            FooterButton(icon = Icons.Default.Task, label = "Tasks", onClick = { onSelect("tasks") })
+        }
+    }
+}
+
+@Composable
+fun FooterButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clickable { onClick() }
+            .padding(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, contentDescription = label, tint = Color.White)
+        Text(label, color = Color.White, style = MaterialTheme.typography.bodySmall)
     }
 }

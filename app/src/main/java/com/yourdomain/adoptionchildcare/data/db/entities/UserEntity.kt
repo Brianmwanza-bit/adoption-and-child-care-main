@@ -13,6 +13,7 @@ data class UserEntity(
     @ColumnInfo(name = "password_hash") val passwordHash: String,
     @ColumnInfo(name = "role") val role: String,
     @ColumnInfo(name = "email") val email: String? = null,
+    @ColumnInfo(name = "profile_photo_uri") val profilePhotoUri: String? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "last_login") val lastLogin: String? = null,
     @ColumnInfo(name = "is_active") val isActive: Boolean = true

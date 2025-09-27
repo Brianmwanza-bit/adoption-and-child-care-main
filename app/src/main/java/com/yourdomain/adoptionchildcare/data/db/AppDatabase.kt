@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.yourdomain.adoptionchildcare.data.db.dao.*
 import com.yourdomain.adoptionchildcare.data.db.entities.AuditLogEntity
+import com.yourdomain.adoptionchildcare.data.db.entities.IconEntity
 import com.yourdomain.adoptionchildcare.data.db.entities.CaseReportEntity
 import com.yourdomain.adoptionchildcare.data.db.entities.ChildEntity
 import com.yourdomain.adoptionchildcare.data.db.entities.FamilyEntity
@@ -25,6 +26,7 @@ import com.yourdomain.adoptionchildcare.data.db.entities.UserPermissionEntity
 @Database(
     entities = [
         UserEntity::class,
+    IconEntity::class,
         ChildEntity::class,
         DocumentEntity::class,
         PlacementEntity::class,
@@ -41,7 +43,7 @@ import com.yourdomain.adoptionchildcare.data.db.entities.UserPermissionEntity
         AdoptionApplicationEntity::class,
         HomeStudyEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

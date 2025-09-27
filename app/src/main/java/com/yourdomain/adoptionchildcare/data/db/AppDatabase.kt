@@ -3,6 +3,8 @@ package com.yourdomain.adoptionchildcare.data.db
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.RoomDatabase
 import com.yourdomain.adoptionchildcare.data.db.dao.*
 import com.yourdomain.adoptionchildcare.data.db.entities.AuditLogEntity
@@ -67,13 +69,44 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
+        private val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add new columns with NULL default so existing rows are preserved
+                try {
+                    database.execSQL("ALTER TABLE users ADD COLUMN profile_photo_uri TEXT")
+                } catch (e: Exception) { /* column may already exist */ }
+                try {
+                    database.execSQL("ALTER TABLE case_reports ADD COLUMN adoption_status TEXT")
+                } catch (e: Exception) { }
+                try {
+                    database.execSQL("ALTER TABLE families ADD COLUMN adoption_eligibility TEXT")
+                } catch (e: Exception) { }
+                try {
+                    database.execSQL("ALTER TABLE audit_logs ADD COLUMN call_card TEXT")
+                } catch (e: Exception) { }
+
+                // Create icons table
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS icons (
+                      icon_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                      `key` TEXT,
+                      url TEXT,
+                      provider TEXT,
+                      created_at TEXT
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(
                 context.applicationContext,
                 AppDatabase::class.java,
                 "adoption_childcare.db"
             )
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_1_2)
                 .build()
                 .also { INSTANCE = it }
         }

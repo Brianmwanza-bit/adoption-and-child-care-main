@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "903675369901",
+    "project_id": "kotlin-projects-952fa",
+    "storage_bucket": "kotlin-projects-952fa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903675369901:android:49263fb18c2c4f7b8b2924",
+        "android_client_info": {
+          "package_name": "com.example.adoption_and_childcare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZG9XJ7MwBuy3LYrof1MMGIxVP8CVCjq8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

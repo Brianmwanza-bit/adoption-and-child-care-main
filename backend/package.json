@@ -4,6 +4,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "pwsh dev.ps1",
+    "dev:3306": "pwsh dev.ps1 -Port 3306",
+    "dev:3307": "pwsh dev.ps1 -Port 3307",
     "test": "jest"
   },
   "dependencies": {

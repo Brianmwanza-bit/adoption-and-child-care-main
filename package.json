@@ -4,7 +4,12 @@
   "description": "Adoption and Child Care Tracking System - Frontend",
   "main": "index.html",
   "scripts": {
-    "start": "echo 'No build step. Open index.html directly.'"
+    "start": "echo 'No build step. Open index.html directly.'",
+    "dev": "cd backend && npm install && npm run dev",
+    "dev:3306": "cd backend && npm install && npm run dev:3306",
+    "dev:3307": "cd backend && npm install && npm run dev:3307",
+    "backend:start": "cd backend && npm start",
+    "backend:install": "cd backend && npm install"
   },
   "author": "Brian Mwanza",
   "license": "MIT",

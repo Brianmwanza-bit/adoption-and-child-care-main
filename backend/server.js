@@ -68,10 +68,22 @@ db.connect((err) => {
       );
       CREATE TABLE IF NOT EXISTS children (
         child_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        dob VARCHAR(255),
-        gender VARCHAR(255),
-        guardian_id INT
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        middle_name VARCHAR(100),
+        gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other', 'Unknown')),
+        date_of_birth DATE,
+        birth_certificate_no VARCHAR(50) UNIQUE,
+        nationality VARCHAR(50),
+        photo_url VARCHAR(255),
+        is_emancipated TINYINT(1) DEFAULT 0,
+        emancipation_date DATE,
+        emancipation_reason TEXT,
+        current_status VARCHAR(50) DEFAULT 'Active',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS guardians (
         guardian_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -87,10 +99,25 @@ db.connect((err) => {
       );
       CREATE TABLE IF NOT EXISTS placements (
         placement_id INT AUTO_INCREMENT PRIMARY KEY,
-        child_id INT,
-        guardian_id INT,
-        start_date VARCHAR(255),
-        end_date VARCHAR(255)
+        child_id INT NOT NULL,
+        source_family_id INT DEFAULT NULL,
+        destination_family_id INT NOT NULL,
+        placement_type VARCHAR(50) CHECK (placement_type IN ('Foster Home', 'Group Home', 'Kinship Care', 'Institution', 'Adoption')),
+        start_date DATE NOT NULL,
+        end_date DATE DEFAULT NULL,
+        organization VARCHAR(150),
+        placement_address TEXT,
+        contact_person VARCHAR(100),
+        contact_phone VARCHAR(20),
+        contact_email VARCHAR(100),
+        notes TEXT,
+        is_current TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (source_family_id) REFERENCES family_profile(family_id),
+        FOREIGN KEY (destination_family_id) REFERENCES family_profile(family_id),
+        FOREIGN KEY (created_by) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS medical_records (
         record_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,6 +175,8 @@ db.connect((err) => {
         address VARCHAR(255),
         household_size INT,
         notes TEXT,
+        latitude DOUBLE,
+        longitude DOUBLE,
         FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS foster_tasks (
@@ -657,9 +686,9 @@ app.put('/court_cases/:id', authenticateToken, (req, res, next) => {
 });
 
 app.put('/placements/:id', authenticateToken, (req, res, next) => {
-  const { child_id, guardian_id, start_date, end_date } = req.body;
-  db.query('UPDATE placements SET child_id=?, guardian_id=?, start_date=?, end_date=? WHERE placement_id=?',
-    [child_id, guardian_id, start_date, end_date, req.params.id],
+  const { child_id, guardian_id, source_family_id, destination_family_id, start_date, end_date } = req.body;
+  db.query('UPDATE placements SET child_id=?, guardian_id=?, source_family_id=?, destination_family_id=?, start_date=?, end_date=? WHERE placement_id=?',
+    [child_id, guardian_id, source_family_id, destination_family_id, start_date, end_date, req.params.id],
     function (err, results) {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       res.json({ success: true, affectedRows: results.affectedRows });

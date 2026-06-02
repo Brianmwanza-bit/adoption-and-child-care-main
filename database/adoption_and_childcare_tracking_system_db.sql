@@ -313,6 +313,8 @@ INSERT INTO `permissions` (`permission_id`, `name`, `description`, `category`) V
 CREATE TABLE `placements` (
   `placement_id` int(11) NOT NULL AUTO_INCREMENT,
   `child_id` int(11) NOT NULL,
+  `source_family_id` int(11) DEFAULT NULL,
+  `destination_family_id` int(11) DEFAULT NULL,
   `placement_type` varchar(50) DEFAULT NULL CHECK (`placement_type` in ('Foster Home','Group Home','Kinship Care','Institution','Adoption')),
   `start_date` date NOT NULL,
   `end_date` date DEFAULT NULL,
@@ -324,7 +326,9 @@ CREATE TABLE `placements` (
   `notes` text DEFAULT NULL,
   `is_current` tinyint(1) DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `created_by` int(11) DEFAULT NULL
+  `created_by` int(11) DEFAULT NULL,
+  KEY `source_family_id` (`source_family_id`),
+  KEY `destination_family_id` (`destination_family_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Current and past placements of children';
 
 -- --------------------------------------------------------
@@ -343,6 +347,64 @@ CREATE TABLE `users` (
   `last_login` timestamp NULL DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='System users';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `family_profile`
+--
+
+CREATE TABLE `family_profile` (
+  `family_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `household_size` int(11) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `latitude` double DEFAULT NULL,
+  `longitude` double DEFAULT NULL,
+  PRIMARY KEY (`family_id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `family_profile_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Foster and family profile records';
+
+--
+-- Table structure for table `foster_tasks`
+--
+
+CREATE TABLE `foster_tasks` (
+  `task_id` int(11) NOT NULL AUTO_INCREMENT,
+  `family_id` int(11) NOT NULL,
+  `case_worker_id` int(11) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `due_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`task_id`),
+  KEY `family_id` (`family_id`),
+  KEY `case_worker_id` (`case_worker_id`),
+  CONSTRAINT `foster_tasks_ibfk_1` FOREIGN KEY (`family_id`) REFERENCES `family_profile` (`family_id`),
+  CONSTRAINT `foster_tasks_ibfk_2` FOREIGN KEY (`case_worker_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Tasks for foster family management';
+
+--
+-- Table structure for table `foster_matches`
+--
+
+CREATE TABLE `foster_matches` (
+  `match_id` int(11) NOT NULL AUTO_INCREMENT,
+  `family_id` int(11) NOT NULL,
+  `case_worker_id` int(11) DEFAULT NULL,
+  `task_id` int(11) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`match_id`),
+  KEY `family_id` (`family_id`),
+  KEY `case_worker_id` (`case_worker_id`),
+  KEY `task_id` (`task_id`),
+  CONSTRAINT `foster_matches_ibfk_1` FOREIGN KEY (`family_id`) REFERENCES `family_profile` (`family_id`),
+  CONSTRAINT `foster_matches_ibfk_2` FOREIGN KEY (`case_worker_id`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `foster_matches_ibfk_3` FOREIGN KEY (`task_id`) REFERENCES `foster_tasks` (`task_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Foster family match records';
 
 --
 -- Dumping data for table `users`
@@ -475,6 +537,27 @@ ALTER TABLE `placements`
   ADD KEY `created_by` (`created_by`);
 
 --
+-- Indexes for table `family_profile`
+--
+ALTER TABLE `family_profile`
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `foster_tasks`
+--
+ALTER TABLE `foster_tasks`
+  ADD KEY `family_id` (`family_id`),
+  ADD KEY `case_worker_id` (`case_worker_id`);
+
+--
+-- Indexes for table `foster_matches`
+--
+ALTER TABLE `foster_matches`
+  ADD KEY `family_id` (`family_id`),
+  ADD KEY `case_worker_id` (`case_worker_id`),
+  ADD KEY `task_id` (`task_id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -561,6 +644,24 @@ ALTER TABLE `placements`
   MODIFY `placement_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `family_profile`
+--
+ALTER TABLE `family_profile`
+  MODIFY `family_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `foster_tasks`
+--
+ALTER TABLE `foster_tasks`
+  MODIFY `task_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `foster_matches`
+--
+ALTER TABLE `foster_matches`
+  MODIFY `match_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -634,7 +735,9 @@ ALTER TABLE `money_records`
 --
 ALTER TABLE `placements`
   ADD CONSTRAINT `placements_ibfk_1` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `placements_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`);
+  ADD CONSTRAINT `placements_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`),
+  ADD CONSTRAINT `placements_ibfk_3` FOREIGN KEY (`source_family_id`) REFERENCES `family_profile` (`family_id`),
+  ADD CONSTRAINT `placements_ibfk_4` FOREIGN KEY (`destination_family_id`) REFERENCES `family_profile` (`family_id`);
 
 --
 -- Constraints for table `user_permissions`

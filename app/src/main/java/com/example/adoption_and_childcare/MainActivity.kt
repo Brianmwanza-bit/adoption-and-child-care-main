@@ -34,6 +34,7 @@ import com.example.adoption_and_childcare.ui.compose.HomeStudiesScreen
 import com.example.adoption_and_childcare.ui.compose.LoginScreen
 import com.example.adoption_and_childcare.ui.compose.MapScreen
 import com.example.adoption_and_childcare.ui.compose.MedicalScreen
+import com.example.adoption_and_childcare.ui.compose.ModernLandingPage
 import com.example.adoption_and_childcare.ui.compose.NotificationsScreen
 import com.example.adoption_and_childcare.ui.compose.PlacementsScreen
 import com.example.adoption_and_childcare.ui.compose.SearchScreen
@@ -79,6 +80,7 @@ class MainActivity : ComponentActivity() {
             val isLoggedInState = session.isLoggedIn()
 
             var isLoggedIn by remember { mutableStateOf<Boolean>(isLoggedInState) }
+            var showLandingPage by remember { mutableStateOf(true) }
             var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
             var currentUser by remember { mutableStateOf<String>(if (isLoggedInState) session.getUsername() ?: "John Doe" else "John Doe") }
             var currentRole by remember { mutableStateOf<String>(if (isLoggedInState) session.getRole() ?: "Admin" else "Admin") }
@@ -97,14 +99,25 @@ class MainActivity : ComponentActivity() {
             // Use Boolean.not() instead of ! operator
             when (isLoggedIn.not()) {
                 true -> {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            // Refresh from session saved by LoginScreen
-                            isLoggedIn = session.isLoggedIn()
-                            currentUser = session.getUsername() ?: currentUser
-                            currentRole = session.getRole() ?: currentRole
-                        }
-                    )
+                    if (showLandingPage) {
+                        ModernLandingPage(
+                            onGetStarted = {
+                                showLandingPage = false
+                            },
+                            onLogin = {
+                                showLandingPage = false
+                            }
+                        )
+                    } else {
+                        LoginScreen(
+                            onLoginSuccess = {
+                                // Refresh from session saved by LoginScreen
+                                isLoggedIn = session.isLoggedIn()
+                                currentUser = session.getUsername() ?: currentUser
+                                currentRole = session.getRole() ?: currentRole
+                            }
+                        )
+                    }
                 }
                 false -> {
                     Scaffold(

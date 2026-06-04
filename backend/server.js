@@ -39,11 +39,12 @@ app.use('/api', apiLimiter); // If your routes are not prefixed with /api, use a
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   port: process.env.DB_PORT || 3306,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null,
   multipleStatements: true,
   charset: 'utf8mb4',
   timezone: '+00:00'

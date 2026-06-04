@@ -130,7 +130,10 @@ fun LoginScreen(
                 // Login and Register buttons
                 if (!hasRegisteredUser) {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -147,7 +150,10 @@ fun LoginScreen(
                         )
                     }
                     Button(
-                        onClick = { showRegisterPopup = true },
+                        onClick = {
+                            showLoginPopup = false
+                            showRegisterPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -165,7 +171,10 @@ fun LoginScreen(
                     }
                 } else {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),

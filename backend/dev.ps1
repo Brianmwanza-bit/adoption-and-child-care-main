@@ -4,7 +4,7 @@
 # This script prepares the database and starts the backend server
 
 param(
-    [int]$Port = 3307,
+    [int]$Port = 3306,
     [string]$DBHost = "localhost"
 )
 

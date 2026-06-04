@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adoption & Child Care System - Admin Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 800px; margin: 50px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2e7d32; margin-bottom: 20px; }
+        .status { font-size: 1.2em; margin-bottom: 30px; }
+        .online { color: #4caf50; font-weight: bold; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; transition: background 0.3s; margin: 10px; }
+        .btn:hover { background-color: #1b5e20; }
+        .btn-blue { background-color: #0277bd; }
+        .btn-blue:hover { background-color: #01579b; }
+        .info { margin-top: 40px; text-align: left; background: #e8f5e9; padding: 20px; border-radius: 8px; font-size: 0.9em; }
+        code { background: #fff; padding: 2px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adoption & Child Care System</h1>
+        <p class="status">System Status: <span class="online">ONLINE</span></p>
+
+        <div>
+            <a href="/api-docs" class="btn">View API Documentation (Swagger)</a>
+            <a href="http://localhost/phpmyadmin" target="_blank" class="btn btn-blue">Open phpMyAdmin</a>
+        </div>
+
+        <div class="info">
+            <h3>Backend Information</h3>
+            <p><strong>API Endpoint:</strong> <code>http://localhost:50000/api</code></p>
+            <p><strong>Database:</strong> <code>adoption_and_childcare_tracking_system_db</code></p>
+            <p><strong>MySQL Port:</strong> <code>3306</code> or <code>3307</code> (Check <code>backend/.env</code>)</p>
+            <p><strong>Static Content:</strong> Files in <code>src/</code> are served here.</p>
+        </div>
+    </div>
+</body>
+</html>

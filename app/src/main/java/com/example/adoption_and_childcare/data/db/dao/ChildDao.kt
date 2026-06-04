@@ -26,4 +26,10 @@ interface ChildDao {
 
     @Query("SELECT COUNT(*) FROM children")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM children WHERE sync_status = 'PENDING'")
+    suspend fun getPendingSync(): List<ChildEntity>
+
+    @Query("UPDATE children SET sync_status = :status, remote_id = :remoteId, last_synced_at = :timestamp WHERE child_id = :localId")
+    suspend fun updateSyncStatus(localId: Int, status: String, remoteId: String?, timestamp: Long)
 }

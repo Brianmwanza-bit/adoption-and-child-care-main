@@ -26,4 +26,10 @@ interface AdoptionApplicationDao {
 
     @Query("SELECT COUNT(*) FROM adoption_applications")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM adoption_applications WHERE sync_status = 'PENDING'")
+    suspend fun getPendingSync(): List<AdoptionApplicationEntity>
+
+    @Query("UPDATE adoption_applications SET sync_status = :status, remote_id = :remoteId, last_synced_at = :timestamp WHERE application_id = :localId")
+    suspend fun updateSyncStatus(localId: Int, status: String, remoteId: String?, timestamp: Long)
 }

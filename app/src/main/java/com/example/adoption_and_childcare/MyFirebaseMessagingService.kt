@@ -103,24 +103,42 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     // Call this method from your login activity/fragment after successful login
     companion object {
         fun sendPendingTokenToServer(context: Context) {
-            val prefs = context.getSharedPreferences("fcm_prefs", Context.MODE_PRIVATE)
+            val appContext = context.applicationContext
+            val prefs = appContext.getSharedPreferences("fcm_prefs", Context.MODE_PRIVATE)
             val pendingToken = prefs.getString("pending_fcm_token", null)
 
             if (!pendingToken.isNullOrEmpty()) {
-                val sessionManager = SessionManager(context)
+                val sessionManager = SessionManager(appContext)
                 if (sessionManager.isLoggedIn()) {
-                    // Create a temporary service instance to send the token
-                    val service = MyFirebaseMessagingService()
-                    service.sessionManager = sessionManager // Assigning the locally created SessionManager for the temp service
-                    service.sendTokenToServer(pendingToken)
-                } else {
-                    Log.d("FCM", "User not logged in (in sendPendingTokenToServer), cannot send.")
+                    val authToken = sessionManager.getAuthToken()
+                    if (authToken.isNullOrEmpty()) return
+
+                    val deviceId = Settings.Secure.getString(appContext.contentResolver, Settings.Secure.ANDROID_ID)
+                    val request = FcmTokenRequest(
+                        fcmToken = pendingToken,
+                        deviceId = deviceId,
+                        platform = "android"
+                    )
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val response = RetrofitClient.apiService.updateFcmToken(
+                                authToken = "Bearer $authToken",
+                                request = request
+                            )
+                            if (response.isSuccessful) {
+                                appContext.getSharedPreferences("fcm_prefs", Context.MODE_PRIVATE)
+                                    .edit().remove("pending_fcm_token").apply()
+                                Log.d("FCM", "Pending token sent successfully")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("FCM", "Error sending pending token: ${e.message}")
+                        }
+                    }
                 }
-            } else {
-                Log.d("FCM", "No pending token found (in sendPendingTokenToServer).")
             }
-        } // Closes fun sendPendingTokenToServer
-    } // Closes companion object
+        }
+    }
 
     private fun showNotification(title: String?, message: String?) {
         val channelId = "default_channel"

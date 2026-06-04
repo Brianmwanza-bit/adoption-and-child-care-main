@@ -2,6 +2,7 @@
 const express = require('express');
 // const sqlite3 = require('sqlite3').verbose();
 const mysql = require('mysql2');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -22,6 +23,60 @@ const app = express();
 const PORT = process.env.PORT || 50000;
 const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
+// Swagger definition
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Adoption & Child Care API',
+      version: '1.0.0',
+      description: 'API documentation for the Adoption & Child Care backend.',
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+      },
+    ],
+  },
+  apis: [__filename],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Root route to prevent "blank page"
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>Adoption & Child Care API</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1>Adoption & Child Care API is Running</h1>
+        <p>Status: <span style="color: green;">Online</span></p>
+        <div style="margin-top: 20px;">
+          <a href="/api-docs" style="padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">View API Documentation</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 0.8em; color: gray;">
+          Target Database: ${process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db'}<br>
+          Port: ${process.env.DB_PORT || '3306'}
+        </p>
+      </body>
+    </html>
+  `);
+});
+
+// Admin DB Status check
+app.get('/admin-db-status', (req, res) => {
+  if (!db) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+  db.query('SELECT 1', (err) => {
+    if (err) {
+      return res.status(500).json({ success: false, error: 'Database connection failed', details: err.message });
+    }
+    res.json({ success: true, message: 'Database is connected', config: { host: dbConfig.host, port: dbConfig.port, database: process.env.DB_NAME } });
+  });
+});
+
 app.use(cors({ origin: '*', credentials: true }));
 app.use(helmet());
 app.use(express.json());
@@ -37,24 +92,58 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter); // If your routes are not prefixed with /api, use app.use(apiLimiter);
 
-// MySQL connection
-const db = mysql.createConnection({
+// MySQL connection configuration
+const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
   port: process.env.DB_PORT || 3306,
   multipleStatements: true,
   charset: 'utf8mb4',
-  timezone: '+00:00'
-});
-db.connect((err) => {
+  timezone: '+00:00',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null
+};
+
+// Create a connection specifically to ensure the database exists
+const initialDb = mysql.createConnection({ ...dbConfig, database: undefined });
+
+initialDb.connect((err) => {
   if (err) {
-    console.error('Failed to connect to MySQL:', err.message);
-    process.exit(1);
+    console.error(`Failed to connect to MySQL server on port ${dbConfig.port}:`, err.message);
+    console.log('--- TROUBLESHOOTING ---');
+    console.log(`1. Check if MySQL is running on port ${dbConfig.port}.`);
+    console.log(`2. If you are using XAMPP, check if MySQL port is 3306 or 3307.`);
+    console.log(`3. Update DB_PORT in backend/.env to match your MySQL port.`);
+    console.log('------------------------');
+    if (err.message.includes('auth_gssapi_client')) {
+      console.error('TIP: Your MySQL server uses GSSAPI. Try running this in MySQL: ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "";');
+    }
   } else {
-    console.log('Connected to MySQL database.');
-    // --- Ensure users table exists ---
+    console.log('Connected to MySQL server. Ensuring database exists...');
+    const dbName = process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db';
+    initialDb.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``, (err) => {
+      initialDb.end();
+      if (err) {
+        console.error('Failed to create/verify database:', err.message);
+      } else {
+        console.log(`Database "${dbName}" is ready.`);
+        initializeTables(dbName);
+      }
+    });
+  }
+});
+
+let db; // Main database connection variable
+
+function initializeTables(dbName) {
+  db = mysql.createConnection({ ...dbConfig, database: dbName });
+  db.connect((err) => {
+    if (err) {
+      console.error('Failed to connect to target database:', err.message);
+      return;
+    }
+    console.log(`Connected to MySQL database: ${dbName}`);
+
     const createTablesSQL = `
       CREATE TABLE IF NOT EXISTS users (
         user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -64,7 +153,9 @@ db.connect((err) => {
         id_number VARCHAR(50),
         role VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
-        photo VARCHAR(255)
+        photo VARCHAR(255),
+        latitude DOUBLE,
+        longitude DOUBLE
       );
       CREATE TABLE IF NOT EXISTS children (
         child_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -96,6 +187,16 @@ db.connect((err) => {
         child_id INT,
         case_number VARCHAR(255),
         status VARCHAR(255)
+      );
+      CREATE TABLE IF NOT EXISTS family_profile (
+        family_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        address VARCHAR(255),
+        household_size INT,
+        notes TEXT,
+        latitude DOUBLE,
+        longitude DOUBLE,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS placements (
         placement_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -150,7 +251,8 @@ db.connect((err) => {
         child_id INT,
         file_name VARCHAR(255),
         file_type VARCHAR(255),
-        file_path VARCHAR(255)
+        file_path VARCHAR(255),
+        file_data LONGBLOB
       );
       CREATE TABLE IF NOT EXISTS audit_logs (
         log_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -168,16 +270,6 @@ db.connect((err) => {
         user_id INT,
         permission_id INT,
         PRIMARY KEY (user_id, permission_id)
-      );
-      CREATE TABLE IF NOT EXISTS family_profile (
-        family_id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        address VARCHAR(255),
-        household_size INT,
-        notes TEXT,
-        latitude DOUBLE,
-        longitude DOUBLE,
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS foster_tasks (
         task_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -218,24 +310,55 @@ db.connect((err) => {
         sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
+      CREATE TABLE IF NOT EXISTS fcm_tokens (
+        token_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        fcm_token TEXT NOT NULL,
+        device_id VARCHAR(255),
+        platform VARCHAR(50),
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        UNIQUE KEY user_device (user_id, device_id)
+      );
     `;
     db.query(createTablesSQL, (err) => {
       if (err) {
         console.error('Failed to create tables:', err.message);
-        process.exit(1);
       } else {
-      console.log('All tables checked/created.');
+        console.log('All MySQL tables checked/created.');
+        runMigrations();
       }
     });
-  }
-});
+  });
+}
 
-// Add location fields to family_profile and users if not present
-// (Migration SQL, run once)
-db.query('ALTER TABLE family_profile ADD COLUMN latitude DOUBLE', () => {});
-db.query('ALTER TABLE family_profile ADD COLUMN longitude DOUBLE', () => {});
-db.query('ALTER TABLE users ADD COLUMN latitude DOUBLE', () => {});
-db.query('ALTER TABLE users ADD COLUMN longitude DOUBLE', () => {});
+function runMigrations() {
+  const migrations = [
+    { table: 'users', column: 'photo_data', type: 'LONGBLOB' },
+    { table: 'documents', column: 'file_data', type: 'LONGBLOB' }
+  ];
+
+  migrations.forEach(mig => {
+    ensureColumnExists(mig.table, mig.column, mig.type, (err) => {
+      if (err) {
+        console.error(`Migration error for ${mig.table}.${mig.column}:`, err.message);
+      } else {
+        console.log(`Ensured column ${mig.column} exists in ${mig.table}`);
+      }
+    });
+  });
+}
+
+function ensureColumnExists(table, column, type, callback) {
+  db.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [column], (err, results) => {
+    if (err) return callback && callback(err);
+    if (results.length === 0) {
+      db.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${type}`, callback);
+    } else {
+      if (callback) callback();
+    }
+  });
+}
 
 // Endpoint to update family location
 app.put('/family_profile/:id/location', authenticateToken, (req, res, next) => {
@@ -973,33 +1096,26 @@ app.get('/notifications/unread-count', authenticateToken, (req, res, next) => {
 app.use(express.static(path.join(__dirname, '../src')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- Automated Schema Migration for BLOB columns ---
-function ensureColumnExists(table, column, type, callback) {
-  db.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [column], (err, results) => {
-    if (err) return callback && callback(err);
-    if (results.length === 0) {
-      // Column does not exist, add it
-      db.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${type}`, callback);
-    } else {
-      if (callback) callback();
-    }
-  });
-}
+// FCM Token Endpoint
+app.post('/api/fcm/token', authenticateToken, (req, res, next) => {
+  const { fcmToken, deviceId, platform } = req.body;
+  const userId = req.user.user_id;
 
-// Ensure BLOB columns for storing actual photo/file data
-const migrations = [
-  { table: 'users', column: 'photo_data', type: 'LONGBLOB' },
-  { table: 'documents', column: 'file_data', type: 'LONGBLOB' }
-];
+  if (!fcmToken) {
+    return res.status(400).json({ success: false, error: { message: 'Missing fcmToken' } });
+  }
 
-migrations.forEach(mig => {
-  ensureColumnExists(mig.table, mig.column, mig.type, (err) => {
-    if (err) {
-      console.error(`Migration error for ${mig.table}.${mig.column}:`, err.message);
-    } else {
-      console.log(`Ensured column ${mig.column} exists in ${mig.table}`);
+  // Upsert token for this user and device
+  db.query(
+    `INSERT INTO fcm_tokens (user_id, fcm_token, device_id, platform)
+     VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE fcm_token = ?, last_updated = CURRENT_TIMESTAMP`,
+    [userId, fcmToken, deviceId, platform, fcmToken],
+    (err, result) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      res.json({ success: true, message: 'FCM token updated' });
     }
-  });
+  );
 });
 
 app.use((err, req, res, next) => {

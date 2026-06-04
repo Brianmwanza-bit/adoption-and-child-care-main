@@ -20,9 +20,9 @@ import kotlinx.coroutines.launch
 object DatabaseInitializer {
     
     fun initializeDatabase(context: Context) {
-        val db = AppDatabase.getInstance(context)
-        
+        val appContext = context.applicationContext
         CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getInstance(appContext)
             // Check if database is already initialized
             val userCount = db.userDao().count()
             if (userCount > 0) return@launch // Already initialized

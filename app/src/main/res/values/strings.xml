@@ -10,4 +10,31 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+
+    <!-- App Shell Strings -->
+    <string name="profile_photo_desc">Profile Photo</string>
+    <string name="logout_label">Logout</string>
+    <string name="menu_desc">Menu</string>
+    <string name="help_about_label">Help/About</string>
+    <string name="add_photo_desc">Add Photo</string>
+
+    <!-- Quick Access Card Strings -->
+    <string name="card_children">Children</string>
+    <string name="card_children_summary">Last added: Sarah (Age 8)</string>
+    <string name="card_families">Families</string>
+    <string name="card_families_summary">Active families</string>
+    <string name="card_placements">Placements</string>
+    <string name="card_placements_summary">Current placements</string>
+    <string name="card_tasks">Tasks</string>
+    <string name="card_tasks_summary">Upcoming tasks</string>
+    <string name="card_documents">Documents</string>
+    <string name="card_documents_summary">Recent uploads</string>
+    <string name="card_reports">Reports &amp; Cases</string>
+    <string name="card_reports_summary">Active cases</string>
+    <string name="card_finance">Finance</string>
+    <string name="card_finance_summary">Recent transactions</string>
+    <string name="card_bg_checks">Background Checks</string>
+    <string name="card_bg_checks_summary">Pending checks</string>
+    <string name="card_education">Education</string>
+    <string name="card_education_summary">Education records</string>
 </resources>

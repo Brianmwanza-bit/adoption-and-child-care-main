@@ -2,11 +2,12 @@ package com.example.adoption_and_childcare.data.session
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.adoption_and_childcare.MyFirebaseMessagingService
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 
-class SessionManager(context: Context) {
+class SessionManager(private val context: Context) {
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("adoption_session", Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences("adoption_session", Context.MODE_PRIVATE)
 
     fun saveSession(user: UserEntity) {
         prefs.edit()
@@ -15,6 +16,9 @@ class SessionManager(context: Context) {
             .putString(KEY_ROLE, user.role)
             .putString(KEY_EMAIL, user.email)
             .apply()
+
+        // Sync pending FCM token upon login session save
+        MyFirebaseMessagingService.sendPendingTokenToServer(context)
     }
 
     fun saveAuthToken(token: String) {
@@ -27,12 +31,17 @@ class SessionManager(context: Context) {
         prefs.edit().clear().apply()
     }
 
-    fun isLoggedIn(): Boolean = prefs.contains(KEY_USER_ID) && !getAuthToken().isNullOrEmpty()
+    fun isLoggedIn(): Boolean = prefs.contains(KEY_USER_ID)
 
-    fun userId(): Int = prefs.getInt(KEY_USER_ID, -1)
-    fun username(): String = prefs.getString(KEY_USERNAME, "") ?: ""
-    fun role(): String = prefs.getString(KEY_ROLE, "") ?: ""
-    fun email(): String = prefs.getString(KEY_EMAIL, "") ?: ""
+    fun getUserId(): Int = prefs.getInt(KEY_USER_ID, -1)
+    fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
+    fun getRole(): String? = prefs.getString(KEY_ROLE, null)
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+
+    fun userId(): Int = getUserId()
+    fun username(): String = getUsername() ?: ""
+    fun role(): String = getRole() ?: ""
+    fun email(): String = getEmail() ?: ""
 
     companion object {
         private const val KEY_USER_ID = "user_id"

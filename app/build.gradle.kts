@@ -1,13 +1,13 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.services)
 }
-hilt {
-    enableAggregatingTask = false
-}
+
 android {
     namespace = "com.yourdomain.adoptionchildcare"
     compileSdk = 35
@@ -35,17 +35,25 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
     buildFeatures {
         viewBinding = true
         dataBinding = true // Add databinding support
         compose = true // Enable Compose
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.5" // Updated to be compatible with Kotlin 1.9.25
-    }
+}
+
+hilt {
+    enableAggregatingTask = true
+}
+
+// Suppress Hilt/Dagger unrecognized processor options warnings
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("-Xlint:-processing", "-Xlint:-options"))
 }
 
 dependencies {
@@ -81,7 +89,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.runtime)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 
     // Retrofit + OkHttp
     implementation(libs.retrofit)
@@ -91,11 +99,16 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
 
     // Tests
     testImplementation(libs.junit)
@@ -109,14 +122,5 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Hilt Navigation Compose for hiltViewModel
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    kapt("androidx.hilt:hilt-compiler:1.2.0")
-    // Explicitly add JavaPoet to resolve Hilt/Room annotation processor issues
-    implementation(libs.javapoet)
-}
-
-configurations.all {
-    resolutionStrategy {
-        force("com.squareup:javapoet:1.13.0")
-    }
+    implementation(libs.hilt.androidx.navigation.compose)
 }

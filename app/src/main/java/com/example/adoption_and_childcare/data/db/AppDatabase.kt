@@ -59,7 +59,7 @@ import com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity
         HomeStudyEntity::class,
         NotificationEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

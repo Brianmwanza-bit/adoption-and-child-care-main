@@ -18,5 +18,10 @@ data class FamilyEntity(
     @ColumnInfo(name = "country") val country: String? = null,
     @ColumnInfo(name = "status") val status: String? = "Active",
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
-    @ColumnInfo(name = "updated_at") val updatedAt: String? = null
+    @ColumnInfo(name = "updated_at") val updatedAt: String? = null,
+
+    // Sync Metadata
+    @ColumnInfo(name = "remote_id") val remoteId: String? = null,
+    @ColumnInfo(name = "sync_status") val syncStatus: String = "PENDING", // PENDING, SYNCED, ERROR
+    @ColumnInfo(name = "last_synced_at") val lastSyncedAt: Long? = null
 )

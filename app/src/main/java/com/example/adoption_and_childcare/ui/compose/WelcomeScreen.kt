@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,7 @@ fun WelcomeScreen(
             Surface(
                 modifier = Modifier.size(120.dp),
                 shape = RoundedCornerShape(30.dp),
-                color = Color.White.copy(alpha = 0.2f)
+                color = Color.White
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -112,9 +113,6 @@ fun WelcomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = SolidColor(Color.White)
-                ),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Color.White
@@ -130,7 +128,7 @@ fun WelcomeScreen(
 
         // Footer Version
         Text(
-            text = "Version 1.4.0",
+            text = "Version 1.0.0",
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 24.dp),

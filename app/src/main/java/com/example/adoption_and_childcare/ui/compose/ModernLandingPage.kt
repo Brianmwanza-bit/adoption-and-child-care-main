@@ -1,7 +1,6 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -23,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 
 @Preview(showBackground = true, showSystemUi = true)
@@ -72,7 +72,7 @@ fun ModernLandingPage(
             HeroSection(isVisible, onLogin)
 
             // 2. IMPACT STATS
-            ImpactStatsSection(isVisible)
+            ImpactStatsSection()
 
             // 3. KEY FEATURES
             FeaturesSection()
@@ -98,6 +98,17 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
                 )
             )
     ) {
+        // Decorative Background Element using ContentScale
+        /* 
+        Image(
+            painter = painterResource(id = R.drawable.hero_pattern), 
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+            alpha = 0.1f
+        )
+        */
+
         // Decorative Circles
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
@@ -168,7 +179,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
 }
 
 @Composable
-fun ImpactStatsSection(isVisible: Boolean) {
+fun ImpactStatsSection() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -203,18 +214,73 @@ fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun FeaturesSection() {
-    Column(modifier = Modifier.padding(24.dp)) {
+    val features = listOf(
+        FeatureData(Icons.Default.Speed, "Real-time Tracking", "Monitor case progress and milestones instantly."),
+        FeatureData(Icons.Default.Lock, "Secure Documents", "Military-grade encryption for all sensitive records."),
+        FeatureData(Icons.Default.Groups, "Family Matching", "Smart algorithms to find the perfect home for every child.")
+    )
+
+    Column(modifier = Modifier.padding(vertical = 24.dp)) {
         Text(
             text = "Everything you need",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = Color(0xFF1A1A1A),
+            modifier = Modifier.padding(horizontal = 24.dp)
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        FeatureRow(Icons.Default.Speed, "Real-time Tracking", "Monitor case progress and milestones instantly.")
-        FeatureRow(Icons.Default.Lock, "Secure Documents", "Military-grade encryption for all sensitive records.")
-        FeatureRow(Icons.Default.Groups, "Family Matching", "Smart algorithms to find the perfect home for every child.")
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(features) { feature ->
+                GlassmorphicFeatureCard(feature)
+            }
+        }
+    }
+}
+
+data class FeatureData(val icon: ImageVector, val title: String, val desc: String)
+
+@Composable
+fun GlassmorphicFeatureCard(feature: FeatureData) {
+    Card(
+        modifier = Modifier
+            .width(260.dp)
+            .height(180.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFF4CAF50).copy(alpha = 0.1f),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    feature.icon,
+                    contentDescription = null,
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+
+            Column {
+                Text(feature.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(feature.desc, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+        }
     }
 }
 

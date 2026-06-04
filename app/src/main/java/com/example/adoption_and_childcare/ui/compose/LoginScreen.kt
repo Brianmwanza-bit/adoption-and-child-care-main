@@ -3,6 +3,7 @@ package com.example.adoption_and_childcare.ui.compose
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -18,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -31,7 +34,10 @@ import com.example.adoption_and_childcare.data.db.entities.UserEntity
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.utils.Security
 import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +48,6 @@ fun LoginScreen(
     val actualViewModel = viewModel ?: hiltViewModel<UserManagementViewModel>()
     val context = LocalContext.current
     val session = remember { SessionManager(context) }
-    val db = remember { AppDatabase.getInstance(context) }
     val scope = rememberCoroutineScope()
     var showLoginPopup by remember { mutableStateOf(false) }
     var showRegisterPopup by remember { mutableStateOf(false) }
@@ -75,7 +80,7 @@ fun LoginScreen(
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -130,7 +135,10 @@ fun LoginScreen(
                 // Login and Register buttons
                 if (!hasRegisteredUser) {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -147,7 +155,10 @@ fun LoginScreen(
                         )
                     }
                     Button(
-                        onClick = { showRegisterPopup = true },
+                        onClick = {
+                            showLoginPopup = false
+                            showRegisterPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -165,7 +176,10 @@ fun LoginScreen(
                     }
                 } else {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -197,8 +211,7 @@ fun LoginScreen(
             },
             onCancel = { showLoginPopup = false },
             onImagePicker = { imagePickerLauncher.launch("image/*") },
-            viewModel = actualViewModel,
-            db = db
+            viewModel = actualViewModel
         )
     }
 
@@ -212,8 +225,7 @@ fun LoginScreen(
             },
             onCancel = { showRegisterPopup = false },
             onImagePicker = { imagePickerLauncher.launch("image/*") },
-            viewModel = actualViewModel,
-            db = db
+            viewModel = actualViewModel
         )
     }
 }
@@ -225,16 +237,32 @@ fun LoginPopupBlock(
     onLoginSuccess: (UserEntity) -> Unit,
     onCancel: () -> Unit,
     onImagePicker: () -> Unit,
-    viewModel: UserManagementViewModel,
-    db: AppDatabase
+    viewModel: UserManagementViewModel
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var shake by remember { mutableStateOf(false) }
+    var isSuccess by remember { mutableStateOf(false) }
+
+    val shakeOffset by animateFloatAsState(
+        targetValue = if (shake) 5f else 0f,
+        animationSpec = if (shake) {
+            repeatable(
+                iterations = 6,
+                animation = tween(durationMillis = 50, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            )
+        } else {
+            tween(0)
+        },
+        label = "shake",
+        finishedListener = { if (shake) shake = false }
+    )
 
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     Box(
         modifier = Modifier
@@ -245,10 +273,11 @@ fun LoginPopupBlock(
         Card(
             modifier = Modifier
                 .width(320.dp)
-                .padding(16.dp),
+                .padding(16.dp)
+                .graphicsLayer(translationX = shakeOffset),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -257,138 +286,158 @@ fun LoginPopupBlock(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Profile photo placeholder
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.3f))
-                        .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (profilePhotoUri != null) {
-                        AsyncImage(
-                            model = profilePhotoUri,
-                            contentDescription = "Profile Photo",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = "👤",
-                            fontSize = 30.sp
-                        )
-                    }
-                    IconButton(
-                        onClick = onImagePicker,
+                if (isSuccess) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Success",
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(80.dp)
+                    )
+                    Text("Login Successful!", fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                } else {
+                    // Profile photo placeholder
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(28.dp)
-                            .background(
-                                Color(0xFF9C27B0),
-                                CircleShape
-                            )
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.3f))
+                            .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add Photo",
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
-                    )
-                )
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
-                    )
-                )
-
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = onCancel,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Gray
-                        ),
-                        shape = RoundedCornerShape(25.dp)
-                    ) {
-                        Text("Cancel", color = Color.White)
-                    }
-
-                    Button(
-                        onClick = {
-                            if (email.isBlank() || password.isBlank()) {
-                                errorMessage = "Please fill in all fields"
-                                shake = true
-                            } else {
-                                isLoading = true
-                                scope.launch {
-                                    try {
-                                        val userDao = db.userDao()
-                                        val userByEmail = userDao.findByEmail(email)
-                                        val user = userByEmail ?: userDao.findByUsername(email)
-                                        val hashed = Security.hashPassword(password)
-                                        if (user != null && user.passwordHash == hashed) {
-                                            onLoginSuccess(user)
-                                        } else {
-                                            errorMessage = "Invalid credentials"
-                                        }
-                                    } catch (e: Exception) {
-                                        errorMessage = e.message ?: "Login failed"
-                                    } finally {
-                                        isLoading = false
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9C27B0)
-                        ),
-                        shape = RoundedCornerShape(25.dp)
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
+                        if (profilePhotoUri != null) {
+                            AsyncImage(
+                                model = profilePhotoUri,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
                             )
                         } else {
-                            Text("Login", color = Color.White)
+                            Text(
+                                text = "👤",
+                                fontSize = 30.sp
+                            )
+                        }
+                        IconButton(
+                            onClick = onImagePicker,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(28.dp)
+                                .background(
+                                    Color(0xFF9C27B0),
+                                    CircleShape
+                                )
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add Photo",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF9C27B0),
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF9C27B0),
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    )
+
+                    if (errorMessage.isNotEmpty()) {
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                focusManager.clearFocus()
+                                onCancel()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Gray
+                            ),
+                            shape = RoundedCornerShape(25.dp)
+                        ) {
+                            Text("Cancel", color = Color.White)
+                        }
+
+                        Button(
+                            onClick = {
+                                if (email.isBlank() || password.isBlank()) {
+                                    errorMessage = "Please fill in all fields"
+                                    shake = true
+                                } else {
+                                    isLoading = true
+                                    scope.launch {
+                                        try {
+                                            val user = withContext(Dispatchers.IO) {
+                                                val userByEmail = viewModel.findByEmail(email)
+                                                userByEmail ?: viewModel.findByUsername(email)
+                                            }
+
+                                            val hashed = Security.hashPassword(password)
+                                            if (user != null && user.passwordHash == hashed) {
+                                                isSuccess = true
+                                                focusManager.clearFocus()
+                                                delay(500)
+                                                onLoginSuccess(user)
+                                            } else {
+                                                errorMessage = "Invalid credentials"
+                                                shake = true
+                                            }
+                                        } catch (e: Exception) {
+                                            errorMessage = e.message ?: "Login failed"
+                                            shake = true
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF9C27B0)
+                            ),
+                            shape = RoundedCornerShape(25.dp)
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Login", color = Color.White)
+                            }
                         }
                     }
                 }
@@ -404,8 +453,7 @@ fun RegisterPopupBlock(
     onRegisterSuccess: () -> Unit,
     onCancel: () -> Unit,
     onImagePicker: () -> Unit,
-    viewModel: UserManagementViewModel,
-    db: AppDatabase
+    viewModel: UserManagementViewModel
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -415,6 +463,7 @@ fun RegisterPopupBlock(
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     val occupations = listOf("Admin", "Case Worker", "Foster Parent", "Social Worker", "Supervisor")
 
@@ -430,7 +479,7 @@ fun RegisterPopupBlock(
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -490,7 +539,7 @@ fun RegisterPopupBlock(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -502,7 +551,7 @@ fun RegisterPopupBlock(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -515,7 +564,7 @@ fun RegisterPopupBlock(
                     visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -567,7 +616,10 @@ fun RegisterPopupBlock(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = onCancel,
+                        onClick = {
+                            focusManager.clearFocus()
+                            onCancel()
+                        },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Gray
@@ -587,8 +639,10 @@ fun RegisterPopupBlock(
                                 isLoading = true
                                 scope.launch {
                                     try {
-                                        val userDao = db.userDao()
-                                        val existing = userDao.findByEmail(email) ?: userDao.findByUsername(username)
+                                        val existing = withContext(Dispatchers.IO) {
+                                            viewModel.findByEmail(email) ?: viewModel.findByUsername(username)
+                                        }
+                                        
                                         if (existing != null) {
                                             errorMessage = "User already exists"
                                         } else {
@@ -598,8 +652,12 @@ fun RegisterPopupBlock(
                                                 role = occupation,
                                                 email = email
                                             )
-                                            val id = userDao.insert(entity)
-                                            if (id > 0) onRegisterSuccess() else errorMessage = "Registration failed"
+                                            withContext(Dispatchers.IO) {
+                                                viewModel.insert(entity)
+                                            }
+                                            focusManager.clearFocus()
+                                            delay(500)
+                                            onRegisterSuccess()
                                         }
                                     } catch (e: Exception) {
                                         errorMessage = e.message ?: "Registration failed"

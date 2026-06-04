@@ -25,7 +25,8 @@
         <activity
             android:name="com.example.adoption_and_childcare.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.AdoptionAndChildcare">
+            android:theme="@style/Theme.AdoptionAndChildcare"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

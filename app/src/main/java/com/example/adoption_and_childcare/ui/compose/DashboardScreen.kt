@@ -1,10 +1,10 @@
 package com.example.adoption_and_childcare.ui.compose
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -12,121 +12,179 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
-data class DashboardCard(
+// Data classes for mock data
+data class ActivityItem(
     val title: String,
-    val icon: ImageVector,
-    val count: Int,
-    val summary: String,
+    val description: String,
+    val time: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
+
+data class AlertItem(
+    val title: String,
+    val description: String,
+    val priority: String, // "High", "Medium", "Low"
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
+
+data class QuickAction(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val color: Color,
-    val route: String? = null
+    val route: String
+)
+
+data class UpcomingEvent(
+    val title: String,
+    val date: String,
+    val type: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color
+)
+
+data class StatItem(
+    val label: String,
+    val value: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color,
+    val route: String?
 )
 
 @Composable
 fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: NotificationsViewModel = viewModel()) {
     val loading by notificationsViewModel.loading.collectAsState()
     val error by notificationsViewModel.error.collectAsState()
-    val unreadCount by notificationsViewModel.unreadCount.collectAsState()
-
-    val context = LocalContext.current
-
-    var childrenCount by remember { mutableStateOf(0) }
-    var familiesCount by remember { mutableStateOf(0) }
-    var adoptionAppsCount by remember { mutableStateOf(0) }
-    var homeStudiesCount by remember { mutableStateOf(0) }
-    var documentsCount by remember { mutableStateOf(0) }
-    var placementsCount by remember { mutableStateOf(0) }
-    var reportsCount by remember { mutableStateOf(0) }
-    var educationCount by remember { mutableStateOf(0) }
-    var medicalCount by remember { mutableStateOf(0) }
-    var financeCount by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        notificationsViewModel.loadNotifications()
-        val db = AppDatabase.Companion.getInstance(context)
-        withContext(Dispatchers.IO) {
-            val c = db.childDao().count()
-            val f = db.familyDao().count()
-            val aa = db.adoptionApplicationDao().count()
-            val hs = db.homeStudyDao().count()
-            val d = db.documentDao().count()
-            val p = db.placementDao().count()
-            val r = db.caseReportDao().count()
-            val e = db.educationRecordDao().count()
-            val m = db.medicalRecordDao().count()
-            val fin = db.moneyRecordDao().count()
-            withContext(Dispatchers.Main) {
-                childrenCount = c
-                familiesCount = f
-                adoptionAppsCount = aa
-                homeStudiesCount = hs
-                documentsCount = d
-                placementsCount = p
-                reportsCount = r
-                educationCount = e
-                medicalCount = m
-                financeCount = fin
-            }
-        }
-    }
-
-    val dashboardCards = listOf(
-        DashboardCard("Children", Icons.Default.ChildCare, childrenCount, "Total children", Color(0xFF4CAF50), route = "children_list"),
-        DashboardCard("Families", Icons.Default.FamilyRestroom, familiesCount, "Registered families", Color(0xFF2196F3), route = "families"),
-        DashboardCard("Adoption Applications", Icons.Default.Folder, adoptionAppsCount, "Applications submitted", Color(0xFF9C27B0), route = "adoption_applications"),
-        DashboardCard("Home Studies", Icons.Default.AssignmentTurnedIn, homeStudiesCount, "Home studies", Color(0xFFFF9800), route = "home_studies"),
-        DashboardCard("Documents", Icons.Default.Description, documentsCount, "Files uploaded", Color(0xFF607D8B), route = "documents"),
-        DashboardCard("Placements", Icons.Default.Home, placementsCount, "Active placements", Color(0xFF8BC34A), route = "placements"),
-        DashboardCard("Reports & Cases", Icons.Default.Assessment, reportsCount, "Case reports", Color(0xFFE91E63), route = "reports"),
-        DashboardCard("Education", Icons.Default.School, educationCount, "Education records", Color(0xFF3F51B5), route = "education"),
-        DashboardCard("Medical", Icons.Default.LocalHospital, medicalCount, "Medical records", Color(0xFFF44336), route = "medical"),
-        DashboardCard("Finance", Icons.Default.AttachMoney, financeCount, "Transactions", Color(0xFF4CAF50), route = "finance")
+    
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
+    
+    // Mock data for statistics
+    val stats = listOf(
+        StatItem("Children in Care", "24", Icons.Default.ChildCare, Color(0xFF4CAF50), "children_list"),
+        StatItem("Active Placements", "18", Icons.Default.Home, Color(0xFF2196F3), "placements"),
+        StatItem("Pending Applications", "7", Icons.Default.Folder, Color(0xFFFF9800), "adoption_applications"),
+        StatItem("Home Studies", "12", Icons.Default.AssignmentTurnedIn, Color(0xFF9C27B0), "home_studies")
     )
-
+    
+    // Mock data for recent activities
+    val recentActivities = listOf(
+        ActivityItem("New Child Added", "John Doe added to system", "2 hours ago", Icons.Default.PersonAdd, Color(0xFF4CAF50)),
+        ActivityItem("Placement Updated", "Smith family placement status changed", "5 hours ago", Icons.Default.Home, Color(0xFF2196F3)),
+        ActivityItem("Document Uploaded", "Birth certificate added for Jane", "1 day ago", Icons.Default.CloudUpload, Color(0xFF9C27B0)),
+        ActivityItem("Home Study Completed", "Johnson family home study approved", "2 days ago", Icons.Default.CheckCircle, Color(0xFF4CAF50)),
+        ActivityItem("Medical Record Updated", "Vaccination records added", "3 days ago", Icons.Default.LocalHospital, Color(0xFFF44336))
+    )
+    
+    // Mock data for priority alerts
+    val priorityAlerts = listOf(
+        AlertItem("Expiring Home Study", "Williams family home study expires in 5 days", "High", Icons.Default.Warning, Color(0xFFF44336)),
+        AlertItem("Missing Document", "Background check pending for Thompson family", "Medium", Icons.Default.Error, Color(0xFFFF9800)),
+        AlertItem("Court Date", "Adoption hearing for Davis case scheduled for tomorrow", "High", Icons.Default.Gavel, Color(0xFFE91E63))
+    )
+    
+    // Mock data for quick actions
+    val quickActions = listOf(
+        QuickAction("Add Child", Icons.Default.Add, Color(0xFF4CAF50), "children_list"),
+        QuickAction("File Report", Icons.Default.Assignment, Color(0xFF2196F3), "reports"),
+        QuickAction("Upload Document", Icons.Default.CloudUpload, Color(0xFF9C27B0), "documents"),
+        QuickAction("Schedule Home Study", Icons.Default.CalendarToday, Color(0xFFFF9800), "home_studies")
+    )
+    
+    // Mock data for upcoming events
+    val upcomingEvents = listOf(
+        UpcomingEvent("Court Hearing", "Tomorrow", "Legal", Icons.Default.Gavel, Color(0xFFE91E63)),
+        UpcomingEvent("Home Study Review", "Dec 15", "Review", Icons.Default.AssignmentTurnedIn, Color(0xFFFF9800)),
+        UpcomingEvent("Placement Visit", "Dec 18", "Visit", Icons.Default.Home, Color(0xFF2196F3)),
+        UpcomingEvent("Case Conference", "Dec 20", "Meeting", Icons.Default.Group, Color(0xFF9C27B0))
+    )
+    
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Dashboard Title
         Text(
             text = "Dashboard",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            fontWeight = FontWeight.Bold
         )
-
+        
         if (loading) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(80.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
         } else if (error != null) {
             Box(
-                modifier = Modifier.fillMaxWidth().height(80.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text(error!!, color = MaterialTheme.colorScheme.error)
             }
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(dashboardCards) { card ->
-                    DashboardCardItem(card = card, onClick = {
-                        card.route?.let { onNavigate(it) }
-                    })
+                // Search Bar
+                item {
+                    SearchBarComponent(
+                        query = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        isActive = isSearchActive,
+                        onActiveChange = { isSearchActive = it }
+                    )
+                }
+                
+                // Overview Statistics Panel
+                item {
+                    OverviewStatsPanel(
+                        stats = stats,
+                        onNavigate = onNavigate
+                    )
+                }
+                
+                // Priority Alerts Section
+                item {
+                    PriorityAlertsSection(
+                        alerts = priorityAlerts
+                    )
+                }
+                
+                // Quick Actions Panel
+                item {
+                    QuickActionsPanel(
+                        actions = quickActions,
+                        onNavigate = onNavigate
+                    )
+                }
+                
+                // Recent Activity Feed
+                item {
+                    RecentActivityFeed(
+                        activities = recentActivities
+                    )
+                }
+                
+                // Upcoming Events Section
+                item {
+                    UpcomingEventsSection(
+                        events = upcomingEvents
+                    )
                 }
             }
         }
@@ -134,51 +192,451 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
 }
 
 @Composable
-fun DashboardCardItem(card: DashboardCard, onClick: () -> Unit = {}) {
+fun SearchBarComponent(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    isActive: Boolean,
+    onActiveChange: (Boolean) -> Unit
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text("Search children, families, cases...") },
+        leadingIcon = {
+            Icon(Icons.Default.Search, contentDescription = "Search")
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                }
+            }
+        },
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true
+    )
+}
+
+@Composable
+fun OverviewStatsPanel(
+    stats: List<StatItem>,
+    onNavigate: (String) -> Unit
+) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = MaterialTheme.shapes.medium
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Overview",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                stats.forEach { stat ->
+                    StatCard(
+                        stat = stat,
+                        modifier = Modifier.weight(1f),
+                        onClick = { stat.route?.let { onNavigate(it) } }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    stat: StatItem,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = stat.color.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = stat.icon,
+                contentDescription = stat.label,
+                tint = stat.color,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = stat.value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = stat.color
+            )
+            Text(
+                text = stat.label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+fun PriorityAlertsSection(
+    alerts: List<AlertItem>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = card.icon,
-                    contentDescription = card.title,
-                    tint = card.color,
-                    modifier = Modifier.size(24.dp)
+                Text(
+                    text = "Priority Alerts",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = card.count.toString(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = card.color
+                    text = "${alerts.size} items",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            alerts.forEach { alert ->
+                AlertCard(alert = alert)
+            }
+        }
+    }
+}
+
+@Composable
+fun AlertCard(alert: AlertItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = when(alert.priority) {
+                "High" -> Color(0xFFFFEBEE)
+                "Medium" -> Color(0xFFFFF8E1)
+                else -> Color(0xFFF5F5F5)
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = alert.icon,
+                contentDescription = null,
+                tint = alert.color,
+                modifier = Modifier.size(20.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = alert.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = alert.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = alert.color
+            ) {
+                Text(
+                    text = alert.priority,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QuickActionsPanel(
+    actions: List<QuickAction>,
+    onNavigate: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Quick Actions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                actions.forEach { action ->
+                    ActionButton(
+                        action = action,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigate(action.route) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ActionButton(
+    action: QuickAction,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = action.color
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = action.icon,
+                contentDescription = action.title,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                text = action.title,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun RecentActivityFeed(
+    activities: List<ActivityItem>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Recent Activity",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "View All",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            activities.forEach { activity ->
+                ActivityItemRow(activity = activity)
+            }
+        }
+    }
+}
+
+@Composable
+fun ActivityItemRow(activity: ActivityItem) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(8.dp),
+            color = activity.color.copy(alpha = 0.1f)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = activity.icon,
+                    contentDescription = null,
+                    tint = activity.color,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = activity.title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = activity.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
+        
+        Text(
+            text = activity.time,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        )
+    }
+}
+
+@Composable
+fun UpcomingEventsSection(
+    events: List<UpcomingEvent>
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Upcoming Events",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "View Calendar",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            events.forEach { event ->
+                EventCard(event = event)
+            }
+        }
+    }
+}
+
+@Composable
+fun EventCard(event: UpcomingEvent) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = event.color.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = event.icon,
+                contentDescription = null,
+                tint = event.color,
+                modifier = Modifier.size(24.dp)
+            )
+            
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = event.type,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
             
             Text(
-                text = card.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable(enabled = card.route != null) { onClick() }
-            )
-            
-            Text(
-                text = card.summary,
+                text = event.date,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                fontWeight = FontWeight.Medium,
+                color = event.color
             )
         }
     }

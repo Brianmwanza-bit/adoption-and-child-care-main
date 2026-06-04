@@ -26,4 +26,10 @@ interface FamilyDao {
 
     @Query("SELECT COUNT(*) FROM families")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM families WHERE sync_status = 'PENDING'")
+    suspend fun getPendingSync(): List<FamilyEntity>
+
+    @Query("UPDATE families SET sync_status = :status, remote_id = :remoteId, last_synced_at = :timestamp WHERE family_id = :localId")
+    suspend fun updateSyncStatus(localId: Int, status: String, remoteId: String?, timestamp: Long)
 }

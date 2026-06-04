@@ -75,7 +75,7 @@ fun LoginScreen(
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -130,7 +130,10 @@ fun LoginScreen(
                 // Login and Register buttons
                 if (!hasRegisteredUser) {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -147,7 +150,10 @@ fun LoginScreen(
                         )
                     }
                     Button(
-                        onClick = { showRegisterPopup = true },
+                        onClick = {
+                            showLoginPopup = false
+                            showRegisterPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -165,7 +171,10 @@ fun LoginScreen(
                     }
                 } else {
                     Button(
-                        onClick = { showLoginPopup = true },
+                        onClick = {
+                            showRegisterPopup = false
+                            showLoginPopup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -248,7 +257,7 @@ fun LoginPopupBlock(
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -308,7 +317,7 @@ fun LoginPopupBlock(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -321,7 +330,7 @@ fun LoginPopupBlock(
                     visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -430,7 +439,7 @@ fun RegisterPopupBlock(
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.2f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -490,7 +499,7 @@ fun RegisterPopupBlock(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -502,7 +511,7 @@ fun RegisterPopupBlock(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 
@@ -515,7 +524,7 @@ fun RegisterPopupBlock(
                     visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFF9C27B0),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                     )
                 )
 

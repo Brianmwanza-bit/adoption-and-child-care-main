@@ -1,7 +1,9 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.google.services)
 }
@@ -43,9 +45,6 @@ android {
         dataBinding = true // Add databinding support
         compose = true // Enable Compose
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.5" // Updated to be compatible with Kotlin 1.9.25
-    }
 }
 
 dependencies {
@@ -81,7 +80,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.runtime)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
 
     // Retrofit + OkHttp
     implementation(libs.retrofit)
@@ -91,7 +90,7 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
@@ -110,7 +109,7 @@ dependencies {
 
     // Hilt Navigation Compose for hiltViewModel
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    kapt("androidx.hilt:hilt-compiler:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
     // Explicitly add JavaPoet to resolve Hilt/Room annotation processor issues
     implementation(libs.javapoet)
 }

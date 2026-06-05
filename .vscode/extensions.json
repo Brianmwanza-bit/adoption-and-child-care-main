@@ -3,6 +3,7 @@
         "vscjava.vscode-java-pack",
         "redhat.java",
         "vscjava.vscode-gradle",
-        "ms-vscode.vscode-json"
+        "ms-vscode.vscode-json",
+        "robertpiosik.gemini-coder"
     ]
 }

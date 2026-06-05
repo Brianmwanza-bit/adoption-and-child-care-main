@@ -23,6 +23,60 @@ const app = express();
 const PORT = process.env.PORT || 50000;
 const SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
+// Swagger definition
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Adoption & Child Care API',
+      version: '1.0.0',
+      description: 'API documentation for the Adoption & Child Care backend.',
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+      },
+    ],
+  },
+  apis: [__filename],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Root route to prevent "blank page"
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>Adoption & Child Care API</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1>Adoption & Child Care API is Running</h1>
+        <p>Status: <span style="color: green;">Online</span></p>
+        <div style="margin-top: 20px;">
+          <a href="/api-docs" style="padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">View API Documentation</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 0.8em; color: gray;">
+          Target Database: ${process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db'}<br>
+          Port: ${process.env.DB_PORT || '3306'}
+        </p>
+      </body>
+    </html>
+  `);
+});
+
+// Admin DB Status check
+app.get('/admin-db-status', (req, res) => {
+  if (!db) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+  db.query('SELECT 1', (err) => {
+    if (err) {
+      return res.status(500).json({ success: false, error: 'Database connection failed', details: err.message });
+    }
+    res.json({ success: true, message: 'Database is connected', config: { host: dbConfig.host, port: dbConfig.port, database: process.env.DB_NAME } });
+  });
+});
+
 app.use(cors({ origin: '*', credentials: true }));
 app.use(helmet());
 app.use(express.json());
@@ -55,7 +109,12 @@ const initialDb = mysql.createConnection({ ...dbConfig, database: undefined });
 
 initialDb.connect((err) => {
   if (err) {
-    console.error('Failed to connect to MySQL server:', err.message);
+    console.error(`Failed to connect to MySQL server on port ${dbConfig.port}:`, err.message);
+    console.log('--- TROUBLESHOOTING ---');
+    console.log(`1. Check if MySQL is running on port ${dbConfig.port}.`);
+    console.log(`2. If you are using XAMPP, check if MySQL port is 3306 or 3307.`);
+    console.log(`3. Update DB_PORT in backend/.env to match your MySQL port.`);
+    console.log('------------------------');
     if (err.message.includes('auth_gssapi_client')) {
       console.error('TIP: Your MySQL server uses GSSAPI. Try running this in MySQL: ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "";');
     }

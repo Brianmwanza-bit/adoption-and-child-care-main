@@ -34,12 +34,16 @@ import com.example.adoption_and_childcare.ui.compose.HomeStudiesScreen
 import com.example.adoption_and_childcare.ui.compose.LoginScreen
 import com.example.adoption_and_childcare.ui.compose.MapScreen
 import com.example.adoption_and_childcare.ui.compose.MedicalScreen
+import com.example.adoption_and_childcare.ui.compose.ModernLandingPage
 import com.example.adoption_and_childcare.ui.compose.NotificationsScreen
+import com.example.adoption_and_childcare.ui.compose.PermissionsScreen
 import com.example.adoption_and_childcare.ui.compose.PlacementsScreen
 import com.example.adoption_and_childcare.ui.compose.SearchScreen
 import com.example.adoption_and_childcare.ui.compose.SettingsScreen
+import com.example.adoption_and_childcare.ui.compose.TermsAndConditionsScreen
 import com.example.adoption_and_childcare.ui.compose.UserManagementScreen
 import com.example.adoption_and_childcare.ui.compose.UserRolesScreen
+import com.example.adoption_and_childcare.ui.compose.WelcomeScreen
 import com.example.adoption_and_childcare.utils.SessionManager
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -79,6 +83,7 @@ class MainActivity : ComponentActivity() {
             val isLoggedInState = session.isLoggedIn()
 
             var isLoggedIn by remember { mutableStateOf<Boolean>(isLoggedInState) }
+            var onboardingStep by remember { mutableStateOf(0) } // 0: Landing, 1: Terms, 2: Permissions
             var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
             var currentUser by remember { mutableStateOf<String>(if (isLoggedInState) session.getUsername() ?: "John Doe" else "John Doe") }
             var currentRole by remember { mutableStateOf<String>(if (isLoggedInState) session.getRole() ?: "Admin" else "Admin") }
@@ -94,20 +99,38 @@ class MainActivity : ComponentActivity() {
                 profilePhotoUri = uri
             }
 
-            // Use Boolean.not() instead of ! operator
-            when (isLoggedIn.not()) {
-                true -> {
-                    LoginScreen(
-                        onLoginSuccess = {
-                            // Refresh from session saved by LoginScreen
-                            isLoggedIn = session.isLoggedIn()
-                            currentUser = session.getUsername() ?: currentUser
-                            currentRole = session.getRole() ?: currentRole
-                        }
-                    )
+            if (!isLoggedIn) {
+                when (onboardingStep) {
+                    0 -> {
+                        WelcomeScreen(
+                            onExploreClicked = { onboardingStep = 1 },
+                            onLoginClicked = { onboardingStep = 4 } // Step 4 is Login directly
+                        )
+                    }
+                    1 -> {
+                        ModernLandingPage(
+                            onGetStarted = { onboardingStep = 2 },
+                            onLogin = { onboardingStep = 4 }
+                        )
+                    }
+                    2 -> {
+                        TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
+                    }
+                    3 -> {
+                        PermissionsScreen(onContinue = { onboardingStep = 4 })
+                    }
+                    else -> {
+                        LoginScreen(
+                            onLoginSuccess = {
+                                isLoggedIn = session.isLoggedIn()
+                                currentUser = session.getUsername() ?: currentUser
+                                currentRole = session.getRole() ?: currentRole
+                            }
+                        )
+                    }
                 }
-                false -> {
-                    Scaffold(
+            } else {
+                Scaffold(
                         topBar = {
                             GreenHeader(
                                 profilePhotoUri = profilePhotoUri,
@@ -143,7 +166,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
 @Composable
 private fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {

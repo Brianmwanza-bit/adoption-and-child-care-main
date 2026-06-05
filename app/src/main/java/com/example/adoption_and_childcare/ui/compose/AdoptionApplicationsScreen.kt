@@ -17,6 +17,7 @@ import com.example.adoption_and_childcare.data.db.entities.AdoptionApplicationEn
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdoptionApplicationsScreen() {
     val context = LocalContext.current
@@ -36,27 +37,33 @@ fun AdoptionApplicationsScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Adoption Applications") }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Application")
             }
         }
     ) { padding ->
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Adoption Applications", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        if (apps.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No applications yet")
-            }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(apps) { a ->
-                    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text("Application #${a.applicationId}")
-                            Text("Family ID: ${a.familyId}")
-                            a.status?.let { Text("Status: $it", style = MaterialTheme.typography.bodySmall) }
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+            Text(text = "Adoption Applications", style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(8.dp))
+            if (apps.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No applications yet")
+                }
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(apps) { a ->
+                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp)) {
+                                Text("Application #${a.applicationId}")
+                                Text("Family ID: ${a.familyId}")
+                                a.status?.let { Text("Status: $it", style = MaterialTheme.typography.bodySmall) }
+                            }
                         }
                     }
                 }
@@ -102,6 +109,5 @@ fun AdoptionApplicationsScreen() {
                 }
             )
         }
-    }
     }
 }

@@ -113,9 +113,6 @@ fun WelcomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = SolidColor(Color.White)
-                ),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Color.White

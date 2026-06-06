@@ -83,7 +83,8 @@ class MainActivity : ComponentActivity() {
             val isLoggedInState = session.isLoggedIn()
 
             var isLoggedIn by remember { mutableStateOf<Boolean>(isLoggedInState) }
-            var onboardingStep by remember { mutableStateOf(0) } // 0: Landing, 1: Terms, 2: Permissions
+            var isLoadingAfterLogin by remember { mutableStateOf(false) }
+            var onboardingStep by remember { mutableStateOf(0) } // 0: Welcome, 1: Landing, 2: Terms, 3: Login
             var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
             var currentUser by remember { mutableStateOf<String>(if (isLoggedInState) session.getUsername() ?: "John Doe" else "John Doe") }
             var currentRole by remember { mutableStateOf<String>(if (isLoggedInState) session.getRole() ?: "Admin" else "Admin") }
@@ -100,33 +101,41 @@ class MainActivity : ComponentActivity() {
             }
 
             if (!isLoggedIn) {
-                when (onboardingStep) {
-                    0 -> {
-                        WelcomeScreen(
-                            onExploreClicked = { onboardingStep = 1 },
-                            onLoginClicked = { onboardingStep = 4 } // Step 4 is Login directly
-                        )
-                    }
-                    1 -> {
-                        ModernLandingPage(
-                            onGetStarted = { onboardingStep = 2 },
-                            onLogin = { onboardingStep = 4 }
-                        )
-                    }
-                    2 -> {
-                        TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
-                    }
-                    3 -> {
-                        PermissionsScreen(onContinue = { onboardingStep = 4 })
-                    }
-                    else -> {
-                        LoginScreen(
-                            onLoginSuccess = {
-                                isLoggedIn = session.isLoggedIn()
-                                currentUser = session.getUsername() ?: currentUser
-                                currentRole = session.getRole() ?: currentRole
-                            }
-                        )
+                if (isLoadingAfterLogin) {
+                    // Show luminous green loading animation
+                    LoadingAnimationScreen(
+                        onComplete = {
+                            isLoadingAfterLogin = false
+                        },
+                        username = currentUser
+                    )
+                } else {
+                    when (onboardingStep) {
+                        0 -> {
+                            WelcomeScreen(
+                                onExploreClicked = { onboardingStep = 1 },
+                                onLoginClicked = { onboardingStep = 3 }
+                            )
+                        }
+                        1 -> {
+                            ModernLandingPage(
+                                onGetStarted = { onboardingStep = 2 },
+                                onLogin = { onboardingStep = 3 }
+                            )
+                        }
+                        2 -> {
+                            TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
+                        }
+                        else -> {
+                            LoginScreen(
+                                onLoginSuccess = {
+                                    isLoadingAfterLogin = true
+                                    isLoggedIn = session.isLoggedIn()
+                                    currentUser = session.getUsername() ?: currentUser
+                                    currentRole = session.getRole() ?: currentRole
+                                }
+                            )
+                        }
                     }
                 }
             } else {

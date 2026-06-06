@@ -424,6 +424,89 @@ app.post('/login', async (req, res, next) => {
   }
 });
 
+// --- MODERN AUTH ENDPOINTS (for Android app) ---
+// POST /auth/register - JSON-based registration (minimal fields required)
+app.post('/auth/register', async (req, res, next) => {
+  try {
+    const { username, email, password, role } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields: username, email, password'));
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userRole = role && role.toLowerCase() === 'case worker' ? 'case_worker' : role ? role.toLowerCase() : 'viewer';
+
+    db.query('INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+      [username, email, hashedPassword, userRole],
+      function (err, results) {
+        if (err) {
+          if (err.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json(formatError('VALIDATION_ERROR', 'User already exists'));
+          }
+          return next({ code: 'DB_ERROR', message: err.message, details: err });
+        }
+        const token = jwt.sign({ user_id: results.insertId, role: userRole }, SECRET, { expiresIn: '7d' });
+        const refreshToken = jwt.sign({ user_id: results.insertId }, SECRET, { expiresIn: '30d' });
+        res.json({
+          success: true,
+          user: { user_id: results.insertId, username, email, role: userRole },
+          token,
+          refreshToken
+        });
+      }
+    );
+  } catch (err) {
+    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
+  }
+});
+
+// POST /auth/login - JSON-based login
+app.post('/auth/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing email or password'));
+    }
+    db.query('SELECT * FROM users WHERE email = ? OR username = ?', [email, email], async (err, results) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
+      const user = results[0];
+      if (!user) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
+
+      const valid = await bcrypt.compare(password, user.password_hash);
+      if (!valid) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
+
+      const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET, { expiresIn: '1h' });
+      const refreshToken = jwt.sign({ user_id: user.user_id }, SECRET, { expiresIn: '7d' });
+      res.json({
+        success: true,
+        user: { user_id: user.user_id, username: user.username, email: user.email, role: user.role },
+        token,
+        refreshToken
+      });
+    });
+  } catch (err) {
+    next({ code: 'INTERNAL_ERROR', message: err.message, details: err });
+  }
+});
+
+// POST /auth/refresh-token - Refresh access token
+app.post('/auth/refresh-token', (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing refreshToken'));
+    }
+    jwt.verify(refreshToken, SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json(formatError('AUTH_ERROR', 'Invalid or expired refresh token'));
+      }
+      const token = jwt.sign({ user_id: decoded.user_id }, SECRET, { expiresIn: '1h' });
+      res.json({ success: true, token });
+    });
+  } catch (err) {
+    res.status(500).json(formatError('INTERNAL_ERROR', err.message));
+  }
+});
+
 // Endpoint to update user photo (expects { photo: base64 or file path })
 app.put('/users/:id/photo', authenticateToken, (req, res, next) => {
   const user_id = req.params.id;

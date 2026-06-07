@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @Composable
-fun ChildrenListScreen() {
+fun ChildrenListScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     var children by remember { mutableStateOf<List<ChildEntity>>(emptyList()) }
@@ -35,6 +35,16 @@ fun ChildrenListScreen() {
     }
 
     Scaffold(
+        topBar = {
+            SmallTopAppBar(
+                title = { Text("Children") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Child")
@@ -47,8 +57,6 @@ fun ChildrenListScreen() {
             .padding(16.dp)
             .padding(padding)
     ) {
-        Text(text = "Children", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
         if (children.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No children yet")

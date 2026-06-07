@@ -1,17 +1,7 @@
 package com.example.adoption_and_childcare.data.db
 
 import android.content.Context
-import com.example.adoption_and_childcare.data.db.entities.AdoptionApplicationEntity
-import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
-import com.example.adoption_and_childcare.data.db.entities.ChildEntity
-import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
-import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
-import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
-import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
-import com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity
-import com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity
-import com.example.adoption_and_childcare.data.db.entities.PlacementEntity
-import com.example.adoption_and_childcare.data.db.entities.UserEntity
+import com.example.adoption_and_childcare.data.db.entities.*
 import com.example.adoption_and_childcare.data.security.Security
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,159 +17,151 @@ object DatabaseInitializer {
             val userCount = db.userDao().count()
             if (userCount > 0) return@launch // Already initialized
             
-            // Create sample users
-            val adminUser = UserEntity(
-                username = "admin",
-                passwordHash = Security.hashPassword("admin123"),
-                role = "Admin",
-                email = "admin@adoption.com"
-            )
-            val socialWorkerUser = UserEntity(
-                username = "social_worker",
-                passwordHash = Security.hashPassword("worker123"),
-                role = "Social Worker",
-                email = "worker@adoption.com"
-            )
+            // 1. Create Staff Users (10)
+            val staffRoles = listOf("admin", "social_worker", "case_worker")
+            val counties = listOf("Nairobi", "Mombasa", "Kisumu", "Nakuru", "Kiambu", "Uasin Gishu", "Machakos", "Kajiado", "Kilifi", "Nyeri")
             
-            val adminId = db.userDao().insert(adminUser).toInt()
-            val workerId = db.userDao().insert(socialWorkerUser).toInt()
+            val userIds = mutableListOf<Int>()
+            for (i in 1..10) {
+                val user = UserEntity(
+                    username = "staff_$i",
+                    passwordHash = Security.hashPassword("password$i"),
+                    role = staffRoles[i % staffRoles.size],
+                    email = "staff$i@adoptioncare.ke",
+                    phone = "0711000${100+i}",
+                    nationalIdNo = "1234567$i",
+                    county = counties[i % counties.size]
+                )
+                userIds.add(db.userDao().insert(user).toInt())
+            }
             
-            // Create sample families
-            val family1 = FamilyEntity(
-                primaryContactName = "John Smith",
-                secondaryContactName = "Jane Smith",
-                email = "smiths@email.com",
-                phone = "555-0123",
-                city = "Springfield",
-                state = "IL",
-                country = "USA"
-            )
-            val family2 = FamilyEntity(
-                primaryContactName = "Mike Johnson",
-                email = "mike.j@email.com",
-                phone = "555-0456",
-                city = "Chicago",
-                state = "IL",
-                country = "USA"
-            )
+            // 2. Create Families (12)
+            val familyNames = listOf("Kamau", "Onyango", "Mutua", "Ali", "Wanjala", "Kipchumba", "Muthoni", "Chebet", "Makena", "Mohamed", "Nekesa", "Githinji")
+            val familyIds = mutableListOf<Int>()
+            for (i in 0..11) {
+                val family = FamilyEntity(
+                    primaryContactName = "${familyNames[i]} Family",
+                    email = "${familyNames[i].lowercase()}@gmail.ke",
+                    phone = "0722000${200+i}",
+                    city = "City $i",
+                    county = counties[i % counties.size],
+                    country = "Kenya",
+                    status = "Active"
+                )
+                familyIds.add(db.familyDao().insert(family).toInt())
+            }
             
-            val family1Id = db.familyDao().insert(family1).toInt()
-            val family2Id = db.familyDao().insert(family2).toInt()
+            // 3. Create Children (15)
+            val childNames = listOf("Kamau", "Achieng", "Moraa", "Wanjala", "Hassan", "Muthoni", "Kiprotich", "Atieno", "Mutua", "Fatuma", "Githinji", "Nekesa", "Kipchumba", "Halima", "Omondi")
+            val childIds = mutableListOf<Int>()
+            for (i in 0..14) {
+                val child = ChildEntity(
+                    firstName = childNames[i],
+                    lastName = "Surnam $i",
+                    gender = if (i % 2 == 0) "Male" else "Female",
+                    dateOfBirth = "201${i%9}-0${(i%9)+1}-15",
+                    caseNumber = "CS-2024-${100+i}",
+                    currentStatus = if (i < 5) "Placed" else "Active",
+                    currentCounty = counties[i % counties.size],
+                    assignedCaseWorker = userIds[i % userIds.size]
+                )
+                childIds.add(db.childDao().insert(child).toInt())
+            }
             
-            // Create sample children
-            val child1 = ChildEntity(
-                firstName = "Emma",
-                lastName = "Wilson",
-                gender = "Female",
-                dateOfBirth = "2015-03-15"
-            )
-            val child2 = ChildEntity(
-                firstName = "Alex",
-                lastName = "Brown",
-                gender = "Male",
-                dateOfBirth = "2012-08-22"
-            )
-            val child3 = ChildEntity(
-                firstName = "Sofia",
-                lastName = "Garcia",
-                gender = "Female",
-                dateOfBirth = "2018-11-10"
-            )
+            // 4. Create Adoption Applications (10)
+            for (i in 0..9) {
+                val app = AdoptionApplicationEntity(
+                    familyId = familyIds[i],
+                    childId = childIds[i],
+                    status = if (i % 3 == 0) "Approved" else if (i % 3 == 1) "Under Review" else "Pending",
+                    notes = "Automatically generated mock application $i",
+                    applicationNumber = "APP-2024-${500+i}"
+                )
+                db.adoptionApplicationDao().insert(app)
+            }
             
-            val child1Id = db.childDao().insert(child1).toInt()
-            val child2Id = db.childDao().insert(child2).toInt()
-            val child3Id = db.childDao().insert(child3).toInt()
+            // 5. Create Home Studies (8)
+            for (i in 0..7) {
+                val homeStudy = HomeStudyEntity(
+                    familyId = familyIds[i],
+                    result = if (i % 2 == 0) "Approved" else "Under Review",
+                    notes = "Detailed home study report for family $i",
+                    startedAt = "2024-01-10"
+                )
+                db.homeStudyDao().insert(homeStudy)
+            }
             
-            // Create sample adoption applications
-            val app1 = AdoptionApplicationEntity(
-                familyId = family1Id,
-                childId = child1Id,
-                status = "Under Review",
-                notes = "Initial application submitted"
-            )
-            val app2 = AdoptionApplicationEntity(
-                familyId = family2Id,
-                childId = child2Id,
-                status = "Approved",
-                notes = "Background checks completed"
-            )
+            // 6. Create Placements (5)
+            for (i in 0..4) {
+                val placement = PlacementEntity(
+                    childId = childIds[i],
+                    destinationFamilyId = familyIds[i],
+                    startDate = "2024-02-15",
+                    placementType = "Foster Home",
+                    isCurrent = true
+                )
+                db.placementDao().insert(placement)
+            }
             
-            db.adoptionApplicationDao().insert(app1)
-            db.adoptionApplicationDao().insert(app2)
+            // 7. Create Case Reports (12)
+            for (i in 0..11) {
+                val report = CaseReportEntity(
+                    childId = childIds[i % childIds.size],
+                    userId = userIds[i % userIds.size],
+                    reportDate = "2024-03-20",
+                    reportTitle = "Quarterly Progress Report $i",
+                    content = "The child is adapting well to the current environment. No major concerns noted."
+                )
+                db.caseReportDao().insert(report)
+            }
             
-            // Create sample home studies
-            val homeStudy1 = HomeStudyEntity(
-                familyId = family1Id,
-                result = "Approved",
-                notes = "Home meets all safety requirements"
-            )
+            // 8. Create Medical Records (10)
+            val diagnoses = listOf("Common Cold", "Malaria", "Routine Checkup", "Flu", "Ear Infection")
+            for (i in 0..9) {
+                val med = MedicalRecordEntity(
+                    childId = childIds[i % childIds.size],
+                    visitDate = "2024-04-10",
+                    hospitalName = "Referral Hospital ${counties[i % counties.size]}",
+                    diagnosis = diagnoses[i % diagnoses.size],
+                    treatment = "Standard treatment protocol administered."
+                )
+                db.medicalRecordDao().insert(med)
+            }
             
-            db.homeStudyDao().insert(homeStudy1)
+            // 9. Create Education Records (10)
+            for (i in 0..9) {
+                val edu = EducationRecordEntity(
+                    childId = childIds[i % childIds.size],
+                    schoolName = "Primary School ${i+1}",
+                    grade = "${(i % 8) + 1}",
+                    enrollmentDate = "2024-01-05"
+                )
+                db.educationRecordDao().insert(edu)
+            }
             
-            // Create sample documents
-            val doc1 = DocumentEntity(
-                childId = child1Id,
-                documentType = "Birth Certificate",
-                fileName = "emma_birth_cert.pdf",
-                filePath = "/documents/emma_birth_cert.pdf"
-            )
-            val doc2 = DocumentEntity(
-                childId = child2Id,
-                documentType = "Medical Records",
-                fileName = "alex_medical.pdf",
-                filePath = "/documents/alex_medical.pdf"
-            )
-            
-            db.documentDao().insert(doc1)
-            db.documentDao().insert(doc2)
-            
-            // Create sample placements
-            val placement1 = PlacementEntity(
-                childId = child1Id,
-                startDate = "2024-01-15",
-                placementType = "Foster Care"
-            )
-            
-            db.placementDao().insert(placement1)
-            
-            // Create sample case reports
-            val report1 = CaseReportEntity(
-                childId = child1Id,
-                userId = workerId,
-                reportDate = "2024-01-20",
-                reportTitle = "Monthly Check-in",
-                content = "Child is adjusting well to placement. No concerns noted."
-            )
-            
-            db.caseReportDao().insert(report1)
-            
-            // Create sample education record
-            val edu1 = EducationRecordEntity(
-                childId = child2Id,
-                schoolName = "Lincoln Elementary",
-                grade = "5th Grade"
-            )
-            
-            db.educationRecordDao().insert(edu1)
-            
-            // Create sample medical record
-            val med1 = MedicalRecordEntity(
-                childId = child1Id,
-                visitDate = "2024-01-10",
-                diagnosis = "Routine checkup - healthy"
-            )
-            
-            db.medicalRecordDao().insert(med1)
-            
-            // Create sample financial record
-            val money1 = MoneyRecordEntity(
-                childId = child1Id,
-                amount = 250.00,
-                date = "2024-01-01",
-                description = "Monthly allowance"
-            )
-            
-            db.moneyRecordDao().insert(money1)
+            // 10. Create Money Records (15)
+            val types = listOf("Allowance", "Education", "Medical", "Clothing", "Other")
+            for (i in 0..14) {
+                val money = MoneyRecordEntity(
+                    childId = childIds[i % childIds.size],
+                    amount = (500 * (i + 1)).toDouble(),
+                    date = "2024-05-15",
+                    transactionType = types[i % types.size],
+                    description = "Monthly provision for ${types[i % types.size]}"
+                )
+                db.moneyRecordDao().insert(money)
+            }
+
+            // 11. Create Notifications (10)
+            for (i in 0..9) {
+                val notif = NotificationEntity(
+                    userId = userIds[0], // Admin/User 1
+                    title = "System Update $i",
+                    message = "Important update regarding case file CS-2024-${100+i}",
+                    isRead = false
+                )
+                db.notificationDao().insertNotification(notif)
+            }
         }
     }
 }

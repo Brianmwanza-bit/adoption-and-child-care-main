@@ -23,4 +23,7 @@ interface MoneyRecordDao {
 
     @Query("SELECT * FROM money_records ORDER BY date DESC")
     fun observeAll(): Flow<List<MoneyRecordEntity>>
+
+    @Query("SELECT * FROM money_records WHERE mpesa_receipt_no LIKE :q ORDER BY date DESC LIMIT :limit")
+    suspend fun searchByReceipt(q: String, limit: Int = 5): List<MoneyRecordEntity>
 }

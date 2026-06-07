@@ -18,6 +18,9 @@ data class MedicalRecordEntity(
     @ColumnInfo(name = "follow_up_date") val followUpDate: String? = null,
     @ColumnInfo(name = "is_immunization") val isImmunization: Boolean = false,
     @ColumnInfo(name = "immunization_type") val immunizationType: String? = null,
+    @ColumnInfo(name = "medical_report_data", typeAffinity = ColumnInfo.BLOB) val medicalReportData: ByteArray? = null,
+    @ColumnInfo(name = "medical_report_mime_type") val medicalReportMimeType: String? = null,
+    @ColumnInfo(name = "medical_report_size") val medicalReportSize: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "created_by") val createdBy: Int? = null
 )

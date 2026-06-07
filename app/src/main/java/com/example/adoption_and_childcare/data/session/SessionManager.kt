@@ -15,6 +15,7 @@ class SessionManager(private val context: Context) {
             .putString(KEY_USERNAME, user.username)
             .putString(KEY_ROLE, user.role)
             .putString(KEY_EMAIL, user.email)
+            .putString(KEY_COUNTY, user.county)
             .apply()
 
         // Sync pending FCM token upon login session save
@@ -37,6 +38,7 @@ class SessionManager(private val context: Context) {
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
     fun getRole(): String? = prefs.getString(KEY_ROLE, null)
     fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+    fun getCounty(): String? = prefs.getString(KEY_COUNTY, null)
 
     fun userId(): Int = getUserId()
     fun username(): String = getUsername() ?: ""
@@ -48,6 +50,7 @@ class SessionManager(private val context: Context) {
         private const val KEY_USERNAME = "username"
         private const val KEY_ROLE = "role"
         private const val KEY_EMAIL = "email"
+        private const val KEY_COUNTY = "county"
         private const val KEY_AUTH_TOKEN = "auth_token"
     }
 }

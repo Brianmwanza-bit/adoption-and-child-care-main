@@ -13,7 +13,9 @@ data class DocumentEntity(
     @ColumnInfo(name = "file_name") val fileName: String,
     @ColumnInfo(name = "file_type") val fileType: String? = null,
     @ColumnInfo(name = "file_size") val fileSize: Int? = null,
-    @ColumnInfo(name = "file_path") val filePath: String,
+    @ColumnInfo(name = "file_path") val filePath: String? = null,
+    @ColumnInfo(name = "file_data", typeAffinity = ColumnInfo.BLOB) val fileData: ByteArray? = null,
+    @ColumnInfo(name = "mime_type") val mimeType: String? = null,
     @ColumnInfo(name = "description") val description: String? = null,
     @ColumnInfo(name = "uploaded_at") val uploadedAt: String? = null,
     @ColumnInfo(name = "uploaded_by") val uploadedBy: Int? = null

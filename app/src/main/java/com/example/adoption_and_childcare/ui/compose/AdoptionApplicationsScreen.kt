@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdoptionApplicationsScreen() {
+fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     var apps by remember { mutableStateOf<List<AdoptionApplicationEntity>>(emptyList()) }
@@ -39,7 +40,12 @@ fun AdoptionApplicationsScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adoption Applications") }
+                title = { Text("Adoption Applications") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -49,8 +55,6 @@ fun AdoptionApplicationsScreen() {
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-            Text(text = "Adoption Applications", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
             if (apps.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No applications yet")
@@ -87,13 +91,14 @@ fun AdoptionApplicationsScreen() {
                         val child = childId.text.toIntOrNull()
                         if (fam != null) {
                             scope.launch {
-                                db.adoptionApplicationDao().insert(
+                                db.adoptionApplicationDao().insertWithSync(
                                     AdoptionApplicationEntity(
                                         familyId = fam,
                                         childId = child,
                                         status = status.text.ifBlank { "Pending" },
                                         notes = notes.text.ifBlank { null }
-                                    )
+                                    ),
+                                    db.syncQueueDao()
                                 )
                                 showCreate = false
                                 familyId = TextFieldValue("")

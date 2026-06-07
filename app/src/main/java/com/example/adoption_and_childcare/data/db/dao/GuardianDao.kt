@@ -20,4 +20,7 @@ interface GuardianDao {
 
     @Query("SELECT COUNT(*) FROM guardians")
     suspend fun count(): Int
+
+    @Query("SELECT child_id FROM guardians WHERE user_id = :userId")
+    suspend fun getChildIdsByUserId(userId: Int): List<Int>
 }

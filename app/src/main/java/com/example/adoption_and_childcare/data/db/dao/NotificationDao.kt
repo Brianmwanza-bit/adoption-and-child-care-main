@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotificationDao {
+    @Query("SELECT * FROM notifications ORDER BY created_at DESC")
+    fun observeAll(): Flow<List<NotificationEntity>>
+
     @Query("SELECT * FROM notifications WHERE user_id = :userId ORDER BY created_at DESC")
     fun getNotificationsForUser(userId: Int): Flow<List<NotificationEntity>>
 

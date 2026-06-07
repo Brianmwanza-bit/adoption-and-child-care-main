@@ -18,6 +18,9 @@ interface CourtCaseDao {
     @Query("SELECT * FROM court_cases ORDER BY filing_date DESC")
     fun observeAll(): Flow<List<CourtCaseEntity>>
 
+    @Query("SELECT * FROM court_cases WHERE hearing_date >= DATE('now') ORDER BY hearing_date ASC")
+    fun observeUpcoming(): Flow<List<CourtCaseEntity>>
+
     @Query("SELECT COUNT(*) FROM court_cases")
     suspend fun count(): Int
 }

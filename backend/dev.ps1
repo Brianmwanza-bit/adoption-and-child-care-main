@@ -38,6 +38,7 @@ Write-Host "Setting up environment variables..." -ForegroundColor Yellow
 
 # Create or update .env file
 $env_content = @"
+PORT=50000
 DB_HOST=$DBHost
 DB_PORT=$Port
 DB_USER=root
@@ -60,18 +61,21 @@ Write-Host "  User: root" -ForegroundColor White
 Write-Host "  Database: adoption_and_childcare_tracking_system_db" -ForegroundColor White
 Write-Host ""
 
-# Check if database exists
-Write-Host "Checking database..." -ForegroundColor Yellow
-
-try {
-    $result = mysql -h $DBHost -P $Port -u root -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='adoption_and_childcare_tracking_system_db'" 2>&1
-    if ($result -match "adoption_and_childcare_tracking_system_db") {
-        Write-Host "[OK] Database exists" -ForegroundColor Green
-    } else {
-        Write-Host "[INFO] Database not found, will import on server start" -ForegroundColor Yellow
+# Check if database exists (if mysql command is available)
+if (Get-Command mysql -ErrorAction SilentlyContinue) {
+    Write-Host "Checking database..." -ForegroundColor Yellow
+    try {
+        $result = mysql -h $DBHost -P $Port -u root -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='adoption_and_childcare_tracking_system_db'" 2>&1
+        if ($result -match "adoption_and_childcare_tracking_system_db") {
+            Write-Host "[OK] Database exists" -ForegroundColor Green
+        } else {
+            Write-Host "[INFO] Database not found, will import on server start" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "[WARNING] Could not check database: $_" -ForegroundColor Yellow
     }
-} catch {
-    Write-Host "[WARNING] Could not check database: $_" -ForegroundColor Yellow
+} else {
+    Write-Host "[SKIP] Skipping manual database check: 'mysql' command not in PATH. Backend server will handle it." -ForegroundColor Gray
 }
 
 Write-Host ""
@@ -97,6 +101,11 @@ Write-Host "  Status: Starting..." -ForegroundColor White
 Write-Host ""
 Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
 Write-Host ""
+
+# Open phpMyAdmin in the default browser
+$db_url = "http://localhost/phpmyadmin/index.php?route=/database/structure&db=adoption_and_childcare_tracking_system_db"
+Write-Host "Opening phpMyAdmin: $db_url" -ForegroundColor Yellow
+Start-Process $db_url
 
 # Start the backend server
 node server.js

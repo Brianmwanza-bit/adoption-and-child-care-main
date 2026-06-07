@@ -17,7 +17,11 @@ data class GuardianEntity(
     @ColumnInfo(name = "address") val address: String? = null,
     @ColumnInfo(name = "is_primary") val isPrimary: Boolean = false,
     @ColumnInfo(name = "legal_doc_path") val legalDocPath: String? = null,
+    @ColumnInfo(name = "legal_doc_data", typeAffinity = ColumnInfo.BLOB) val legalDocData: ByteArray? = null,
+    @ColumnInfo(name = "legal_doc_mime_type") val legalDocMimeType: String? = null,
+    @ColumnInfo(name = "legal_doc_size") val legalDocSize: Int? = null,
     @ColumnInfo(name = "verification_status") val verificationStatus: String? = "Pending",
+    @ColumnInfo(name = "user_id") val userId: Int? = null, // Links guardian to user account for RBAC
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null
 )

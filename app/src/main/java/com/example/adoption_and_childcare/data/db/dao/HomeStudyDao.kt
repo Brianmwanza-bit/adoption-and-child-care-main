@@ -4,23 +4,44 @@ import androidx.room.*
 import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
 import kotlinx.coroutines.flow.Flow
 
+import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
+import com.google.gson.Gson
+
 @Dao
-interface HomeStudyDao {
+abstract class HomeStudyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(entity: HomeStudyEntity): Long
+    abstract suspend fun insert(entity: HomeStudyEntity): Long
 
     @Update
-    suspend fun update(entity: HomeStudyEntity)
+    abstract suspend fun update(entity: HomeStudyEntity)
+
+    @Transaction
+    open suspend fun insertWithSync(entity: HomeStudyEntity, syncQueueDao: SyncQueueDao) {
+        val id = insert(entity)
+        val payload = Gson().toJson(entity.copy(homeStudyId = id.toInt()))
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "home_studies",
+                operation = "INSERT",
+                recordId = id.toString(),
+                payload = payload,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 
     @Query("DELETE FROM home_studies WHERE home_study_id = :id")
-    suspend fun deleteById(id: Int)
+    abstract suspend fun deleteById(id: Int)
 
     @Query("SELECT * FROM home_studies WHERE family_id = :familyId ORDER BY started_at DESC")
-    fun observeForFamily(familyId: Int): Flow<List<HomeStudyEntity>>
+    abstract fun observeForFamily(familyId: Int): Flow<List<HomeStudyEntity>>
 
     @Query("SELECT COUNT(*) FROM home_studies")
-    suspend fun count(): Int
+    abstract suspend fun count(): Int
 
     @Query("SELECT * FROM home_studies ORDER BY started_at DESC")
-    fun observeAll(): Flow<List<HomeStudyEntity>>
+    abstract fun observeAll(): Flow<List<HomeStudyEntity>>
+
+    @Query("SELECT * FROM home_studies WHERE completed_at IS NULL ORDER BY started_at ASC")
+    abstract fun observeUpcoming(): Flow<List<HomeStudyEntity>>
 }

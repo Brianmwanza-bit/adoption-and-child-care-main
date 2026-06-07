@@ -6,7 +6,7 @@ package com.yourdomain.adoptionchildcare.config
 object AppConfig {
     
     // API Configuration
-    const val API_BASE_URL = "http://10.0.2.2:50000/"
+    const val API_BASE_URL = "http://192.168.43.197:50000/"
     const val API_TIMEOUT_SECONDS = 30L
     const val API_RETRY_COUNT = 3
     

@@ -23,4 +23,7 @@ interface DocumentDao {
 
     @Query("SELECT COUNT(*) FROM documents")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM documents WHERE file_name LIKE :q OR document_type LIKE :q ORDER BY uploaded_at DESC LIMIT :limit")
+    suspend fun globalSearch(q: String, limit: Int = 5): List<DocumentEntity>
 }

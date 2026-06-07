@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,10 +18,11 @@ import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeStudiesScreen() {
+fun HomeStudiesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.Companion.getInstance(context) }
+    val db = remember { AppDatabase.getInstance(context) }
     var studies by remember { mutableStateOf<List<HomeStudyEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
@@ -35,6 +37,16 @@ fun HomeStudiesScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Home Studies") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Home Study")
@@ -42,8 +54,6 @@ fun HomeStudiesScreen() {
         }
     ) { padding ->
     Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Home Studies", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
         if (studies.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No home studies yet")
@@ -77,12 +87,13 @@ fun HomeStudiesScreen() {
                         val fam = familyId.text.toIntOrNull()
                         if (fam != null) {
                             scope.launch {
-                                db.homeStudyDao().insert(
+                                db.homeStudyDao().insertWithSync(
                                     HomeStudyEntity(
                                         familyId = fam,
                                         result = result.text.ifBlank { null },
                                         notes = notes.text.ifBlank { null }
-                                    )
+                                    ),
+                                    db.syncQueueDao()
                                 )
                                 showCreate = false
                                 familyId = TextFieldValue("")

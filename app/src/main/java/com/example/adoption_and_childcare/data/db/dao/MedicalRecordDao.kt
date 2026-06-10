@@ -12,6 +12,9 @@ interface MedicalRecordDao {
     @Update
     suspend fun update(entity: MedicalRecordEntity)
 
+    @Query("DELETE FROM medical_records WHERE record_id = :id")
+    suspend fun deleteById(id: Int)
+
     @Query("SELECT * FROM medical_records WHERE child_id = :childId ORDER BY visit_date DESC")
     fun observeForChild(childId: Int): Flow<List<MedicalRecordEntity>>
 

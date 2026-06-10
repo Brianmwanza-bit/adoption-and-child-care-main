@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,10 +18,11 @@ import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentsScreen() {
+fun DocumentsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.Companion.getInstance(context) }
+    val db = remember { AppDatabase.getInstance(context) }
     var docs by remember { mutableStateOf<List<DocumentEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
@@ -36,6 +38,16 @@ fun DocumentsScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Documents") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Document")
@@ -43,8 +55,6 @@ fun DocumentsScreen() {
         }
     ) { padding ->
     Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Documents", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
         if (docs.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No documents yet") }
         } else {

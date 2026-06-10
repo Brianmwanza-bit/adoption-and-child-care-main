@@ -9,6 +9,7 @@ data class PlacementEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "placement_id") val placementId: Int = 0,
     @ColumnInfo(name = "child_id") val childId: Int,
+    @ColumnInfo(name = "destination_family_id") val destinationFamilyId: Int? = null,
     @ColumnInfo(name = "placement_type") val placementType: String? = null,
     @ColumnInfo(name = "start_date") val startDate: String,
     @ColumnInfo(name = "end_date") val endDate: String? = null,

@@ -24,11 +24,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.data.db.DatabaseInitializer
 import com.example.adoption_and_childcare.ui.compose.*
-import com.example.adoption_and_childcare.data.session.SessionManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.adoption_and_childcare.viewmodel.SyncViewModel
+import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import com.example.adoption_and_childcare.viewmodel.SOSViewModel
+import com.example.adoption_and_childcare.viewmodel.SOSState
+import androidx.work.*
+import com.example.adoption_and_childcare.data.sync.SyncWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 private enum class AppRoute(val route: String, val label: String) {
     LOGIN("login", "Login"),
@@ -51,7 +61,11 @@ private enum class AppRoute(val route: String, val label: String) {
     AUDIT_LOGS("audit_logs", "Audit Logs"),
     SEARCH("search", "Search"),
     CAMERA("camera", "Camera"),
-    USER_ROLES("user_roles", "User Roles")
+    USER_ROLES("user_roles", "User Roles"),
+    GUARDIANS("guardians", "Guardians"),
+    COURT_CASES("court_cases", "Court Cases"),
+    FOSTER_TASKS("foster_tasks", "Foster Tasks"),
+    FOSTER_MATCHES("foster_matches", "Foster Matches")
 }
 
 @AndroidEntryPoint
@@ -65,6 +79,32 @@ class MainActivity : ComponentActivity() {
             val session = remember { SessionManager(context) }
             val isLoggedInState = session.isLoggedIn()
 
+            val syncViewModel: SyncViewModel = hiltViewModel()
+            val notificationsViewModel: NotificationsViewModel = hiltViewModel()
+            val sosViewModel: SOSViewModel = hiltViewModel()
+
+            // Feature E7 — SOS Active State UI Banner
+            val sosState by sosViewModel.sosState.collectAsState()
+
+            // Feature S5 — Auto-sync on App Foreground
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_RESUME) {
+                        val lastSynced = context.getSharedPreferences("sync_prefs", android.content.Context.MODE_PRIVATE)
+                            .getLong("last_synced_at", 0L)
+                        val now = System.currentTimeMillis() / 1000
+                        if (now - lastSynced > 15 * 60) {
+                            syncViewModel.triggerSync()
+                        }
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
+            }
+
             var isLoggedIn by remember { mutableStateOf<Boolean>(isLoggedInState) }
             var onboardingStep by remember { mutableStateOf(0) } // 0: Landing, 1: Terms, 2: Permissions
             var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
@@ -74,6 +114,21 @@ class MainActivity : ComponentActivity() {
             // Initialize database with sample data
             LaunchedEffect(Unit) {
                 DatabaseInitializer.initializeDatabase(context)
+                
+                // Schedule periodic background sync
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+
+                val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
+                    .build()
+
+                WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    "PeriodicSync",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    syncRequest
+                )
             }
 
             val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -135,20 +190,6 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Spacer(Modifier.height(12.dp))
                                 NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
-                                    label = { Text("Dashboard") },
-                                    selected = currentRoute(navController) == AppRoute.DASHBOARD.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.DASHBOARD.route) {
-                                            popUpTo(AppRoute.DASHBOARD.route) { saveState = true }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-                                NavigationDrawerItem(
                                     icon = { Icon(Icons.Default.ChildCare, contentDescription = null) },
                                     label = { Text("Children") },
                                     selected = currentRoute(navController) == AppRoute.CHILDREN_LIST.route,
@@ -199,52 +240,32 @@ class MainActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                 )
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Assessment, contentDescription = null) },
-                                    label = { Text("Reports") },
-                                    selected = currentRoute(navController) == AppRoute.REPORTS.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.REPORTS.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Notifications, contentDescription = null) },
-                                    label = { Text("Notifications") },
-                                    selected = currentRoute(navController) == AppRoute.NOTIFICATIONS.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.NOTIFICATIONS.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-                                // Add more items as needed
                             }
                         }
                     ) {
                         Scaffold(
                             topBar = {
-                                GreenHeader(
-                                    profilePhotoUri = profilePhotoUri,
-                                    username = currentUser,
-                                    role = currentRole,
-                                    onImagePicker = { imagePickerLauncher.launch("image/*") },
-                                    onMenuClick = {
-                                        scope.launch { drawerState.open() }
+                                Column {
+                                    if (sosState == SOSState.ACTIVE) {
+                                        EmergencyActiveBanner()
                                     }
-                                )
+                                    GreenHeader(
+                                        profilePhotoUri = profilePhotoUri,
+                                        username = currentUser,
+                                        role = currentRole,
+                                        onImagePicker = { imagePickerLauncher.launch("image/*") },
+                                        onMenuClick = {
+                                            scope.launch { drawerState.open() }
+                                        }
+                                    )
+                                }
                             },
                             bottomBar = {
-                                com.example.adoption_and_childcare.ui.compose.BlueFooter(
-                                    version = "1.0.0",
-                                    isSynced = true,
-                                    onHelpClick = { /* TODO: Show help dialog */ },
-                                    onEmergencyClick = { /* TODO: Handle emergency call */ },
-                                    onPrivacyClick = { /* TODO: Show privacy policy */ },
-                                    onTermsClick = { /* TODO: Show terms of service */ },
-                                    onAgencyContactClick = { /* TODO: Show agency contact info */ },
-                                    onReportAbuseClick = { /* TODO: Show report abuse form */ }
+                                BottomNavBar(
+                                    navController = navController,
+                                    syncViewModel = syncViewModel,
+                                    notificationsViewModel = notificationsViewModel,
+                                    sosViewModel = sosViewModel
                                 )
                             }
                         ) { paddingValues ->
@@ -262,9 +283,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            }
         }
     }
+}
 
 @Composable
 private fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -283,27 +304,54 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier = Mo
                 }
             )
         }
-        composable(AppRoute.CHILDREN_LIST.route) { ChildrenListScreen() }
-        composable(AppRoute.FAMILIES.route) { FamiliesScreen() }
-        composable(AppRoute.ADOPTION_APPS.route) { AdoptionApplicationsScreen() }
-        composable(AppRoute.HOME_STUDIES.route) { HomeStudiesScreen() }
-        composable(AppRoute.DOCUMENTS.route) { DocumentsScreen() }
-        composable(AppRoute.PLACEMENTS.route) { PlacementsScreen() }
-        composable(AppRoute.REPORTS.route) { CaseReportsScreen() }
-        composable(AppRoute.EDUCATION.route) { EducationScreen() }
-        composable(AppRoute.MEDICAL.route) { MedicalScreen() }
-        composable(AppRoute.FINANCE.route) { FinanceScreen() }
-        composable(AppRoute.SETTINGS.route) { SettingsScreen() }
-        composable(AppRoute.MAP.route) { MapScreen() }
-        composable(AppRoute.BACKGROUND_CHECKS.route) { BackgroundChecksScreen() }
-        composable(AppRoute.USER_MANAGEMENT.route) { UserManagementScreen() }
-        composable(AppRoute.NOTIFICATIONS.route) { NotificationsScreen() }
-        composable(AppRoute.AUDIT_LOGS.route) { AuditLogsScreen() }
-        composable(AppRoute.SEARCH.route) { SearchScreen() }
+        composable(AppRoute.CHILDREN_LIST.route) { 
+            ChildrenListScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.FAMILIES.route) { 
+            FamiliesScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.ADOPTION_APPS.route) { 
+            AdoptionApplicationsScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.HOME_STUDIES.route) { 
+            HomeStudiesScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.DOCUMENTS.route) { 
+            DocumentsScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.PLACEMENTS.route) { 
+            PlacementsScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.REPORTS.route) { 
+            CaseReportsScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.EDUCATION.route) { 
+            EducationScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.MEDICAL.route) { 
+            MedicalScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.FINANCE.route) { 
+            FinanceScreen(onBack = { navController.popBackStack() }) 
+        }
+        composable(AppRoute.SETTINGS.route) { 
+            SettingsScreen() 
+        }
+        composable(AppRoute.MAP.route) { MapScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.BACKGROUND_CHECKS.route) { BackgroundChecksScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.USER_MANAGEMENT.route) { UserManagementScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.NOTIFICATIONS.route) { NotificationsScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.AUDIT_LOGS.route) { AuditLogsScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.SEARCH.route) { 
+            SearchScreen(onBack = { navController.popBackStack() }) 
+        }
         composable(AppRoute.CAMERA.route) { CameraScreen() }
-        composable(AppRoute.USER_ROLES.route) { UserRolesScreen() }
-        // Add AnalyticsScreen to navigation
-        composable("analytics") { AnalyticsScreen() }
+        composable(AppRoute.USER_ROLES.route) { UserRolesScreen(onBack = { navController.popBackStack() }) }
+        composable("analytics") { AnalyticsScreen(onBack = { navController.popBackStack() }) }
+        composable("guardians") { GuardiansScreen(onBack = { navController.popBackStack() }) }
+        composable("court_cases") { CourtCasesScreen(onBack = { navController.popBackStack() }) }
+        composable("foster_tasks") { FosterTasksScreen(onBack = { navController.popBackStack() }) }
+        composable("foster_matches") { FosterMatchesScreen(onBack = { navController.popBackStack() }) }
     }
 }
 

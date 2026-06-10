@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +18,9 @@ import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EducationScreen() {
+fun EducationScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     var records by remember { mutableStateOf<List<EducationRecordEntity>>(emptyList()) }
@@ -33,6 +35,16 @@ fun EducationScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Education Records") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Education Record")
@@ -40,8 +52,6 @@ fun EducationScreen() {
         }
     ) { padding ->
     Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Education", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
         if (records.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No education records yet") }
         } else {

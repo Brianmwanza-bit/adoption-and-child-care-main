@@ -33,4 +33,7 @@ interface UserDao {
 
     @Query("SELECT COUNT(*) FROM users")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM users WHERE username LIKE :q OR email LIKE :q OR phone LIKE :q OR national_id_no LIKE :q OR county LIKE :q ORDER BY username LIMIT :limit")
+    suspend fun globalSearch(q: String, limit: Int = 5): List<UserEntity>
 }

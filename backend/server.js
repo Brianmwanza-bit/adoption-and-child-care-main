@@ -154,49 +154,83 @@ function initializeTables(dbName) {
         role VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
         photo VARCHAR(255),
+        photo_data LONGBLOB,
+        photo_mime_type VARCHAR(100),
+        photo_size INT,
         latitude DOUBLE,
         longitude DOUBLE
       );
       CREATE TABLE IF NOT EXISTS children (
         child_id INT AUTO_INCREMENT PRIMARY KEY,
+        case_number VARCHAR(255),
         first_name VARCHAR(100) NOT NULL,
         last_name VARCHAR(100) NOT NULL,
         middle_name VARCHAR(100),
-        gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other', 'Unknown')),
+        gender VARCHAR(10),
         date_of_birth DATE,
         birth_certificate_no VARCHAR(50) UNIQUE,
         nationality VARCHAR(50),
         photo_url VARCHAR(255),
+        photo_data LONGBLOB,
+        photo_mime_type VARCHAR(100),
+        photo_size INT,
+        current_county VARCHAR(100),
+        county VARCHAR(100),
         is_emancipated TINYINT(1) DEFAULT 0,
         emancipation_date DATE,
         emancipation_reason TEXT,
         current_status VARCHAR(50) DEFAULT 'Active',
         created_by INT,
+        assigned_case_worker INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS guardians (
         guardian_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        phone VARCHAR(255),
-        address VARCHAR(255)
+        child_id INT,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        relationship VARCHAR(50) NOT NULL,
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        address TEXT,
+        is_primary TINYINT(1) DEFAULT 0,
+        legal_doc_path VARCHAR(255),
+        legal_doc_data LONGBLOB,
+        legal_doc_mime_type VARCHAR(100),
+        legal_doc_size INT,
+        verification_status VARCHAR(20) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS court_cases (
         case_id INT AUTO_INCREMENT PRIMARY KEY,
         child_id INT,
         case_number VARCHAR(255),
-        status VARCHAR(255)
+        status VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
-      CREATE TABLE IF NOT EXISTS family_profile (
+      CREATE TABLE IF NOT EXISTS families (
         family_id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
+        primary_contact_name VARCHAR(255) NOT NULL,
+        secondary_contact_name VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        national_id_no VARCHAR(50),
         address VARCHAR(255),
-        household_size INT,
-        notes TEXT,
+        city VARCHAR(100),
+        county VARCHAR(100),
+        state VARCHAR(100),
+        country VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'Active',
         latitude DOUBLE,
         longitude DOUBLE,
-        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       );
       CREATE TABLE IF NOT EXISTS placements (
         placement_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -214,45 +248,93 @@ function initializeTables(dbName) {
         notes TEXT,
         is_current TINYINT(1) DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         created_by INT,
         FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
-        FOREIGN KEY (source_family_id) REFERENCES family_profile(family_id),
-        FOREIGN KEY (destination_family_id) REFERENCES family_profile(family_id),
+        FOREIGN KEY (source_family_id) REFERENCES families(family_id),
+        FOREIGN KEY (destination_family_id) REFERENCES families(family_id),
         FOREIGN KEY (created_by) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS medical_records (
         record_id INT AUTO_INCREMENT PRIMARY KEY,
         child_id INT,
-        description TEXT,
-        date VARCHAR(255)
+        visit_date DATE NOT NULL,
+        doctor_name VARCHAR(100),
+        hospital_name VARCHAR(150),
+        diagnosis TEXT,
+        treatment TEXT,
+        medications TEXT,
+        follow_up_date DATE,
+        is_immunization TINYINT(1) DEFAULT 0,
+        immunization_type VARCHAR(50),
+        medical_report_data LONGBLOB,
+        medical_report_mime_type VARCHAR(100),
+        medical_report_size INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS case_reports (
         report_id INT AUTO_INCREMENT PRIMARY KEY,
-        case_id INT,
-        report_text TEXT,
-        date VARCHAR(255)
+        child_id INT,
+        user_id INT,
+        report_date DATE NOT NULL,
+        report_title VARCHAR(150) NOT NULL,
+        report_type VARCHAR(50),
+        content TEXT NOT NULL,
+        is_confidential TINYINT(1) DEFAULT 0,
+        report_data LONGBLOB,
+        report_mime_type VARCHAR(100),
+        report_size INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
       );
       CREATE TABLE IF NOT EXISTS money_records (
         money_id INT AUTO_INCREMENT PRIMARY KEY,
         child_id INT,
-        amount DOUBLE,
-        date VARCHAR(255),
-        description TEXT
+        amount DECIMAL(12,2) NOT NULL,
+        transaction_type VARCHAR(50),
+        description TEXT,
+        date DATE NOT NULL,
+        receipt_data LONGBLOB,
+        receipt_mime_type VARCHAR(100),
+        receipt_size INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS education_records (
         record_id INT AUTO_INCREMENT PRIMARY KEY,
         child_id INT,
-        school VARCHAR(255),
-        grade VARCHAR(255),
-        year VARCHAR(255)
+        school_name VARCHAR(150) NOT NULL,
+        grade VARCHAR(50),
+        enrollment_date DATE,
+        report_card_data LONGBLOB,
+        report_card_mime_type VARCHAR(100),
+        report_card_size INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS documents (
         document_id INT AUTO_INCREMENT PRIMARY KEY,
         child_id INT,
-        file_name VARCHAR(255),
-        file_type VARCHAR(255),
+        document_type VARCHAR(50) NOT NULL,
+        file_name VARCHAR(255) NOT NULL,
+        file_type VARCHAR(50),
+        file_size INT,
         file_path VARCHAR(255),
-        file_data LONGBLOB
+        file_data LONGBLOB,
+        mime_type VARCHAR(100),
+        description TEXT,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        uploaded_by INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS audit_logs (
         log_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -270,6 +352,29 @@ function initializeTables(dbName) {
         user_id INT,
         permission_id INT,
         PRIMARY KEY (user_id, permission_id)
+      );
+      CREATE TABLE IF NOT EXISTS adoption_applications (
+        application_id INT AUTO_INCREMENT PRIMARY KEY,
+        family_id INT NOT NULL,
+        child_id INT NOT NULL,
+        status VARCHAR(50) DEFAULT 'Pending',
+        notes TEXT,
+        application_number VARCHAR(50) UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (family_id) REFERENCES family_profile(family_id),
+        FOREIGN KEY (child_id) REFERENCES children(child_id)
+      );
+      CREATE TABLE IF NOT EXISTS home_studies (
+        study_id INT AUTO_INCREMENT PRIMARY KEY,
+        family_id INT NOT NULL,
+        result VARCHAR(50),
+        notes TEXT,
+        started_at DATE,
+        completed_at DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (family_id) REFERENCES family_profile(family_id)
       );
       CREATE TABLE IF NOT EXISTS foster_tasks (
         task_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -320,22 +425,71 @@ function initializeTables(dbName) {
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
         UNIQUE KEY user_device (user_id, device_id)
       );
+      CREATE TABLE IF NOT EXISTS counties (
+        county_id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL,
+        police_headquarters_phone VARCHAR(20)
+      );
+      CREATE TABLE IF NOT EXISTS emergency_events (
+        event_id VARCHAR(36) PRIMARY KEY,
+        triggered_by INT NOT NULL,
+        latitude DECIMAL(10, 8),
+        longitude DECIMAL(11, 8),
+        accuracy_meters INT,
+        county VARCHAR(100),
+        channels_alerted JSON,
+        nearest_station_name VARCHAR(200),
+        nearest_station_phone VARCHAR(20),
+        nearest_station_distance_km DECIMAL(6,2),
+        status ENUM('active','resolved','cancelled') DEFAULT 'active',
+        triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP NULL,
+        resolved_by INT NULL,
+        notes TEXT,
+        FOREIGN KEY (triggered_by) REFERENCES users(user_id)
+      );
+      CREATE TABLE IF NOT EXISTS sos_location_history (
+        history_id INT AUTO_INCREMENT PRIMARY KEY,
+        event_id VARCHAR(36) NOT NULL,
+        latitude DECIMAL(10, 8) NOT NULL,
+        longitude DECIMAL(11, 8) NOT NULL,
+        accuracy INT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (event_id) REFERENCES emergency_events(event_id) ON DELETE CASCADE
+      );
     `;
-    db.query(createTablesSQL, (err) => {
-      if (err) {
-        console.error('Failed to create tables:', err.message);
-      } else {
-        console.log('All MySQL tables checked/created.');
-        runMigrations();
-      }
+      db.query(createTablesSQL, (err) => {
+        if (err) {
+          console.error('Failed to create tables:', err.message);
+        } else {
+          console.log('All MySQL tables checked/created.');
+          seedCounties();
+          runMigrations();
+        }
+      });
     });
-  });
+}
+
+function seedCounties() {
+  const counties = [
+    ['Nairobi', '+254722000000'],
+    ['Mombasa', '+254722111111'],
+    ['Kisumu', '+254722222222']
+  ];
+  db.query('INSERT IGNORE INTO counties (name, police_headquarters_phone) VALUES ?', [counties]);
 }
 
 function runMigrations() {
   const migrations = [
     { table: 'users', column: 'photo_data', type: 'LONGBLOB' },
-    { table: 'documents', column: 'file_data', type: 'LONGBLOB' }
+    { table: 'documents', column: 'file_data', type: 'LONGBLOB' },
+    { table: 'users', column: 'national_id_no', type: 'VARCHAR(50)' },
+    { table: 'users', column: 'county', type: 'VARCHAR(100)' },
+    { table: 'users', column: 'sub_county', type: 'VARCHAR(100)' },
+    { table: 'users', column: 'created_at', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' },
+    { table: 'users', column: 'updated_at', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP' },
+    { table: 'users', column: 'last_login', type: 'TIMESTAMP NULL' },
+    { table: 'users', column: 'is_active', type: 'TINYINT(1) DEFAULT 1' }
   ];
 
   migrations.forEach(mig => {
@@ -447,10 +601,10 @@ function formatError(code, message, details) {
 app.post('/register', upload.single('photo'), async (req, res, next) => {
   try {
     // If multipart/form-data, fields are in req.body, file in req.file
-    const { username, password, phone, id_number, role, email } = req.body;
+    const { username, password, phone, id_number, role, email, county, sub_county } = req.body;
     const roleLower = role && role.toLowerCase();
-    if (!username || !password || !phone || !id_number || !role || !email) {
-      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'phone', 'id_number', 'role', 'email'] }));
+    if (!username || !password || !role || !email) {
+      return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing required fields', { fields: ['username', 'password', 'role', 'email'] }));
     }
     let photoPath = null;
     if (req.file) {
@@ -459,8 +613,8 @@ app.post('/register', upload.single('photo'), async (req, res, next) => {
       photoPath = req.body.photo;
     }
   const password_hash = await bcrypt.hash(password, 10);
-    db.query('INSERT INTO users (username, password_hash, phone, id_number, role, email, photo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [username, password_hash, phone, id_number, roleLower, email, photoPath],
+    db.query('INSERT INTO users (username, password_hash, phone, id_number, role, email, photo, county, sub_county) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, password_hash, phone, id_number, roleLower, email, photoPath, county, sub_county],
       function (err, results) {
         if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
         res.json({ success: true, id: results.insertId, username, role: roleLower, email, phone, id_number, photo: photoPath });
@@ -478,7 +632,7 @@ app.post('/login', async (req, res, next) => {
       return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing username or password'));
     }
     // Get the user and their role from users table ONLY
-    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+    db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, username], async (err, results) => {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       const user = results[0];
       if (!user) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
@@ -557,9 +711,18 @@ dbTables = [
   { name: 'education_records', pk: 'record_id' },
   { name: 'documents', pk: 'document_id' },
   { name: 'users', pk: 'user_id' },
+  { name: 'families', pk: 'family_id' },
+  { name: 'family_profile', pk: 'family_id' },
+  { name: 'adoption_applications', pk: 'application_id' },
+  { name: 'home_studies', pk: 'study_id' },
   { name: 'audit_logs', pk: 'log_id' },
   { name: 'permissions', pk: 'permission_id' },
-  { name: 'user_permissions', pk: 'user_id' }
+  { name: 'user_permissions', pk: 'user_id' },
+  { name: 'foster_tasks', pk: 'task_id' },
+  { name: 'foster_matches', pk: 'match_id' },
+  { name: 'background_checks', pk: 'check_id' },
+  { name: 'notifications', pk: 'notification_id' },
+  { name: 'counties', pk: 'county_id' }
 ];
 
 dbTables.forEach(table => {
@@ -643,7 +806,7 @@ app.get('/background_checks', authenticateToken, (req, res, next) => {
 });
 
 // --- POST ENDPOINTS FOR NEW TABLES ---
-app.post('/family_profile', authenticateToken, requireRole('admin', 'case_worker'), (req, res, next) => {
+app.post('/family_profile', authenticateToken, requireRole('admin', 'case_worker', 'social worker'), (req, res, next) => {
   const { user_id, address, household_size, notes } = req.body;
   db.query('INSERT INTO family_profile (user_id, address, household_size, notes) VALUES (?, ?, ?, ?)',
     [user_id, address, household_size, notes],
@@ -689,7 +852,7 @@ app.post('/background_checks', authenticateToken, (req, res, next) => {
 });
 
 // --- PUT ENDPOINTS FOR NEW TABLES ---
-app.put('/family_profile/:id', authenticateToken, requireRole('admin', 'case_worker'), (req, res, next) => {
+app.put('/family_profile/:id', authenticateToken, requireRole('admin', 'case_worker', 'social worker'), (req, res, next) => {
   const { address, household_size, notes } = req.body;
   db.query('UPDATE family_profile SET address=?, household_size=?, notes=? WHERE family_id=?',
     [address, household_size, notes, req.params.id],
@@ -734,7 +897,7 @@ app.put('/background_checks/:id', authenticateToken, (req, res, next) => {
 });
 
 // --- DELETE ENDPOINTS FOR NEW TABLES ---
-app.delete('/family_profile/:id', authenticateToken, requireRole('admin', 'case_worker'), (req, res, next) => {
+app.delete('/family_profile/:id', authenticateToken, requireRole('admin', 'case_worker', 'social worker'), (req, res, next) => {
   db.query('DELETE FROM family_profile WHERE family_id=?', [req.params.id], function (err, result) {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
     logAudit('family_profile', req.params.id, 'delete', req.user.user_id);
@@ -1034,21 +1197,21 @@ app.post('/notifications/send', authenticateToken, (req, res, next) => {
 });
 
 // --- Additional Analytics Endpoints ---
-app.get('/analytics/roles', authenticateToken, requireRole('admin'), (req, res, next) => {
+app.get('/analytics/roles', authenticateToken, requireRole('admin', 'social worker'), (req, res, next) => {
   db.query(`SELECT role, COUNT(*) as count FROM users GROUP BY role`, (err, rows) => {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
     res.json(rows);
   });
 });
 
-app.get('/analytics/recent-activity', authenticateToken, requireRole('admin'), (req, res, next) => {
+app.get('/analytics/recent-activity', authenticateToken, requireRole('admin', 'social worker'), (req, res, next) => {
   db.query(`SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 20`, (err, rows) => {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
     res.json(rows);
   });
 });
 
-app.get('/analytics/pending-background-checks', authenticateToken, requireRole('admin'), (req, res, next) => {
+app.get('/analytics/pending-background-checks', authenticateToken, requireRole('admin', 'social worker'), (req, res, next) => {
   db.query(`SELECT * FROM background_checks WHERE status='pending' ORDER BY requested_at DESC`, (err, rows) => {
     if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
     res.json(rows);
@@ -1114,6 +1277,167 @@ app.post('/api/fcm/token', authenticateToken, (req, res, next) => {
     (err, result) => {
       if (err) return next({ code: 'DB_ERROR', message: err.message, details: err });
       res.json({ success: true, message: 'FCM token updated' });
+    }
+  );
+});
+
+// --- SYNC ENDPOINTS (Feature S4) ---
+app.post('/api/v2/sync/push', authenticateToken, (req, res, next) => {
+  const syncItems = req.body;
+  if (!Array.isArray(syncItems)) return res.status(400).json({ success: false, error: 'Expected array of sync items' });
+
+  let appliedCount = 0;
+  let errors = [];
+
+  // This is a simplified version. Ideally use a transaction.
+  syncItems.forEach(item => {
+    const { table_name, operation, record_id, payload } = item;
+    const data = JSON.parse(payload);
+
+    // Convert base64 strings or byte arrays to Buffers for BLOB columns
+    Object.keys(data).forEach(key => {
+      if (key.endsWith('_data') || key.endsWith('_blob')) {
+        if (typeof data[key] === 'string') {
+          data[key] = Buffer.from(data[key], 'base64');
+        } else if (Array.isArray(data[key])) {
+          data[key] = Buffer.from(data[key]);
+        }
+      }
+    });
+
+    if (operation === 'INSERT' || operation === 'UPDATE') {
+      const keys = Object.keys(data);
+      const values = Object.values(data);
+      const placeholders = keys.map(() => '?').join(', ');
+      const setClause = keys.map(key => `${key} = ?`).join(', ');
+
+      const sql = operation === 'INSERT'
+        ? `INSERT INTO ${table_name} (${keys.join(', ')}) VALUES (${placeholders}) ON DUPLICATE KEY UPDATE ${setClause}`
+        : `UPDATE ${table_name} SET ${setClause} WHERE ${table_name.slice(0, -1)}_id = ?`;
+
+      const queryParams = operation === 'INSERT' ? [...values, ...values] : [...values, record_id];
+
+      db.query(sql, queryParams, (err) => {
+        if (err) errors.push({ record_id, error: err.message });
+        else appliedCount++;
+      });
+    } else if (operation === 'DELETE') {
+      db.query(`DELETE FROM ${table_name} WHERE ${table_name.slice(0, -1)}_id = ?`, [record_id], (err) => {
+        if (err) errors.push({ record_id, error: err.message });
+        else appliedCount++;
+      });
+    }
+  });
+
+  res.json({ success: true, applied: appliedCount, errors });
+});
+
+app.get('/api/v2/sync/pull', authenticateToken, (req, res, next) => {
+  const { since } = req.query;
+  const sinceDate = new Date(parseInt(since) * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+  const result = {
+    children: [],
+    families: [],
+    family_profile: [],
+    placements: [],
+    medical_records: [],
+    education_records: [],
+    money_records: [],
+    documents: [],
+    case_reports: [],
+    court_cases: [],
+    guardians: [],
+    adoption_applications: [],
+    home_studies: [],
+    foster_tasks: [],
+    foster_matches: [],
+    background_checks: [],
+    notifications: [],
+    audit_logs: []
+  };
+
+  const convertBlobs = (rows) => {
+    return rows.map(row => {
+      const newRow = { ...row };
+      Object.keys(newRow).forEach(key => {
+        if (Buffer.isBuffer(newRow[key])) {
+          newRow[key] = newRow[key].toString('base64');
+        }
+      });
+      return newRow;
+    });
+  };
+
+  const queries = [
+    { key: 'children', table: 'children', timeCol: 'updated_at' },
+    { key: 'families', table: 'families', timeCol: 'updated_at' },
+    { key: 'family_profile', table: 'family_profile', timeCol: 'updated_at' },
+    { key: 'placements', table: 'placements', timeCol: 'updated_at' },
+    { key: 'medical_records', table: 'medical_records', timeCol: 'updated_at' },
+    { key: 'education_records', table: 'education_records', timeCol: 'updated_at' },
+    { key: 'money_records', table: 'money_records', timeCol: 'updated_at' },
+    { key: 'documents', table: 'documents', timeCol: 'updated_at' },
+    { key: 'case_reports', table: 'case_reports', timeCol: 'updated_at' },
+    { key: 'court_cases', table: 'court_cases', timeCol: 'updated_at' },
+    { key: 'guardians', table: 'guardians', timeCol: 'updated_at' },
+    { key: 'adoption_applications', table: 'adoption_applications', timeCol: 'updated_at' },
+    { key: 'home_studies', table: 'home_studies', timeCol: 'updated_at' },
+    { key: 'foster_tasks', table: 'foster_tasks', timeCol: 'created_at' },
+    { key: 'foster_matches', table: 'foster_matches', timeCol: 'created_at' },
+    { key: 'background_checks', table: 'background_checks', timeCol: 'requested_at' },
+    { key: 'notifications', table: 'notifications', timeCol: 'sent_at' },
+    { key: 'audit_logs', table: 'audit_logs', timeCol: 'timestamp' }
+  ];
+
+  let completed = 0;
+  let hasError = false;
+  queries.forEach(q => {
+    db.query(`SELECT * FROM ${q.table} WHERE ${q.timeCol} > ?`, [sinceDate], (err, rows) => {
+      if (hasError) return;
+      if (err) {
+        console.error(`Pull error for ${q.table}:`, err.message);
+        // We continue anyway but log it
+        result[q.key] = [];
+      } else {
+        result[q.key] = convertBlobs(rows);
+      }
+      completed++;
+      if (completed === queries.length) {
+        res.json(result);
+      }
+    });
+  });
+});
+
+// --- EMERGENCY ENDPOINTS (Feature E6) ---
+function authenticateSOS(req, res, next) {
+  const apiKey = req.headers['x-sos-api-key'];
+  if (apiKey !== process.env.SOS_API_KEY) return res.sendStatus(401);
+  next();
+}
+
+app.post('/api/v2/emergency/alert', authenticateSOS, (req, res, next) => {
+  const { user_id, latitude, longitude, timestamp } = req.body;
+  const event_id = require('crypto').randomUUID();
+
+  db.query('INSERT INTO emergency_events (event_id, triggered_by, latitude, longitude, triggered_at) VALUES (?, ?, ?, ?, ?)',
+    [event_id, user_id, latitude, longitude, new Date(timestamp)],
+    (err) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message });
+      res.json({ event_id, status: 'dispatched' });
+    }
+  );
+});
+
+app.post('/api/v2/emergency/location', authenticateSOS, (req, res, next) => {
+  const { event_id, latitude, longitude, accuracy, timestamp } = req.body;
+  db.query('INSERT INTO sos_location_history (event_id, latitude, longitude, accuracy, timestamp) VALUES (?, ?, ?, ?, ?)',
+    [event_id, latitude, longitude, accuracy, new Date(timestamp)],
+    (err) => {
+      if (err) return next({ code: 'DB_ERROR', message: err.message });
+      db.query('UPDATE emergency_events SET latitude=?, longitude=?, accuracy_meters=? WHERE event_id=?', [latitude, longitude, accuracy, event_id]);
+      res.json({ received: true });
     }
   );
 });

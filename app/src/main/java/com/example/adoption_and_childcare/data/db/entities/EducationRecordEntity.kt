@@ -16,6 +16,9 @@ data class EducationRecordEntity(
     @ColumnInfo(name = "performance") val performance: String? = null,
     @ColumnInfo(name = "special_needs") val specialNeeds: String? = null,
     @ColumnInfo(name = "teacher_contact") val teacherContact: String? = null,
+    @ColumnInfo(name = "report_card_data", typeAffinity = ColumnInfo.BLOB) val reportCardData: ByteArray? = null,
+    @ColumnInfo(name = "report_card_mime_type") val reportCardMimeType: String? = null,
+    @ColumnInfo(name = "report_card_size") val reportCardSize: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null
 )

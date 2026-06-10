@@ -7,10 +7,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,10 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 import com.example.adoption_and_childcare.data.session.SessionManager
-import com.example.adoption_and_childcare.utils.Security
+import com.example.adoption_and_childcare.network.LoginRequest
+import com.example.adoption_and_childcare.network.RegisterRequest
 import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -132,6 +133,20 @@ fun LoginScreen(
                         )
                     }
                 }
+                
+                // Welcome text
+                Text(
+                    text = "Welcome",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF9C27B0)
+                )
+                Text(
+                    text = "Adoption & Child Care System",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                
                 // Login and Register buttons
                 if (!hasRegisteredUser) {
                     Button(
@@ -163,13 +178,14 @@ fun LoginScreen(
                             .fillMaxWidth()
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF9C27B0)
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF9C27B0)
                         ),
                         shape = RoundedCornerShape(25.dp)
                     ) {
                         Text(
                             text = "Register",
-                            color = Color.White,
+                            color = Color(0xFF9C27B0),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -338,6 +354,13 @@ fun LoginPopupBlock(
                         }
                     }
 
+                    Text(
+                        text = "Login",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF9C27B0)
+                    )
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -398,19 +421,17 @@ fun LoginPopupBlock(
                                     isLoading = true
                                     scope.launch {
                                         try {
-                                            val user = withContext(Dispatchers.IO) {
-                                                val userByEmail = viewModel.findByEmail(email)
-                                                userByEmail ?: viewModel.findByUsername(email)
+                                            val response = withContext(Dispatchers.IO) {
+                                                viewModel.loginRemote(LoginRequest(email, password))
                                             }
 
-                                            val hashed = Security.hashPassword(password)
-                                            if (user != null && user.passwordHash == hashed) {
+                                            if (response?.success == true && response.user != null) {
                                                 isSuccess = true
                                                 focusManager.clearFocus()
                                                 delay(500)
-                                                onLoginSuccess(user)
+                                                onLoginSuccess(response.user)
                                             } else {
-                                                errorMessage = "Invalid credentials"
+                                                errorMessage = response?.error?.message ?: "Invalid credentials"
                                                 shake = true
                                             }
                                         } catch (e: Exception) {
@@ -458,14 +479,20 @@ fun RegisterPopupBlock(
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var idNumber by remember { mutableStateOf("") }
+    var county by remember { mutableStateOf("") }
+    var subCounty by remember { mutableStateOf("") }
     var occupation by remember { mutableStateOf("") }
     var showOccupationDropdown by remember { mutableStateOf(false) }
+    var showCountyDropdown by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    val occupations = listOf("Admin", "Case Worker", "Foster Parent", "Social Worker", "Supervisor")
+    val occupations = listOf("Admin", "Case Worker", "Foster Parent", "Social Worker", "Supervisor", "Staff")
+    val counties = listOf("Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Kiambu", "Machakos", "Kajiado", "Kericho", "Bungoma", "Meru", "Kakamega", "Nyeri", "Kisii", "Migori", "Isiolo", "Garissa", "Wajir", "Mandera")
 
     Box(
         modifier = Modifier
@@ -475,7 +502,8 @@ fun RegisterPopupBlock(
     ) {
         Card(
             modifier = Modifier
-                .width(320.dp)
+                .width(340.dp)
+                .heightIn(max = 600.dp)
                 .padding(16.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
@@ -484,9 +512,11 @@ fun RegisterPopupBlock(
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Profile photo placeholder
                 Box(
@@ -531,6 +561,13 @@ fun RegisterPopupBlock(
                     }
                 }
 
+                Text(
+                    text = "Register",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF9C27B0)
+                )
+
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
@@ -568,6 +605,77 @@ fun RegisterPopupBlock(
                     )
                 )
 
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Phone") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF9C27B0),
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                    )
+                )
+
+                OutlinedTextField(
+                    value = idNumber,
+                    onValueChange = { idNumber = it },
+                    label = { Text("National ID Number") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF9C27B0),
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                    )
+                )
+
+                // County dropdown
+                ExposedDropdownMenuBox(
+                    expanded = showCountyDropdown,
+                    onExpandedChange = { showCountyDropdown = !showCountyDropdown }
+                ) {
+                    OutlinedTextField(
+                        value = county,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text("County") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCountyDropdown) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF9C27B0),
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showCountyDropdown,
+                        onDismissRequest = { showCountyDropdown = false }
+                    ) {
+                        counties.forEach { cnt ->
+                            DropdownMenuItem(
+                                text = { Text(cnt) },
+                                onClick = {
+                                    county = cnt
+                                    showCountyDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = subCounty,
+                    onValueChange = { subCounty = it },
+                    label = { Text("Sub County (Optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFF9C27B0),
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
+                    )
+                )
+
                 // Occupation dropdown
                 ExposedDropdownMenuBox(
                     expanded = showOccupationDropdown,
@@ -577,14 +685,14 @@ fun RegisterPopupBlock(
                         value = occupation,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("Occupation") },
+                        label = { Text("Role") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOccupationDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFF9C27B0),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.7f)
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.7f)
                         )
                     )
                     ExposedDropdownMenu(
@@ -631,33 +739,35 @@ fun RegisterPopupBlock(
 
                     Button(
                         onClick = {
-                            if (username.isBlank() || email.isBlank() || password.isBlank() || occupation.isBlank()) {
-                                errorMessage = "Please fill in all fields"
+                            if (username.isBlank() || email.isBlank() || password.isBlank() || phone.isBlank() || idNumber.isBlank() || occupation.isBlank()) {
+                                errorMessage = "Please fill in all required fields"
                             } else if (password.length < 6) {
                                 errorMessage = "Password must be at least 6 characters"
                             } else {
                                 isLoading = true
                                 scope.launch {
                                     try {
-                                        val existing = withContext(Dispatchers.IO) {
-                                            viewModel.findByEmail(email) ?: viewModel.findByUsername(username)
+                                        val response = withContext(Dispatchers.IO) {
+                                            viewModel.registerRemote(
+                                                RegisterRequest(
+                                                    username = username,
+                                                    email = email,
+                                                    password = password,
+                                                    phone = phone,
+                                                    id_number = idNumber,
+                                                    role = occupation,
+                                                    county = county.ifEmpty { null },
+                                                    sub_county = subCounty.ifEmpty { null }
+                                                )
+                                            )
                                         }
                                         
-                                        if (existing != null) {
-                                            errorMessage = "User already exists"
-                                        } else {
-                                            val entity = UserEntity(
-                                                username = username,
-                                                passwordHash = Security.hashPassword(password),
-                                                role = occupation,
-                                                email = email
-                                            )
-                                            withContext(Dispatchers.IO) {
-                                                viewModel.insert(entity)
-                                            }
+                                        if (response?.success == true) {
                                             focusManager.clearFocus()
                                             delay(500)
                                             onRegisterSuccess()
+                                        } else {
+                                            errorMessage = response?.error?.message ?: "Registration failed"
                                         }
                                     } catch (e: Exception) {
                                         errorMessage = e.message ?: "Registration failed"

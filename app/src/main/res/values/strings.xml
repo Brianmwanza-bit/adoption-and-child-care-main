@@ -37,4 +37,129 @@
     <string name="card_bg_checks_summary">Pending checks</string>
     <string name="card_education">Education</string>
     <string name="card_education_summary">Education records</string>
+
+    <!-- Dashboard Strings -->
+    <string name="dashboard_title_management">Management</string>
+    <string name="dashboard_title_overview">Overview</string>
+    <string name="dashboard_title_alerts">Priority Alerts</string>
+    <string name="dashboard_title_activity">Recent Activity</string>
+    <string name="dashboard_title_events">Upcoming Events</string>
+    <string name="dashboard_view_all">View All</string>
+    <string name="dashboard_view_calendar">View Calendar</string>
+    <string name="dashboard_search_hint">Search children, families, cases&#8230;</string>
+    <string name="dashboard_search_desc">Search</string>
+    <string name="dashboard_clear_desc">Clear</string>
+    <string name="dashboard_items_count">%1$d items</string>
+
+    <!-- Dashboard Mock Data -->
+    <string name="stat_children_care">Children in Care</string>
+    <string name="stat_active_placements">Active Placements</string>
+    <string name="stat_pending_apps">Pending Applications</string>
+    <string name="stat_home_studies">Home Studies</string>
+
+    <string name="activity_child_added">New Child Added</string>
+    <string name="activity_child_added_desc">John Doe added to system</string>
+    <string name="activity_time_2h">2 hours ago</string>
+    <string name="activity_placement_updated">Placement Updated</string>
+    <string name="activity_placement_updated_desc">Smith family placement status changed</string>
+    <string name="activity_time_5h">5 hours ago</string>
+    <string name="activity_doc_uploaded">Document Uploaded</string>
+    <string name="activity_doc_uploaded_desc">Birth certificate added for Jane</string>
+    <string name="activity_time_1d">1 day ago</string>
+    <string name="activity_study_completed">Home Study Completed</string>
+    <string name="activity_study_completed_desc">Johnson family home study approved</string>
+    <string name="activity_time_2d">2 days ago</string>
+    <string name="activity_medical_updated">Medical Record Updated</string>
+    <string name="activity_medical_updated_desc">Vaccination records added</string>
+    <string name="activity_time_3d">3 days ago</string>
+
+    <string name="alert_expiring_study">Expiring Home Study</string>
+    <string name="alert_expiring_study_desc">Williams family home study expires in 5 days</string>
+    <string name="alert_priority_high">High</string>
+    <string name="alert_missing_doc">Missing Document</string>
+    <string name="alert_missing_doc_desc">Background check pending for Thompson family</string>
+    <string name="alert_priority_medium">Medium</string>
+    <string name="alert_court_date">Court Date</string>
+    <string name="alert_court_date_desc">Adoption hearing for Davis case scheduled for tomorrow</string>
+
+    <string name="event_court_hearing">Court Hearing</string>
+    <string name="event_tomorrow">Tomorrow</string>
+    <string name="event_type_legal">Legal</string>
+    <string name="event_study_review">Home Study Review</string>
+    <string name="event_date_dec15">Dec 15</string>
+    <string name="event_type_review">Review</string>
+    <string name="event_placement_visit">Placement Visit</string>
+    <string name="event_date_dec18">Dec 18</string>
+    <string name="event_type_visit">Visit</string>
+    <string name="event_case_conf">Case Conference</string>
+    <string name="event_date_dec20">Dec 20</string>
+    <string name="event_type_meeting">Meeting</string>
+
+    <string name="module_children">Children</string>
+    <string name="module_families">Families</string>
+    <string name="module_applications">Applications</string>
+    <string name="module_home_studies">Home Studies</string>
+    <string name="module_documents">Documents</string>
+    <string name="module_placements">Placements</string>
+    <string name="module_reports">Case Reports</string>
+    <string name="module_education">Education</string>
+    <string name="module_medical">Medical</string>
+    <string name="module_finance">Finance</string>
+
+    <!-- Navigation Routes -->
+    <string name="route_children_list">children_list</string>
+    <string name="route_placements">placements</string>
+    <string name="route_adoption_applications">adoption_applications</string>
+    <string name="route_home_studies">home_studies</string>
+    <string name="route_families">families</string>
+    <string name="route_documents">documents</string>
+    <string name="route_reports">reports</string>
+    <string name="route_education">education</string>
+    <string name="route_medical">medical</string>
+    <string name="route_finance">finance</string>
+    <!-- Finance Screen Strings -->
+    <string name="finance_title">Financial Records</string>
+    <string name="finance_back_desc">Back</string>
+    <string name="finance_add_txn_desc">Add Transaction</string>
+    <string name="finance_no_transactions">No transactions yet</string>
+    <string name="finance_txn_id">Txn #%1$s</string>
+    <string name="finance_child_id_label">Child ID: %1$s</string>
+    <string name="finance_amount_label">Amount: KES %1$s</string>
+    <string name="finance_type_label">Type: %1$s</string>
+    <string name="finance_date_label">Date: %1$s</string>
+    <string name="finance_note_label">Note: %1$s</string>
+    <string name="finance_edit_desc">Edit</string>
+    <string name="finance_delete_desc">Delete</string>
+    <string name="finance_download_desc">Download</string>
+    <string name="finance_add_txn_title">Add Transaction</string>
+    <string name="finance_edit_txn_title">Edit Transaction</string>
+    <string name="finance_delete_txn_title">Delete Transaction</string>
+    <string name="finance_delete_txn_confirm">Are you sure you want to delete transaction #%1$s for KES %2$s?</string>
+    <string name="finance_child_id_field">Child ID</string>
+    <string name="finance_amount_field">Amount (KES)</string>
+    <string name="finance_kes_prefix">KES </string>
+    <string name="finance_type_field">Transaction Type</string>
+    <string name="finance_payment_method_field">Payment Method</string>
+    <string name="finance_mpesa_phone_field">M-Pesa Phone Number</string>
+    <string name="finance_mpesa_txn_id_field">M-Pesa Transaction ID (Optional)</string>
+    <string name="finance_bank_account_field">Bank Account Number</string>
+    <string name="finance_bank_ref_field">Bank Reference Number</string>
+    <string name="finance_date_field">Date (YYYY-MM-DD)</string>
+    <string name="finance_desc_field">Description (Optional)</string>
+    <string name="finance_save">Save</string>
+    <string name="finance_cancel">Cancel</string>
+    <string name="finance_update">Update</string>
+    <string name="finance_delete">Delete</string>
+
+    <string name="txn_type_allowance">Allowance</string>
+    <string name="txn_type_education">Education</string>
+    <string name="txn_type_medical">Medical</string>
+    <string name="txn_type_clothing">Clothing</string>
+    <string name="txn_type_other">Other</string>
+
+    <string name="pay_method_cash">Cash</string>
+    <string name="pay_method_mpesa">M-Pesa</string>
+    <string name="pay_method_bank">Bank Transfer</string>
+    <string name="pay_method_mobile">Mobile Banking</string>
+    <string name="pay_method_cheque">Cheque</string>
 </resources>

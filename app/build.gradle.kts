@@ -1,7 +1,6 @@
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -10,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.yourdomain.adoptionchildcare"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.adoption_and_childcare"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -35,23 +34,27 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
     buildFeatures {
         viewBinding = true
-        dataBinding = true // Add databinding support
-        compose = true // Enable Compose
+        dataBinding = true
+        compose = true
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 hilt {
     enableAggregatingTask = true
 }
 
-// Suppress Hilt/Dagger unrecognized processor options warnings
+ksp {
+    arg("dagger.fastInit", "enabled")
+    arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+    arg("dagger.hilt.android.internal.projectType", "APP")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-Xlint:-processing", "-Xlint:-options"))
 }
@@ -67,23 +70,23 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    // Jetpack Compose BOM - this manages all Compose library versions
-    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    // Jetpack Compose BOM
+    implementation(platform(libs.compose.bom))
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.navigation:navigation-compose:2.7.4")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
 
-    // Compose integration with existing components
-    implementation("androidx.compose.ui:ui-viewbinding")
+    // Compose integration
+    implementation(libs.androidx.compose.ui.viewbinding)
 
     // Additional Compose libraries
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation(libs.coil.compose)
 
     // Room
     implementation(libs.androidx.room.runtime)
@@ -107,6 +110,7 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.concurrent.futures.ktx)
     implementation(libs.hilt.work)
     ksp(libs.hilt.androidx.compiler)
 
@@ -116,11 +120,14 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Compose Testing
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Hilt Navigation Compose for hiltViewModel
+    // Hilt Navigation Compose
     implementation(libs.hilt.androidx.navigation.compose)
+
+    // Play Services Location
+    implementation(libs.play.services.location)
 }

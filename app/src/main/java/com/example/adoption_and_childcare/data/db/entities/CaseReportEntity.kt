@@ -15,6 +15,9 @@ data class CaseReportEntity(
     @ColumnInfo(name = "report_type") val reportType: String? = null,
     @ColumnInfo(name = "content") val content: String,
     @ColumnInfo(name = "is_confidential") val isConfidential: Boolean = false,
+    @ColumnInfo(name = "report_data", typeAffinity = ColumnInfo.BLOB) val reportData: ByteArray? = null,
+    @ColumnInfo(name = "report_mime_type") val reportMimeType: String? = null,
+    @ColumnInfo(name = "report_size") val reportSize: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null
 )

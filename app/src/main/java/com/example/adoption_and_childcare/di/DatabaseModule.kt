@@ -3,23 +3,7 @@ package com.example.adoption_and_childcare.di
 import android.content.Context
 import androidx.room.Room
 import com.example.adoption_and_childcare.data.db.AppDatabase
-import com.example.adoption_and_childcare.data.db.dao.AdoptionApplicationDao
-import com.example.adoption_and_childcare.data.db.dao.AuditLogDao
-import com.example.adoption_and_childcare.data.db.dao.CaseReportDao
-import com.example.adoption_and_childcare.data.db.dao.ChildDao
-import com.example.adoption_and_childcare.data.db.dao.CourtCaseDao
-import com.example.adoption_and_childcare.data.db.dao.DocumentDao
-import com.example.adoption_and_childcare.data.db.dao.EducationRecordDao
-import com.example.adoption_and_childcare.data.db.dao.FamilyDao
-import com.example.adoption_and_childcare.data.db.dao.GuardianDao
-import com.example.adoption_and_childcare.data.db.dao.HomeStudyDao
-import com.example.adoption_and_childcare.data.db.dao.MedicalRecordDao
-import com.example.adoption_and_childcare.data.db.dao.MoneyRecordDao
-import com.example.adoption_and_childcare.data.db.dao.NotificationDao
-import com.example.adoption_and_childcare.data.db.dao.PermissionDao
-import com.example.adoption_and_childcare.data.db.dao.PlacementDao
-import com.example.adoption_and_childcare.data.db.dao.UserDao
-import com.example.adoption_and_childcare.data.db.dao.UserPermissionDao
+import com.example.adoption_and_childcare.data.db.dao.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,6 +23,13 @@ object DatabaseModule {
             AppDatabase::class.java,
             "adoption_childcare.db"
         )
+            .addMigrations(
+                AppDatabase.MIGRATION_3_4, 
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6,
+                AppDatabase.MIGRATION_6_7,
+                AppDatabase.MIGRATION_7_8
+            )
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -93,4 +84,10 @@ object DatabaseModule {
 
     @Provides
     fun provideNotificationDao(database: AppDatabase): NotificationDao = database.notificationDao()
+
+    @Provides
+    fun provideSyncQueueDao(database: AppDatabase): SyncQueueDao = database.syncQueueDao()
+
+    @Provides
+    fun provideSOSLocationDao(database: AppDatabase): SOSLocationDao = database.sosLocationDao()
 }

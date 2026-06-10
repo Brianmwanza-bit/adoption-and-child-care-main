@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +18,9 @@ import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CaseReportsScreen() {
+fun CaseReportsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     var reports by remember { mutableStateOf<List<CaseReportEntity>>(emptyList()) }
@@ -35,6 +37,16 @@ fun CaseReportsScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Case Reports") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Report")
@@ -42,8 +54,6 @@ fun CaseReportsScreen() {
         }
     ) { padding ->
     Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        Text(text = "Reports & Cases", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
         if (reports.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No reports yet") }
         } else {

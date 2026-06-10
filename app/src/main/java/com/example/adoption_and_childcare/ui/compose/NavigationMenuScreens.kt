@@ -3,6 +3,8 @@ package com.example.adoption_and_childcare.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -157,7 +159,8 @@ fun ShortcutsScreen() {
 }
 
 @Composable
-fun PermissionsScreen() {
+fun AppPermissionsScreen() {
+    val scrollState = rememberScrollState()
     val permissions = listOf(
         "View Child Records" to true,
         "Edit Case Reports" to true,
@@ -166,7 +169,7 @@ fun PermissionsScreen() {
         "Approve Applications" to false
     )
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(scrollState)) {
         Text("Permissions", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         Card(
@@ -194,8 +197,9 @@ fun PermissionsScreen() {
 
 @Composable
 fun HelpAboutScreen() {
+    val scrollState = rememberScrollState()
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(Icons.Default.ChildCare, contentDescription = null, modifier = Modifier.size(100.dp), tint = Color(0xFF4CAF50))

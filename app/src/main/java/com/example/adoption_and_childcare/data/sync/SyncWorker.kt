@@ -5,82 +5,41 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.adoption_and_childcare.data.db.dao.ChildDao
-import com.example.adoption_and_childcare.data.db.dao.FamilyDao
-import com.example.adoption_and_childcare.data.db.dao.AdoptionApplicationDao
-import com.example.adoption_and_childcare.network.RetrofitClient
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
+/**
+ * Worker class for handling periodic background synchronization.
+ * Leverages [SyncManager] to perform the actual data transfer between local and remote sources.
+ */
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val childDao: ChildDao,
-    private val familyDao: FamilyDao,
-    private val applicationDao: AdoptionApplicationDao
+    private val syncManager: SyncManager
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         return try {
-            syncChildren()
-            syncFamilies()
-            syncApplications()
-            Result.success()
+            Log.d("SyncWorker", "Starting background sync...")
+            val result = syncManager.sync()
+            when (result) {
+                is SyncResult.Success -> {
+                    Log.d("SyncWorker", "Sync successful: Pushed ${result.pushed}, Pulled ${result.pulled}")
+                    Result.success()
+                }
+                is SyncResult.Error -> {
+                    Log.e("SyncWorker", "Sync failed with error: ${result.message}")
+                    Result.retry()
+                }
+                is SyncResult.Offline -> {
+                    Log.d("SyncWorker", "Sync skipped: Device is offline")
+                    Result.retry()
+                }
+            }
         } catch (e: Exception) {
-            Log.e("SyncWorker", "Sync failed: ${e.message}")
+            Log.e("SyncWorker", "Unexpected sync exception: ${e.message}")
             Result.retry()
-        }
-    }
-
-    private suspend fun syncChildren() {
-        val pending = childDao.getPendingSync()
-        if (pending.isNotEmpty()) {
-            val response = RetrofitClient.syncApiService.syncChildrenBatch(pending)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body?.success == true) {
-                    val now = System.currentTimeMillis()
-                    body.synced_local_ids.forEach { localId ->
-                        val remoteId = body.remote_ids?.get(localId)
-                        childDao.updateSyncStatus(localId, "SYNCED", remoteId, now)
-                    }
-                }
-            }
-        }
-    }
-
-    private suspend fun syncFamilies() {
-        val pending = familyDao.getPendingSync()
-        if (pending.isNotEmpty()) {
-            val response = RetrofitClient.syncApiService.syncFamiliesBatch(pending)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body?.success == true) {
-                    val now = System.currentTimeMillis()
-                    body.synced_local_ids.forEach { localId ->
-                        val remoteId = body.remote_ids?.get(localId)
-                        familyDao.updateSyncStatus(localId, "SYNCED", remoteId, now)
-                    }
-                }
-            }
-        }
-    }
-
-    private suspend fun syncApplications() {
-        val pending = applicationDao.getPendingSync()
-        if (pending.isNotEmpty()) {
-            val response = RetrofitClient.syncApiService.syncApplicationsBatch(pending)
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body?.success == true) {
-                    val now = System.currentTimeMillis()
-                    body.synced_local_ids.forEach { localId ->
-                        val remoteId = body.remote_ids?.get(localId)
-                        applicationDao.updateSyncStatus(localId, "SYNCED", remoteId, now)
-                    }
-                }
-            }
         }
     }
 }

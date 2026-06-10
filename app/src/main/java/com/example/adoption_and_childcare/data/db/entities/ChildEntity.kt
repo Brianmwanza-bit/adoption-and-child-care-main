@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 data class ChildEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "child_id") val childId: Int = 0,
+    @ColumnInfo(name = "case_number") val caseNumber: String? = null,
     @ColumnInfo(name = "first_name") val firstName: String,
     @ColumnInfo(name = "middle_name") val middleName: String? = null,
     @ColumnInfo(name = "last_name") val lastName: String,
@@ -16,6 +17,11 @@ data class ChildEntity(
     @ColumnInfo(name = "birth_certificate_no") val birthCertificateNo: String? = null,
     @ColumnInfo(name = "nationality") val nationality: String? = null,
     @ColumnInfo(name = "photo_url") val photoUrl: String? = null,
+    @ColumnInfo(name = "photo_data", typeAffinity = ColumnInfo.BLOB) val photoData: ByteArray? = null,
+    @ColumnInfo(name = "photo_mime_type") val photoMimeType: String? = null,
+    @ColumnInfo(name = "photo_size") val photoSize: Int? = null,
+    @ColumnInfo(name = "current_county") val currentCounty: String? = null,
+    @ColumnInfo(name = "county") val county: String? = null,
     @ColumnInfo(name = "is_emancipated") val isEmancipated: Boolean = false,
     @ColumnInfo(name = "emancipation_date") val emancipationDate: String? = null,
     @ColumnInfo(name = "emancipation_reason") val emancipationReason: String? = null,
@@ -23,6 +29,7 @@ data class ChildEntity(
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null,
     @ColumnInfo(name = "created_by") val createdBy: Int? = null,
+    @ColumnInfo(name = "assigned_case_worker") val assignedCaseWorker: Int? = null,
     
     // Sync Metadata
     @ColumnInfo(name = "remote_id") val remoteId: String? = null,

@@ -15,6 +15,15 @@ interface UserPermissionDao {
     @Query("DELETE FROM user_permissions WHERE user_id = :userId AND permission_id = :permissionId")
     suspend fun deleteByUserAndPermission(userId: Int, permissionId: Int)
 
+    @Query("DELETE FROM user_permissions WHERE id = :id")
+    suspend fun deleteById(id: Int)
+
+    @Query("SELECT * FROM user_permissions WHERE id = :id")
+    suspend fun findById(id: Int): UserPermissionEntity?
+
+    @Query("SELECT * FROM user_permissions")
+    suspend fun getAll(): List<UserPermissionEntity>
+
     @Query("SELECT * FROM user_permissions ORDER BY user_id")
     fun observeAll(): Flow<List<UserPermissionEntity>>
 

@@ -4,6 +4,20 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a foster care match in the system.
+ * 
+ * This entity tracks matches between children and foster families.
+ * 
+ * @property matchId Unique identifier for the match (auto-generated).
+ * @property familyId ID of the foster family.
+ * @property caseWorkerId User ID of the case worker managing the match.
+ * @property childId ID of the child being matched.
+ * @property status Current status (e.g., Pending, Active).
+ * @property createdAt Date when the match was created.
+ * @property matchedAt Date when the match was finalized.
+ * @property notes Additional notes about the match.
+ */
 @Entity(tableName = "foster_matches")
 data class FosterMatchEntity(
     @PrimaryKey(autoGenerate = true)

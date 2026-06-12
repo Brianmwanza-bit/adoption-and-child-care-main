@@ -4,6 +4,40 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a child in the adoption and child care system.
+ * 
+ * This entity stores comprehensive information about children under care,
+ * including personal details, placement status, case information, and sync metadata
+ * for offline-first functionality.
+ * 
+ * @property childId Unique identifier for the child (auto-generated).
+ * @property caseNumber Unique case number assigned to the child.
+ * @property firstName Child's first name.
+ * @property middleName Child's middle name.
+ * @property lastName Child's last name.
+ * @property gender Child's gender.
+ * @property dateOfBirth Child's date of birth.
+ * @property birthCertificateNo Birth certificate number.
+ * @property nationality Child's nationality.
+ * @property photoUrl URL to child's photo.
+ * @property photoData Binary data of child's photo.
+ * @property photoMimeType MIME type of child's photo.
+ * @property photoSize Size of child's photo in bytes.
+ * @property currentCounty County where the child is currently located.
+ * @property county County of origin.
+ * @property isEmancipated Whether the child is legally emancipated.
+ * @property emancipationDate Date of emancipation.
+ * @property emancipationReason Reason for emancipation.
+ * @property currentStatus Current status of the child (e.g., Active, Placed).
+ * @property createdAt Timestamp when the record was created.
+ * @property updatedAt Timestamp when the record was last updated.
+ * @property createdBy User ID of the creator.
+ * @property assignedCaseWorker User ID of the assigned case worker.
+ * @property remoteId Remote server ID for synchronization.
+ * @property syncStatus Synchronization status (PENDING, SYNCED, ERROR).
+ * @property lastSyncedAt Timestamp of last synchronization.
+ */
 @Entity(tableName = "children")
 data class ChildEntity(
     @PrimaryKey(autoGenerate = true)

@@ -16,6 +16,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.GuardianEntity
+import com.example.adoption_and_childcare.data.repository.GuardianRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -29,8 +31,16 @@ import kotlinx.coroutines.launch
 fun GuardiansScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { GuardianRepositoryImpl(db.guardianDao(), apiService) }
+    
     var guardians by remember { mutableStateOf<List<GuardianEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
 
     var childId by remember { mutableStateOf(TextFieldValue("")) }
@@ -39,9 +49,18 @@ fun GuardiansScreen(onBack: () -> Unit = {}) {
     var relationship by remember { mutableStateOf(TextFieldValue("")) }
     var phone by remember { mutableStateOf(TextFieldValue("")) }
 
+    // Load from local DB
     LaunchedEffect(Unit) {
         db.guardianDao().observeAll().collectLatest { list ->
             guardians = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -138,5 +157,33 @@ fun GuardiansScreen(onBack: () -> Unit = {}) {
                 TextButton(onClick = { showCreate = false }) { Text("Cancel") }
             }
         )
+    }
+}
+
+/**
+ * Helper function to fetch guardians from API.
+ */
+private fun fetchFromApi(
+    repository: GuardianRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch guardians: ${e.message}")
+        }
     }
 }

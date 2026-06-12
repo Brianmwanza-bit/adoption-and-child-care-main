@@ -4,6 +4,19 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a notification in the system.
+ * 
+ * This entity stores notifications for users, including alerts, reminders,
+ * and system messages.
+ * 
+ * @property notificationId Unique identifier for the notification (auto-generated).
+ * @property userId ID of the user receiving the notification.
+ * @property title Title of the notification.
+ * @property message Detailed message content.
+ * @property isRead Whether the notification has been read.
+ * @property createdAt Timestamp when the notification was created.
+ */
 @Entity(tableName = "notifications")
 data class NotificationEntity(
     @PrimaryKey(autoGenerate = true)

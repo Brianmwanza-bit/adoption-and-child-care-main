@@ -624,7 +624,22 @@ const dbTables = [
   { name: 'foster_tasks', pk: 'task_id' },
   { name: 'foster_matches', pk: 'match_id' },
   { name: 'background_checks', pk: 'check_id' },
-  { name: 'notifications', pk: 'notification_id' }
+  { name: 'notifications', pk: 'notification_id' },
+  { name: 'tasks', pk: 'task_id' },
+  { name: 'action_items', pk: 'action_id' },
+  { name: 'dashboard_metrics', pk: 'metric_id' },
+  { name: 'dashboard_preferences', pk: 'preference_id' },
+  { name: 'critical_dates', pk: 'date_id' },
+  { name: 'worker_messages', pk: 'message_id' },
+  { name: 'risk_assessments', pk: 'assessment_id' },
+  { name: 'permanency_plans', pk: 'plan_id' },
+  { name: 'caseload', pk: 'caseload_id' },
+  { name: 'case_urgency_flags', pk: 'flag_id' },
+  { name: 'case_activities', pk: 'activity_id' },
+  { name: 'case_deadlines', pk: 'deadline_id' },
+  { name: 'case_approvals', pk: 'approval_id' },
+  { name: 'placement_compatibility', pk: 'compatibility_id' },
+  { name: 'workload_tracking', pk: 'workload_id' }
 ];
 
 dbTables.forEach(table => {
@@ -653,23 +668,340 @@ dbTables.forEach(table => {
 });
 
 // Sync Endpoints
+
+// Map camelCase Room entity keys to MySQL snake_case columns
+const columnMap = {
+  userId: 'user_id', username: 'username', passwordHash: 'password_hash', role: 'role',
+  email: 'email', phone: 'phone', nationalIdNo: 'national_id_no', idNumber: 'id_number',
+  county: 'county', subCounty: 'sub_county', photo: 'photo', photoUrl: 'photo_url',
+  photoMimeType: 'photo_mime_type', photoSize: 'photo_size', latitude: 'latitude', longitude: 'longitude',
+  createdAt: 'created_at', updatedAt: 'updated_at', lastLogin: 'last_login', isActive: 'is_active',
+  childId: 'child_id', caseNumber: 'case_number', firstName: 'first_name', lastName: 'last_name',
+  middleName: 'middle_name', gender: 'gender', dateOfBirth: 'date_of_birth',
+  birthCertificateNo: 'birth_certificate_no', nationality: 'nationality',
+  currentCounty: 'current_county', currentStatus: 'current_status',
+  isEmancipated: 'is_emancipated', emancipationDate: 'emancipation_date',
+  emancipationReason: 'emancipation_reason', createdBy: 'created_by',
+  assignedCaseWorker: 'assigned_case_worker', riskLevel: 'risk_level', casePriority: 'case_priority',
+  familyId: 'family_id', primaryContactName: 'primary_contact_name',
+  secondaryContactName: 'secondary_contact_name', address: 'address', city: 'city',
+  state: 'state', country: 'country', status: 'status', householdSize: 'household_size',
+  maximumCapacity: 'maximum_capacity', currentOccupancy: 'current_occupancy',
+  familyRegistrationNo: 'family_registration_no', familyType: 'family_type',
+  registrationStatus: 'registration_status', syncStatus: 'sync_status',
+  lastSyncedAt: 'last_synced_at', guardianId: 'guardian_id', relationship: 'relationship',
+  isPrimary: 'is_primary', legalDocPath: 'legal_doc_path', legalDocMimeType: 'legal_doc_mime_type',
+  legalDocSize: 'legal_doc_size', verificationStatus: 'verification_status',
+  placementId: 'placement_id', placementType: 'placement_type', startDate: 'start_date',
+  endDate: 'end_date', isCurrent: 'is_current', sourceFamilyId: 'source_family_id',
+  destinationFamilyId: 'destination_family_id', organization: 'organization',
+  placementAddress: 'placement_address', contactPerson: 'contact_person',
+  contactPhone: 'contact_phone', contactEmail: 'contact_email', notes: 'notes',
+  recordId: 'record_id', visitDate: 'visit_date', doctorName: 'doctor_name',
+  hospitalName: 'hospital_name', diagnosis: 'diagnosis', treatment: 'treatment',
+  medications: 'medications', followUpDate: 'follow_up_date',
+  isImmunization: 'is_immunization', immunizationType: 'immunization_type',
+  medicalReportMimeType: 'medical_report_mime_type', medicalReportSize: 'medical_report_size',
+  reportId: 'report_id', reportDate: 'report_date', reportTitle: 'report_title',
+  reportType: 'report_type', content: 'content', isConfidential: 'is_confidential',
+  reportMimeType: 'report_mime_type', reportSize: 'report_size',
+  moneyId: 'money_id', amount: 'amount', transactionType: 'transaction_type',
+  description: 'description', date: 'date', receiptMimeType: 'receipt_mime_type',
+  receiptSize: 'receipt_size', schoolName: 'school_name', grade: 'grade',
+  enrollmentDate: 'enrollment_date', reportCardMimeType: 'report_card_mime_type',
+  reportCardSize: 'report_card_size', documentId: 'document_id', documentType: 'document_type',
+  fileName: 'file_name', fileType: 'file_type', fileSize: 'file_size', filePath: 'file_path',
+  mimeType: 'mime_type', uploadedAt: 'uploaded_at', uploadedBy: 'uploaded_by',
+  caseId: 'case_id', courtName: 'court_name', hearingDate: 'hearing_date', outcome: 'outcome',
+  applicationId: 'application_id', applicationNumber: 'application_number',
+  submittedAt: 'submitted_at', studyId: 'study_id', homeStudyIdMap: 'home_study_idMap',
+  startedAt: 'started_at', completedAt: 'completed_at', result: 'result',
+  studyReportMimeType: 'study_report_mime_type', studyReportSize: 'study_report_size',
+  taskId: 'task_id', caseWorkerId: 'case_worker_id', dueDate: 'due_date',
+  matchId: 'match_id', matchedAt: 'matched_at', checkId: 'check_id',
+  clearanceCertificatePath: 'clearance_certificate_path',
+  clearanceMimeType: 'clearance_mime_type', clearanceSize: 'clearance_size',
+  logId: 'log_id', tableName: 'table_name', changedBy: 'changed_by', changedAt: 'changed_at',
+  oldData: 'old_data', newData: 'new_data', action: 'action',
+  notificationId: 'notification_id', title: 'title', message: 'message',
+  isRead: 'is_read', sentAt: 'sent_at', permissionId: 'permission_id',
+  name: 'name', settingId: 'setting_id', settingKey: 'setting_key',
+  settingValue: 'setting_value', category: 'category',
+  eventId: 'event_id', triggeredBy: 'triggered_by', accuracyMeters: 'accuracy_meters',
+  channelsAlerted: 'channels_alerted', nearestStationName: 'nearest_station_name',
+  nearestStationPhone: 'nearest_station_phone', nearestStationDistanceKm: 'nearest_station_distance_km',
+  resolvedAt: 'resolved_at', resolvedBy: 'resolved_by',
+  sosEventId: 'sos_event_id', accuracy: 'accuracy', timestamp: 'timestamp',
+  // Dashboard enhancement table columns
+  taskId: 'task_id', assignedTo: 'assigned_to', relatedEntityType: 'related_entity_type',
+  relatedEntityId: 'related_entity_id',
+  actionId: 'action_id', assigneeId: 'assignee_id', relatedCaseId: 'related_case_id',
+  metricId: 'metric_id', metricName: 'metric_name', metricValue: 'metric_value',
+  previousValue: 'previous_value', trendPercentage: 'trend_percentage',
+  calculatedDate: 'calculated_date', dateRangeDays: 'date_range_days',
+  preferenceId: 'preference_id', layoutType: 'layout_type', showMetrics: 'show_metrics',
+  showAlerts: 'show_alerts', showActionItems: 'show_action_items',
+  showRecentUpdates: 'show_recent_updates', darkMode: 'dark_mode',
+  notificationFrequency: 'notification_frequency', quietHoursEnabled: 'quiet_hours_enabled',
+  quietHoursStart: 'quiet_hours_start', quietHoursEnd: 'quiet_hours_end',
+  dateId: 'date_id', dateType: 'date_type', eventDate: 'event_date',
+  isCompleted: 'is_completed', completedDate: 'completed_date',
+  messageId: 'message_id', senderId: 'sender_id', recipientId: 'recipient_id',
+  assessmentId: 'assessment_id', assessmentDate: 'assessment_date',
+  safetyScore: 'safety_score', maltreatmentRiskIndicators: 'maltreatment_risk_indicators',
+  behavioralConcerns: 'behavioral_concerns', medicalHealthRisks: 'medical_health_risks',
+  educationalGaps: 'educational_gaps', assessmentBy: 'assessment_by',
+  planId: 'plan_id', planNumber: 'plan_number', primaryGoal: 'primary_goal',
+  secondaryGoal: 'secondary_goal', tertiaryGoal: 'tertiary_goal',
+  reviewDate: 'review_date', completionDate: 'completion_date',
+  concurrentPlanning: 'concurrent_planning',
+  caseloadId: 'caseload_id', workerId: 'worker_id',
+  activeCases: 'active_cases', pendingReviews: 'pending_reviews',
+  capacityPercentage: 'capacity_percentage',
+  flagId: 'flag_id', flagType: 'flag_type',
+  activityId: 'activity_id', activityType: 'activity_type',
+  activityDate: 'activity_date', activityTime: 'activity_time',
+  caseworkerId: 'caseworker_id', durationMinutes: 'duration_minutes',
+  deadlineId: 'deadline_id', deadlineType: 'deadline_type',
+  responsibleParty: 'responsible_party', extensionDate: 'extension_date',
+  extensionReason: 'extension_reason', completionNotes: 'completion_notes',
+  approvalId: 'approval_id', approvalType: 'approval_type',
+  submittedBy: 'submitted_by', reviewedBy: 'reviewed_by',
+  submissionComments: 'submission_comments', reviewComments: 'review_comments',
+  revisionRequestedOn: 'revision_requested_on', submittedDate: 'submitted_date',
+  reviewedDate: 'reviewed_date', requiredApproval: 'required_approval',
+  compatibilityId: 'compatibility_id', compatibilityScore: 'compatibility_score',
+  medicalNeedsSupport: 'medical_needs_support',
+  behavioralNeedsSupport: 'behavioral_needs_support',
+  educationalNeedsSupport: 'educational_needs_support',
+  emotionalSupportCapacity: 'emotional_support_capacity',
+  geographicPreferencesMatch: 'geographic_preferences_match',
+  religiousPreferenceMatch: 'religious_preference_match',
+  culturalFitScore: 'cultural_fit_score', specialConsiderations: 'special_considerations',
+  assessedBy: 'assessed_by', lastReviewed: 'last_reviewed',
+  workloadId: 'workload_id', caseworkerIdMap: 'caseworker_id',
+  trackingDate: 'tracking_date', totalActiveCases: 'total_active_cases',
+  casesWithUrgentFlags: 'cases_with_urgent_flags', overdueTasksCount: 'overdue_tasks_count',
+  scheduledActivitiesToday: 'scheduled_activities_today',
+  completedActivities: 'completed_activities', documentsProcessed: 'documents_processed',
+  approvalsPending: 'approvals_pending', timeLoggedHours: 'time_logged_hours',
+};
+
+// Fields that are BLOB/binary and should be excluded from JSON sync
+const blobFields = new Set([
+  'photoData', 'photo_data', 'legalDocData', 'legal_doc_data', 'fileData', 'file_data',
+  'medicalReportData', 'medical_report_data', 'reportData', 'report_data',
+  'receiptData', 'receipt_data', 'reportCardData', 'report_card_data',
+  'studyReportData', 'study_report_data', 'clearanceCertificateData', 'clearance_certificate_data'
+]);
+
+// Known primary keys for each table
+const tablePkMap = {};
+dbTables.forEach(t => { tablePkMap[t.name] = t.pk; });
+tablePkMap['court_cases'] = 'case_id';
+tablePkMap['guardians'] = 'guardian_id';
+tablePkMap['audit_logs'] = 'log_id';
+tablePkMap['permissions'] = 'permission_id';
+tablePkMap['user_permissions'] = 'user_permission_id';
+tablePkMap['system_settings'] = 'setting_id';
+tablePkMap['families'] = 'family_id';
+tablePkMap['emergency_events'] = 'event_id';
+tablePkMap['sos_location_history'] = 'history_id';
+tablePkMap['fcm_tokens'] = 'token_id';
+  tablePkMap['counties'] = 'county_id';
+  tablePkMap['tasks'] = 'task_id';
+  tablePkMap['action_items'] = 'action_id';
+  tablePkMap['dashboard_metrics'] = 'metric_id';
+  tablePkMap['dashboard_preferences'] = 'preference_id';
+  tablePkMap['critical_dates'] = 'date_id';
+  tablePkMap['worker_messages'] = 'message_id';
+  tablePkMap['risk_assessments'] = 'assessment_id';
+  tablePkMap['permanency_plans'] = 'plan_id';
+  tablePkMap['caseload'] = 'caseload_id';
+  tablePkMap['case_urgency_flags'] = 'flag_id';
+  tablePkMap['case_activities'] = 'activity_id';
+  tablePkMap['case_deadlines'] = 'deadline_id';
+  tablePkMap['case_approvals'] = 'approval_id';
+  tablePkMap['placement_compatibility'] = 'compatibility_id';
+  tablePkMap['workload_tracking'] = 'workload_id';
+
+function toColumnName(key) {
+  if (columnMap[key]) return columnMap[key];
+  if (blobFields.has(key)) return null;
+  return key.replace(/[A-Z]/g, letter => '_' + letter.toLowerCase());
+}
+
+function processSyncItem(item, callback) {
+  const { table_name, operation, record_id, payload } = item;
+  let data;
+  try {
+    data = JSON.parse(payload);
+  } catch (e) {
+    return callback(null, { id: record_id, message: 'Invalid JSON payload' });
+  }
+  const columns = [];
+  const values = [];
+  for (const [key, val] of Object.entries(data)) {
+    if (blobFields.has(key)) continue;
+    const colName = toColumnName(key);
+    if (!colName) continue;
+    const pk = tablePkMap[table_name];
+    if (operation === 'INSERT' && colName === pk && (val === 0 || val === null)) continue;
+    columns.push(colName);
+    values.push(val);
+  }
+  if (columns.length === 0) {
+    return callback(null, { id: record_id, message: 'No data fields to sync' });
+  }
+  const pk = tablePkMap[table_name] || 'id';
+  if (operation === 'DELETE') {
+    db.query(`DELETE FROM ${table_name} WHERE ${pk} = ?`, [record_id], (err) => {
+      if (err) return callback(err);
+      callback(null);
+    });
+  } else if (operation === 'UPDATE') {
+    const setClause = columns.map(c => `${c} = ?`).join(', ');
+    db.query(`UPDATE ${table_name} SET ${setClause} WHERE ${pk} = ?`, [...values, record_id], (err) => {
+      if (err) {
+        const insertClause = columns.join(', ');
+        const placeholders = columns.map(() => '?').join(', ');
+        db.query(`INSERT INTO ${table_name} (${insertClause}) VALUES (${placeholders})`, values, (insertErr) => {
+          if (insertErr) return callback(insertErr);
+          callback(null);
+        });
+      } else {
+        callback(null);
+      }
+    });
+  } else {
+    const insertClause = columns.join(', ');
+    const placeholders = columns.map(() => '?').join(', ');
+    db.query(`INSERT INTO ${table_name} (${insertClause}) VALUES (${placeholders})`, values, (err) => {
+      if (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+          const setClause = columns.map(c => `${c} = ?`).join(', ');
+          db.query(`UPDATE ${table_name} SET ${setClause} WHERE ${pk} = ?`, [...values, record_id], (updateErr) => {
+            if (updateErr) return callback(updateErr);
+            callback(null);
+          });
+        } else {
+          return callback(err);
+        }
+      } else {
+        callback(null);
+      }
+    });
+  }
+}
+
 app.post('/api/v2/sync/push', authenticateToken, (req, res, next) => {
   const syncItems = req.body;
+  if (!Array.isArray(syncItems)) {
+    return res.status(400).json({ success: false, applied: 0, errors: ['Request body must be an array'] });
+  }
   let appliedCount = 0;
-  syncItems.forEach(item => {
-    const { table_name, operation, record_id, payload } = item;
-    const data = JSON.parse(payload);
-    // Simple logic: insert/update based on operation
-    appliedCount++;
+  let errors = [];
+  let completed = 0;
+  if (syncItems.length === 0) {
+    return res.json({ success: true, applied: 0, errors: [] });
+  }
+  syncItems.forEach((item) => {
+    processSyncItem(item, (err, syncError) => {
+      completed++;
+      if (err) {
+        console.error(`Sync push error for ${item.table_name}/${item.record_id}:`, err.message);
+        errors.push(`${item.table_name}/${item.record_id}: ${err.message}`);
+      } else if (syncError) {
+        errors.push(`${item.table_name}/${item.record_id}: ${syncError.message}`);
+      } else {
+        appliedCount++;
+        logAudit(item.table_name, parseInt(item.record_id), item.operation.toLowerCase(), req.user.user_id);
+      }
+      if (completed === syncItems.length) {
+        res.json({ success: true, applied: appliedCount, errors });
+      }
+    });
   });
-  res.json({ success: true, applied: appliedCount });
 });
 
 app.get('/api/v2/sync/pull', authenticateToken, (req, res, next) => {
   const { since } = req.query;
-  const sinceDate = new Date(parseInt(since) * 1000).toISOString().slice(0, 19).replace('T', ' ');
-  res.json({ children: [], families: [] }); // Placeholder
+  if (!db) {
+    return res.status(500).json({ success: false, error: 'Database not initialized' });
+  }
+  const sinceDate = since ? new Date(parseInt(since) * 1000).toISOString().slice(0, 19).replace('T', ' ') : null;
+  const pullQueries = [
+    { table: 'users', key: 'users' },
+    { table: 'children', key: 'children' },
+    { table: 'families', key: 'families' },
+    { table: 'family_profile', key: 'family_profile' },
+    { table: 'placements', key: 'placements' },
+    { table: 'medical_records', key: 'medical_records' },
+    { table: 'education_records', key: 'education_records' },
+    { table: 'money_records', key: 'money_records' },
+    { table: 'documents', key: 'documents' },
+    { table: 'case_reports', key: 'case_reports' },
+    { table: 'court_cases', key: 'court_cases' },
+    { table: 'guardians', key: 'guardians' },
+    { table: 'adoption_applications', key: 'adoption_applications' },
+    { table: 'home_studies', key: 'home_studies' },
+    { table: 'foster_tasks', key: 'foster_tasks' },
+    { table: 'foster_matches', key: 'foster_matches' },
+    { table: 'background_checks', key: 'background_checks' },
+    { table: 'notifications', key: 'notifications' },
+    { table: 'audit_logs', key: 'audit_logs' },
+    { table: 'permissions', key: 'permissions' },
+    { table: 'user_permissions', key: 'user_permissions' },
+    { table: 'system_settings', key: 'system_settings' },
+    { table: 'tasks', key: 'tasks' },
+    { table: 'action_items', key: 'action_items' },
+    { table: 'dashboard_metrics', key: 'dashboard_metrics' },
+    { table: 'dashboard_preferences', key: 'dashboard_preferences' },
+    { table: 'critical_dates', key: 'critical_dates' },
+    { table: 'worker_messages', key: 'worker_messages' },
+    { table: 'risk_assessments', key: 'risk_assessments' },
+    { table: 'permanency_plans', key: 'permanency_plans' },
+    { table: 'caseload', key: 'caseload' },
+    { table: 'case_urgency_flags', key: 'case_urgency_flags' },
+    { table: 'case_activities', key: 'case_activities' },
+    { table: 'case_deadlines', key: 'case_deadlines' },
+    { table: 'case_approvals', key: 'case_approvals' },
+    { table: 'placement_compatibility', key: 'placement_compatibility' },
+    { table: 'workload_tracking', key: 'workload_tracking' },
+  ];
+  const result = {};
+  let completed = 0;
+  const total = pullQueries.length;
+  pullQueries.forEach(({ table, key }) => {
+    const safeWhereClause = sinceDate ? 'WHERE updated_at >= ?' : '';
+    const query = `SELECT * FROM ${table} ${safeWhereClause}`;
+    const params = sinceDate ? [sinceDate] : [];
+    db.query(query, params, (err, rows) => {
+      completed++;
+      if (err) {
+        console.error(`Sync pull error for ${table}:`, err.message);
+        result[key] = [];
+      } else {
+        result[key] = rows.map(row => {
+          const converted = {};
+          for (const [col, val] of Object.entries(row)) {
+            const camelKey = Object.entries(columnMap).find(([ck, cc]) => cc === col);
+            if (camelKey) {
+              converted[camelKey[0]] = val;
+            } else {
+              converted[col.replace(/_([a-z])/g, (_, c) => c.toUpperCase())] = val;
+            }
+          }
+          return converted;
+        });
+      }
+      if (completed === total) {
+        res.json({ success: true, ...result });
+      }
+    });
+  });
 });
+
 
 // Emergency Endpoints
 app.post('/api/v2/emergency/alert', (req, res, next) => {

@@ -7,6 +7,13 @@ import kotlinx.coroutines.flow.Flow
 import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
 import com.google.gson.Gson
 
+/**
+ * Data Access Object for adoption application-related database operations.
+ * 
+ * This class provides methods for CRUD operations on adoption application records,
+ * including sync-aware methods that automatically queue changes for
+ * offline-first synchronization.
+ */
 @Dao
 abstract class AdoptionApplicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)

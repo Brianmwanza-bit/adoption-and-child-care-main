@@ -15,6 +15,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity
+import com.example.adoption_and_childcare.data.repository.BackgroundCheckRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -28,8 +30,16 @@ import kotlinx.coroutines.launch
 fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { BackgroundCheckRepositoryImpl(db.backgroundCheckDao(), apiService) }
+    
     var checks by remember { mutableStateOf<List<BackgroundCheckEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -42,9 +52,18 @@ fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
     val statuses = listOf("Pending", "Processing", "Completed", "Failed")
     var showStatusDropdown by remember { mutableStateOf(false) }
 
+    // Load from local DB
     LaunchedEffect(Unit) {
         db.backgroundCheckDao().observeAll().collectLatest { list ->
             checks = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -235,5 +254,33 @@ fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
                 TextButton(onClick = { showDeleteDialog = false; selectedCheck = null }) { Text("Cancel") }
             }
         )
+    }
+}
+
+/**
+ * Helper function to fetch background checks from API.
+ */
+private fun fetchFromApi(
+    repository: BackgroundCheckRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch background checks: ${e.message}")
+        }
     }
 }

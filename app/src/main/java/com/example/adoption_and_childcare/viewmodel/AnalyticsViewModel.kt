@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for analytics and reporting functionality.
+ * 
+ * This ViewModel loads and displays analytics data including
+ * placement trends, child status distribution, and summary statistics.
+ */
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor() : ViewModel() {
 

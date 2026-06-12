@@ -68,6 +68,9 @@ abstract class PlacementDao {
     @Query("SELECT COUNT(*) FROM placements")
     abstract suspend fun count(): Int
 
+    @Query("SELECT * FROM placements WHERE placement_id = :id")
+    abstract suspend fun findById(id: Int): PlacementEntity?
+
     @Query("SELECT * FROM placements ORDER BY start_date DESC")
     abstract fun observeAll(): Flow<List<PlacementEntity>>
 

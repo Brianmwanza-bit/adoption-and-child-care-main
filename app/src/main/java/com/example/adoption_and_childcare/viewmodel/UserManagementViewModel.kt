@@ -10,6 +10,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for user management operations.
+ * 
+ * This ViewModel provides methods for user CRUD operations and
+ * remote authentication (login/register).
+ * 
+ * @property userRepository Repository for user data operations.
+ */
 @HiltViewModel
 class UserManagementViewModel @Inject constructor(
     private val userRepository: UserRepository

@@ -4,6 +4,20 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a sync queue entry for offline-first synchronization.
+ * 
+ * This entity tracks local changes that need to be synchronized with the remote server.
+ * 
+ * @property id Unique identifier for the sync entry (auto-generated).
+ * @property tableName Name of the table that was modified.
+ * @property operation Type of operation (INSERT, UPDATE, DELETE).
+ * @property recordId ID of the record that was modified.
+ * @property payload JSON payload of the changed data.
+ * @property createdAt Timestamp when the change was made.
+ * @property synced Whether the change has been synced (0 = pending, 1 = synced).
+ * @property retryCount Number of retry attempts for failed syncs.
+ */
 @Entity(tableName = "sync_queue")
 data class SyncQueueEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,

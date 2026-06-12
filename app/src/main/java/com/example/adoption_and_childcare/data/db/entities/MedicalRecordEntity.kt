@@ -4,6 +4,29 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a medical record in the system.
+ * 
+ * This entity stores medical information about children, including
+ * visits, diagnoses, treatments, and immunizations.
+ * 
+ * @property recordId Unique identifier for the medical record (auto-generated).
+ * @property childId ID of the child the record belongs to.
+ * @property visitDate Date of the medical visit.
+ * @property doctorName Name of the attending doctor.
+ * @property hospitalName Name of the hospital or clinic.
+ * @property diagnosis Medical diagnosis.
+ * @property treatment Treatment prescribed.
+ * @property medications Medications prescribed.
+ * @property followUpDate Date for follow-up appointment.
+ * @property isImmunization Whether this record is for an immunization.
+ * @property immunizationType Type of immunization.
+ * @property medicalReportData Binary data of medical report file.
+ * @property medicalReportMimeType MIME type of the medical report file.
+ * @property medicalReportSize Size of the medical report file in bytes.
+ * @property createdAt Timestamp when the record was created.
+ * @property createdBy User ID of the creator.
+ */
 @Entity(tableName = "medical_records")
 data class MedicalRecordEntity(
     @PrimaryKey(autoGenerate = true)

@@ -6,6 +6,13 @@ import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Data Access Object for user-related database operations.
+ * 
+ * This interface provides methods for CRUD operations on user records,
+ * including sync-aware methods that automatically queue changes for
+ * offline-first synchronization.
+ */
 @Dao
 interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)

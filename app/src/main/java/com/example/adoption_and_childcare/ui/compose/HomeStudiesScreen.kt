@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
+import com.example.adoption_and_childcare.data.repository.HomeStudyRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -22,8 +24,16 @@ import kotlinx.coroutines.launch
 fun HomeStudiesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { HomeStudyRepositoryImpl(db.homeStudyDao(), apiService) }
+    
     var studies by remember { mutableStateOf<List<HomeStudyEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -33,9 +43,18 @@ fun HomeStudiesScreen(onBack: () -> Unit = {}) {
     var result by remember { mutableStateOf(TextFieldValue("")) }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
 
+    // Load from local DB
     LaunchedEffect(Unit) {
         db.homeStudyDao().observeAll().collectLatest { list ->
             studies = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -188,6 +207,34 @@ fun HomeStudiesScreen(onBack: () -> Unit = {}) {
                     }
                 )
             }
+        }
+    }
+}
+
+/**
+ * Helper function to fetch home studies from API.
+ */
+private fun fetchFromApi(
+    repository: HomeStudyRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch home studies: ${e.message}")
         }
     }
 }

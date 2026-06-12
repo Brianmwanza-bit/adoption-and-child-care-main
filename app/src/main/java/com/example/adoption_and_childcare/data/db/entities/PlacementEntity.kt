@@ -4,6 +4,28 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a child placement in the system.
+ * 
+ * This entity tracks where children are placed, whether in foster homes,
+ * institutions, or other care arrangements.
+ * 
+ * @property placementId Unique identifier for the placement (auto-generated).
+ * @property childId ID of the child being placed.
+ * @property destinationFamilyId ID of the family where the child is placed.
+ * @property placementType Type of placement (e.g., Foster Home, Institution).
+ * @property startDate Start date of the placement.
+ * @property endDate End date of the placement.
+ * @property organization Name of the organization handling the placement.
+ * @property placementAddress Address of the placement location.
+ * @property contactPerson Name of the contact person.
+ * @property contactPhone Phone number of the contact person.
+ * @property contactEmail Email of the contact person.
+ * @property notes Additional notes about the placement.
+ * @property isCurrent Whether this is the current active placement.
+ * @property createdAt Timestamp when the record was created.
+ * @property createdBy User ID of the creator.
+ */
 @Entity(tableName = "placements")
 data class PlacementEntity(
     @PrimaryKey(autoGenerate = true)

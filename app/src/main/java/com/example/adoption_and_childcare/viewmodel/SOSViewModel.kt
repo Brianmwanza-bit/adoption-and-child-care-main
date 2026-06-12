@@ -16,6 +16,14 @@ import javax.inject.Inject
 
 enum class SOSState { IDLE, ARMING, ACTIVE, CANCELLED, SENT }
 
+/**
+ * ViewModel for managing SOS emergency functionality.
+ * 
+ * This ViewModel handles SOS state management, emergency calling,
+ * and location tracking during emergency events.
+ * 
+ * @property context Application context for starting services.
+ */
 @HiltViewModel
 class SOSViewModel @Inject constructor(
     @ApplicationContext private val context: Context

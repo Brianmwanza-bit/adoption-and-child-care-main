@@ -188,6 +188,71 @@ interface ApiService {
     @DELETE("system-settings/{id}")
     suspend fun deleteSystemSetting(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
 
+    // Documents Endpoints
+    @GET("documents")
+    suspend fun getAllDocuments(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>>
+
+    @POST("documents")
+    suspend fun createDocument(@Header("Authorization") token: String, @Body document: com.example.adoption_and_childcare.data.db.entities.DocumentEntity): Response<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>
+
+    @PUT("documents/{id}")
+    suspend fun updateDocument(@Header("Authorization") token: String, @Path("id") id: Int, @Body document: com.example.adoption_and_childcare.data.db.entities.DocumentEntity): Response<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>
+
+    @DELETE("documents/{id}")
+    suspend fun deleteDocument(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+
+    // Education Records Endpoints
+    @GET("education-records")
+    suspend fun getAllEducationRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>>
+
+    @POST("education-records")
+    suspend fun createEducationRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>
+
+    @PUT("education-records/{id}")
+    suspend fun updateEducationRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>
+
+    @DELETE("education-records/{id}")
+    suspend fun deleteEducationRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+
+    // Medical Records Endpoints
+    @GET("medical-records")
+    suspend fun getAllMedicalRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>>
+
+    @POST("medical-records")
+    suspend fun createMedicalRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>
+
+    @PUT("medical-records/{id}")
+    suspend fun updateMedicalRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>
+
+    @DELETE("medical-records/{id}")
+    suspend fun deleteMedicalRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+
+    // Money Records Endpoints
+    @GET("money-records")
+    suspend fun getAllMoneyRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>>
+
+    @POST("money-records")
+    suspend fun createMoneyRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>
+
+    @PUT("money-records/{id}")
+    suspend fun updateMoneyRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>
+
+    @DELETE("money-records/{id}")
+    suspend fun deleteMoneyRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+
+    // Home Studies Endpoints
+    @GET("home-studies")
+    suspend fun getAllHomeStudies(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>>
+
+    @POST("home-studies")
+    suspend fun createHomeStudy(@Header("Authorization") token: String, @Body study: com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity): Response<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>
+
+    @PUT("home-studies/{id}")
+    suspend fun updateHomeStudy(@Header("Authorization") token: String, @Path("id") id: Int, @Body study: com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity): Response<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>
+
+    @DELETE("home-studies/{id}")
+    suspend fun deleteHomeStudy(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+
     // Analytics Endpoints
     @GET("analytics/summary")
     suspend fun getAnalyticsSummary(@Header("Authorization") token: String): Response<AnalyticsSummary>
@@ -261,7 +326,22 @@ data class SyncPullResponse(
     val user_permissions: List<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>,
     val system_settings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>,
     val users: List<com.example.adoption_and_childcare.data.db.entities.UserEntity>,
-    val sos_locations: List<com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity>
+    val sos_locations: List<com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity>,
+    val tasks: List<com.example.adoption_and_childcare.data.db.entities.TaskEntity>,
+    val action_items: List<com.example.adoption_and_childcare.data.db.entities.ActionItemEntity>,
+    val dashboard_metrics: List<com.example.adoption_and_childcare.data.db.entities.DashboardMetricEntity>,
+    val dashboard_preferences: List<com.example.adoption_and_childcare.data.db.entities.DashboardPreferenceEntity>,
+    val critical_dates: List<com.example.adoption_and_childcare.data.db.entities.CriticalDateEntity>,
+    val worker_messages: List<com.example.adoption_and_childcare.data.db.entities.WorkerMessageEntity>,
+    val risk_assessments: List<com.example.adoption_and_childcare.data.db.entities.RiskAssessmentEntity>,
+    val permanency_plans: List<com.example.adoption_and_childcare.data.db.entities.PermanencyPlanEntity>,
+    val caseload: List<com.example.adoption_and_childcare.data.db.entities.CaseloadEntity>,
+    val case_urgency_flags: List<com.example.adoption_and_childcare.data.db.entities.CaseUrgencyFlagEntity>,
+    val case_activities: List<com.example.adoption_and_childcare.data.db.entities.CaseActivityEntity>,
+    val case_deadlines: List<com.example.adoption_and_childcare.data.db.entities.CaseDeadlineEntity>,
+    val case_approvals: List<com.example.adoption_and_childcare.data.db.entities.CaseApprovalEntity>,
+    val placement_compatibility: List<com.example.adoption_and_childcare.data.db.entities.PlacementCompatibilityEntity>,
+    val workload_tracking: List<com.example.adoption_and_childcare.data.db.entities.WorkloadTrackingEntity>
 )
 
 data class UnreadCountResponse(val unread: Int)

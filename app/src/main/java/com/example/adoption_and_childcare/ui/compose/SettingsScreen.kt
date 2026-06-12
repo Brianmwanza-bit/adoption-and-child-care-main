@@ -72,8 +72,19 @@ fun SettingsScreen(onBack: () -> Unit = {}) {
     // Debug Settings
     var debugMode by remember { mutableStateOf(settings.debugMode) }
     var enableLogging by remember { mutableStateOf(settings.enableLogging) }
+    
+    // SOS Emergency Contacts
+    var policeNumber by remember { mutableStateOf(TextFieldValue(settings.getSosContact("police"))) }
+    var fireDepartmentNumber by remember { mutableStateOf(TextFieldValue(settings.getSosContact("fire"))) }
+    var hospitalNumber by remember { mutableStateOf(TextFieldValue(settings.getSosContact("hospital"))) }
+    var cpsNumber by remember { mutableStateOf(TextFieldValue(settings.getSosContact("cps"))) }
+    var emsNumber by remember { mutableStateOf(TextFieldValue(settings.getSosContact("ems"))) }
+    var emergencyContact1Name by remember { mutableStateOf(TextFieldValue(settings.getSosContact("emergency1_name"))) }
+    var emergencyContact1Phone by remember { mutableStateOf(TextFieldValue(settings.getSosContact("emergency1_phone"))) }
+    var emergencyContact2Name by remember { mutableStateOf(TextFieldValue(settings.getSosContact("emergency2_name"))) }
+    var emergencyContact2Phone by remember { mutableStateOf(TextFieldValue(settings.getSosContact("emergency2_phone"))) }
 
-    val roles = listOf("Admin", "Case Worker", "Foster Parent", "Social Worker", "Supervisor", "Staff")
+    val roles = listOf("Admin", "Case Worker", "Guardian", "Social Worker", "Supervisor", "Staff")
     val themeModes = listOf("System", "Light", "Dark")
     val languages = listOf("English", "Swahili", "French", "Spanish")
 
@@ -463,6 +474,151 @@ fun SettingsScreen(onBack: () -> Unit = {}) {
                 }
             }
 
+            // SOS Emergency Contacts
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFE53935))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "SOS Emergency Contacts", style = MaterialTheme.typography.titleMedium)
+                    }
+                    
+                    Text(
+                        text = "These contacts will be used in emergency situations. Fill in all available fields.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    // Emergency Services
+                    Text(
+                        text = "Emergency Services",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    OutlinedTextField(
+                        value = policeNumber,
+                        onValueChange = { policeNumber = it },
+                        label = { Text("Police") },
+                        placeholder = { Text("911 or local police number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.LocalPolice, contentDescription = null) }
+                    )
+                    
+                    OutlinedTextField(
+                        value = fireDepartmentNumber,
+                        onValueChange = { fireDepartmentNumber = it },
+                        label = { Text("Fire Department") },
+                        placeholder = { Text("911 or fire department number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.LocalFireDepartment, contentDescription = null) }
+                    )
+                    
+                    OutlinedTextField(
+                        value = hospitalNumber,
+                        onValueChange = { hospitalNumber = it },
+                        label = { Text("Hospital / Emergency Room") },
+                        placeholder = { Text("Local hospital number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.LocalHospital, contentDescription = null) }
+                    )
+                    
+                    OutlinedTextField(
+                        value = cpsNumber,
+                        onValueChange = { cpsNumber = it },
+                        label = { Text("Child Protective Services (CPS)") },
+                        placeholder = { Text("CPS hotline number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.ChildCare, contentDescription = null) }
+                    )
+                    
+                    OutlinedTextField(
+                        value = emsNumber,
+                        onValueChange = { emsNumber = it },
+                        label = { Text("Emergency Medical Transport (EMS)") },
+                        placeholder = { Text("911 or EMS number") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = { Icon(Icons.Default.Ambulance, contentDescription = null) }
+                    )
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    
+                    // Personal Emergency Contacts
+                    Text(
+                        text = "Personal Emergency Contacts",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    Text(
+                        text = "Emergency Contact 1",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    OutlinedTextField(
+                        value = emergencyContact1Name,
+                        onValueChange = { emergencyContact1Name = it },
+                        label = { Text("Name") },
+                        placeholder = { Text("Contact name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    OutlinedTextField(
+                        value = emergencyContact1Phone,
+                        onValueChange = { emergencyContact1Phone = it },
+                        label = { Text("Phone Number") },
+                        placeholder = { Text("Phone number") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = "Emergency Contact 2",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    OutlinedTextField(
+                        value = emergencyContact2Name,
+                        onValueChange = { emergencyContact2Name = it },
+                        label = { Text("Name") },
+                        placeholder = { Text("Contact name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    OutlinedTextField(
+                        value = emergencyContact2Phone,
+                        onValueChange = { emergencyContact2Phone = it },
+                        label = { Text("Phone Number") },
+                        placeholder = { Text("Phone number") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Button(
+                        onClick = {
+                            settings.setSosContact("police", policeNumber.text)
+                            settings.setSosContact("fire", fireDepartmentNumber.text)
+                            settings.setSosContact("hospital", hospitalNumber.text)
+                            settings.setSosContact("cps", cpsNumber.text)
+                            settings.setSosContact("ems", emsNumber.text)
+                            settings.setSosContact("emergency1_name", emergencyContact1Name.text)
+                            settings.setSosContact("emergency1_phone", emergencyContact1Phone.text)
+                            settings.setSosContact("emergency2_name", emergencyContact2Name.text)
+                            settings.setSosContact("emergency2_phone", emergencyContact2Phone.text)
+                            showSaveSuccessMessage = true
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Save Emergency Contacts")
+                    }
+                }
+            }
+
             // Debug Settings
             ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -548,7 +704,7 @@ fun SettingsScreen(onBack: () -> Unit = {}) {
             Button(
                 onClick = {
                     // Reset to defaults
-                    settings.apiBaseUrl = "http://192.168.43.197:50000/"
+                    settings.apiBaseUrl = "http://10.0.2.2:50000/"
                     settings.apiTimeout = 30
                     settings.apiRetryCount = 3
                     settings.syncIntervalHours = 6
@@ -564,6 +720,16 @@ fun SettingsScreen(onBack: () -> Unit = {}) {
                     settings.useLocalDatabase = true
                     settings.debugMode = false
                     settings.enableLogging = true
+                    // Reset SOS contacts
+                    settings.setSosContact("police", "911")
+                    settings.setSosContact("fire", "911")
+                    settings.setSosContact("hospital", "")
+                    settings.setSosContact("cps", "")
+                    settings.setSosContact("ems", "911")
+                    settings.setSosContact("emergency1_name", "")
+                    settings.setSosContact("emergency1_phone", "")
+                    settings.setSosContact("emergency2_name", "")
+                    settings.setSosContact("emergency2_phone", "")
                     showSaveSuccessMessage = true
                 },
                 modifier = Modifier.fillMaxWidth(),

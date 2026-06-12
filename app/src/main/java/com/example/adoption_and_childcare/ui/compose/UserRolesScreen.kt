@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.PermissionEntity
 import com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity
+import com.example.adoption_and_childcare.data.repository.PermissionRepositoryImpl
+import com.example.adoption_and_childcare.data.repository.UserPermissionRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -31,9 +34,17 @@ import kotlinx.coroutines.launch
 fun UserRolesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val permissionRepository = remember { PermissionRepositoryImpl(db.permissionDao(), apiService) }
+    val userPermissionRepository = remember { UserPermissionRepositoryImpl(db.userPermissionDao(), apiService) }
     var permissions by remember { mutableStateOf<List<PermissionEntity>>(emptyList()) }
     var userPermissions by remember { mutableStateOf<List<UserPermissionEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreatePermission by remember { mutableStateOf(false) }
     var showEditPermission by remember { mutableStateOf(false) }
     var showDeletePermission by remember { mutableStateOf(false) }
@@ -49,6 +60,14 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
         }
         db.userPermissionDao().observeAll().collectLatest { list ->
             userPermissions = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchPermissionsFromApi(permissionRepository, userPermissionRepository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -235,5 +254,43 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                 TextButton(onClick = { showDeletePermission = false; selectedPermission = null }) { Text("Cancel") }
             }
         )
+    }
+}
+
+/**
+ * Helper function to fetch permissions from API.
+ */
+private fun fetchPermissionsFromApi(
+    permissionRepository: PermissionRepositoryImpl,
+    userPermissionRepository: UserPermissionRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                // Fetch permissions
+                val permResult = permissionRepository.fetchFromApi(token)
+                if (permResult.isFailure) {
+                    onLoading(false, permResult.exceptionOrNull()?.message)
+                    return@launch
+                }
+                
+                // Fetch user permissions
+                val userPermResult = userPermissionRepository.fetchFromApi(token)
+                if (userPermResult.isFailure) {
+                    onLoading(false, userPermResult.exceptionOrNull()?.message)
+                    return@launch
+                }
+                
+                onLoading(false, null)
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch permissions: ${e.message}")
+        }
     }
 }

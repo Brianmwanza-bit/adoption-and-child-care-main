@@ -27,8 +27,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import com.example.adoption_and_childcare.data.repository.DashboardMetricsRepositoryImpl
+import com.example.adoption_and_childcare.utils.AuthManager
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 /**
  * Data class representing a card in the dashboard.
@@ -103,6 +107,12 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
 
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
+    val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val authManager = remember { AuthManager(context) }
+    val metricsRepository = remember { DashboardMetricsRepositoryImpl(db.dashboardMetricDao(), apiService, authManager) }
+    val scope = rememberCoroutineScope()
+    
     val userRole = sessionManager.getRole() ?: "Guest"
     var childrenCount by remember { mutableStateOf(0) }
     var familiesCount by remember { mutableStateOf(0) }
@@ -119,7 +129,8 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
 
     LaunchedEffect(Unit) {
         notificationsViewModel.loadNotifications()
-        val db = AppDatabase.getInstance(context)
+        
+        // Load from local DB
         withContext(Dispatchers.IO) {
             val c = db.childDao().count()
             val f = db.familyDao().count()
@@ -143,6 +154,21 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
                 medicalCount = m
                 financeCount = fin
                 overdueTasks = (c * 0.15).toInt()
+            }
+        }
+        
+        // Fetch real-time metrics from API
+        scope.launch {
+            try {
+                val token = authManager.getAuthToken() ?: ""
+                if (token.isNotEmpty()) {
+                    val result = metricsRepository.fetchFromApi(token)
+                    if (result.isSuccess) {
+                        println("Dashboard metrics fetched from API successfully")
+                    }
+                }
+            } catch (e: Exception) {
+                println("Failed to fetch dashboard metrics: ${e.message}")
             }
         }
     }

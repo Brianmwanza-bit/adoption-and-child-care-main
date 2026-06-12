@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.sp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.ChildEntity
 import com.example.adoption_and_childcare.data.security.PermissionHelper
+import com.example.adoption_and_childcare.data.repository.ChildRepositoryImpl
+import com.example.adoption_and_childcare.network.ApiService
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -32,9 +35,18 @@ import kotlinx.coroutines.launch
 fun ChildrenListScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val childRepository = remember { ChildRepositoryImpl(db.childDao(), apiService) }
+    
     var children by remember { mutableStateOf<List<ChildEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Dialogs
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -55,9 +67,18 @@ fun ChildrenListScreen(onBack: () -> Unit = {}) {
     var showGenderDropdown by remember { mutableStateOf(false) }
     var showStatusDropdown by remember { mutableStateOf(false) }
 
+    // Load data from local DB
     LaunchedEffect(Unit) {
         db.childDao().observeAll().collectLatest { list ->
             children = list
+        }
+    }
+    
+    // Fetch from API on first load
+    LaunchedEffect(Unit) {
+        fetchChildrenFromApi(childRepository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -450,5 +471,34 @@ fun DetailRow(label: String, value: String) {
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+    }
+}
+
+/**
+ * Helper function to fetch children from API and update local database.
+ */
+private fun fetchChildrenFromApi(
+    repository: ChildRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            // Get token from shared preferences (implement as needed)
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch children: ${e.message}")
+        }
     }
 }

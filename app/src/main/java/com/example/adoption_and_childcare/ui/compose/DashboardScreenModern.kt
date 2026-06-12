@@ -192,6 +192,11 @@ fun DashboardScreenModern(
                 item {
                     QuickAccessModulesModern(onNavigate = onNavigate)
                 }
+
+                // ALL SCREENS GRID (14 items)
+                item {
+                    AllScreensGridModern(onNavigate = onNavigate)
+                }
             }
         }
     }
@@ -656,6 +661,250 @@ fun QuickAccessModulesModern(onNavigate: (String) -> Unit) {
                 Modifier.weight(1f)
             ) {
                 onNavigate("finance")
+            }
+        }
+    }
+}
+
+/**
+ * Grid displaying all 14 main screens for easy navigation with modern card design.
+ *
+ * @param onNavigate Navigation callback.
+ */
+@Composable
+fun AllScreensGridModern(onNavigate: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            "All Screens",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A1A1A)
+        )
+        
+        // Row 1: Analytics, Guardians
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Analytics",
+                description = "View insights & reports",
+                icon = Icons.Default.Analytics,
+                color = Color(0xFF673AB7),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("analytics") }
+            )
+            ModernScreenCard(
+                label = "Guardians",
+                description = "Manage guardians",
+                icon = Icons.Default.People,
+                color = Color(0xFF00BCD4),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("guardians") }
+            )
+        }
+        
+        // Row 2: Court Cases, Foster Tasks
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Court Cases",
+                description = "Legal proceedings",
+                icon = Icons.Default.Gavel,
+                color = Color(0xFF795548),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("court_cases") }
+            )
+            ModernScreenCard(
+                label = "Foster Tasks",
+                description = "Task management",
+                icon = Icons.Default.Assignment,
+                color = Color(0xFFFF5722),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("foster_tasks") }
+            )
+        }
+        
+        // Row 3: Foster Matches, User Management
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Foster Matches",
+                description = "Placement matching",
+                icon = Icons.Default.CompareArrows,
+                color = Color(0xFF8BC34A),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("foster_matches") }
+            )
+            ModernScreenCard(
+                label = "User Management",
+                description = "Manage users",
+                icon = Icons.Default.AdminPanelSettings,
+                color = Color(0xFF607D8B),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("user_management") }
+            )
+        }
+        
+        // Row 4: Notifications, Audit Logs
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Notifications",
+                description = "Alerts & messages",
+                icon = Icons.Default.Notifications,
+                color = Color(0xFFFF9800),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("notifications") }
+            )
+            ModernScreenCard(
+                label = "Audit Logs",
+                description = "System activity",
+                icon = Icons.Default.History,
+                color = Color(0xFF9E9E9E),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("audit_logs") }
+            )
+        }
+        
+        // Row 5: Background Checks, Map
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Background Checks",
+                description = "Verification status",
+                icon = Icons.Default.Shield,
+                color = Color(0xFF3F51B5),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("background_checks") }
+            )
+            ModernScreenCard(
+                label = "Map",
+                description = "Location view",
+                icon = Icons.Default.Map,
+                color = Color(0xFF4CAF50),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("map") }
+            )
+        }
+        
+        // Row 6: User Roles, Camera
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "User Roles",
+                description = "Role management",
+                icon = Icons.Default.Badge,
+                color = Color(0xFFE91E63),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("user_roles") }
+            )
+            ModernScreenCard(
+                label = "Camera",
+                description = "Photo capture",
+                icon = Icons.Default.CameraAlt,
+                color = Color(0xFF009688),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("camera") }
+            )
+        }
+        
+        // Row 7: Analytics2, Guardians2
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ModernScreenCard(
+                label = "Home Studies",
+                description = "Home assessments",
+                icon = Icons.Default.Home,
+                color = Color(0xFF8BC34A),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("home_studies") }
+            )
+            ModernScreenCard(
+                label = "Adoption Apps",
+                description = "Applications",
+                icon = Icons.Default.Folder,
+                color = Color(0xFF9C27B0),
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate("adoption_applications") }
+            )
+        }
+    }
+}
+
+/**
+ * A modern card representing a single screen with icon, label, and description.
+ *
+ * @param label Screen label.
+ * @param description Screen description.
+ * @param icon Screen icon.
+ * @param color Theme color.
+ * @param modifier Layout modifier.
+ * @param onClick Click callback.
+ */
+@Composable
+fun ModernScreenCard(
+    label: String,
+    description: String,
+    icon: ImageVector,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.2f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Icon with colored background
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(color.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, label, tint = color, modifier = Modifier.size(28.dp))
+            }
+            
+            // Label and description
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color(0xFF1A1A1A),
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    fontSize = 11.sp
+                )
             }
         }
     }

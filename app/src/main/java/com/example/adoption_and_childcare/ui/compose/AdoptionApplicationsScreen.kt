@@ -15,6 +15,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.AdoptionApplicationEntity
+import com.example.adoption_and_childcare.data.repository.AdoptionApplicationRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -23,17 +25,34 @@ import kotlinx.coroutines.launch
 fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { AdoptionApplicationRepositoryImpl(db.adoptionApplicationDao(), apiService) }
+    
     var apps by remember { mutableStateOf<List<AdoptionApplicationEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
     var familyId by remember { mutableStateOf(TextFieldValue("")) }
     var childId by remember { mutableStateOf(TextFieldValue("")) }
     var status by remember { mutableStateOf(TextFieldValue("Pending")) }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
 
+    // Load from local DB
     LaunchedEffect(Unit) {
         db.adoptionApplicationDao().observeAll().collectLatest { list ->
             apps = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -113,6 +132,34 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
                     TextButton(onClick = { showCreate = false }) { Text("Cancel") }
                 }
             )
+        }
+    }
+}
+
+/**
+ * Helper function to fetch adoption applications from API.
+ */
+private fun fetchFromApi(
+    repository: AdoptionApplicationRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch adoption applications: ${e.message}")
         }
     }
 }

@@ -3,6 +3,12 @@ package com.example.adoption_and_childcare.utils
 import android.content.Context
 import android.content.SharedPreferences
 
+/**
+ * Utility object for managing authentication tokens.
+ * 
+ * Provides methods for saving, retrieving, and clearing
+ * authentication tokens using SharedPreferences.
+ */
 object TokenManager {
     private const val PREF_NAME = "auth_prefs"
     private const val TOKEN_KEY = "auth_token"

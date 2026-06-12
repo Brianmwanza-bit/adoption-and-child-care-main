@@ -4,6 +4,18 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a system setting in the application.
+ * 
+ * This entity stores configurable system settings and preferences.
+ * 
+ * @property settingId Unique identifier for the setting (auto-generated).
+ * @property settingKey Unique key identifying the setting.
+ * @property settingValue Value of the setting.
+ * @property category Category the setting belongs to (e.g., General, Security).
+ * @property createdAt Timestamp when the setting was created.
+ * @property updatedAt Timestamp when the setting was last updated.
+ */
 @Entity(tableName = "system_settings")
 data class SystemSettingEntity(
     @PrimaryKey(autoGenerate = true)

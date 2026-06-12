@@ -4,6 +4,30 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a family in the adoption and child care system.
+ * 
+ * This entity stores information about families interested in adoption or foster care,
+ * including contact details, location, and sync metadata for offline-first functionality.
+ * 
+ * @property familyId Unique identifier for the family (auto-generated).
+ * @property primaryContactName Name of the primary contact person.
+ * @property secondaryContactName Name of the secondary contact person.
+ * @property email Family's email address.
+ * @property phone Family's phone number.
+ * @property nationalIdNo National ID number of the primary contact.
+ * @property address Physical address.
+ * @property city City of residence.
+ * @property county County of residence.
+ * @property state State/region of residence.
+ * @property country Country of residence.
+ * @property status Current status of the family (e.g., Active, Inactive).
+ * @property createdAt Timestamp when the record was created.
+ * @property updatedAt Timestamp when the record was last updated.
+ * @property remoteId Remote server ID for synchronization.
+ * @property syncStatus Synchronization status (PENDING, SYNCED, ERROR).
+ * @property lastSyncedAt Timestamp of last synchronization.
+ */
 @Entity(tableName = "families")
 data class FamilyEntity(
     @PrimaryKey(autoGenerate = true)

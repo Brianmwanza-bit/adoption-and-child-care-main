@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.DatabaseInitializer
 import com.example.adoption_and_childcare.ui.compose.*
 import com.example.adoption_and_childcare.data.session.SessionManager
@@ -28,6 +29,7 @@ import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
 import com.example.adoption_and_childcare.viewmodel.SOSState
 import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import com.example.adoption_and_childcare.viewmodel.SyncViewModel
+import com.yourdomain.adoptionchildcare.BuildConfig
 import com.yourdomain.adoptionchildcare.R
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -74,6 +76,19 @@ private object MainActivityConstants {
     const val COURT_CASES_ROUTE = "court_cases"
     const val FOSTER_TASKS_ROUTE = "foster_tasks"
     const val FOSTER_MATCHES_ROUTE = "foster_matches"
+    const val TASKS_ROUTE = "tasks"
+    const val ACTION_ITEMS_ROUTE = "action_items"
+    const val RISK_ASSESSMENTS_ROUTE = "risk_assessments"
+    const val PERMANENCY_PLANS_ROUTE = "permanency_plans"
+    const val CASE_ACTIVITIES_ROUTE = "case_activities"
+    const val CASE_DEADLINES_ROUTE = "case_deadlines"
+    const val CASE_APPROVALS_ROUTE = "case_approvals"
+    const val CASE_URGENCY_FLAGS_ROUTE = "case_urgency_flags"
+    const val CRITICAL_DATES_ROUTE = "critical_dates"
+    const val WORKLOAD_ROUTE = "workload"
+    const val WORKER_MESSAGES_ROUTE = "worker_messages"
+    const val PLACEMENT_COMPATIBILITY_ROUTE = "placement_compatibility"
+    const val DASHBOARD_PREFERENCES_ROUTE = "dashboard_preferences"
     
     const val SYNC_THRESHOLD_SECONDS = 15 * 60
 }
@@ -103,7 +118,25 @@ private enum class AppRoute(val route: String) {
     AUDIT_LOGS(MainActivityConstants.AUDIT_LOGS_ROUTE),
     SEARCH(MainActivityConstants.SEARCH_ROUTE),
     CAMERA(MainActivityConstants.CAMERA_ROUTE),
-    USER_ROLES(MainActivityConstants.USER_ROLES_ROUTE)
+    USER_ROLES(MainActivityConstants.USER_ROLES_ROUTE),
+    ANALYTICS(MainActivityConstants.ANALYTICS_ROUTE),
+    GUARDIANS(MainActivityConstants.GUARDIANS_ROUTE),
+    COURT_CASES(MainActivityConstants.COURT_CASES_ROUTE),
+    FOSTER_TASKS(MainActivityConstants.FOSTER_TASKS_ROUTE),
+    FOSTER_MATCHES(MainActivityConstants.FOSTER_MATCHES_ROUTE),
+    TASKS(MainActivityConstants.TASKS_ROUTE),
+    ACTION_ITEMS(MainActivityConstants.ACTION_ITEMS_ROUTE),
+    RISK_ASSESSMENTS(MainActivityConstants.RISK_ASSESSMENTS_ROUTE),
+    PERMANENCY_PLANS(MainActivityConstants.PERMANENCY_PLANS_ROUTE),
+    CASE_ACTIVITIES(MainActivityConstants.CASE_ACTIVITIES_ROUTE),
+    CASE_DEADLINES(MainActivityConstants.CASE_DEADLINES_ROUTE),
+    CASE_APPROVALS(MainActivityConstants.CASE_APPROVALS_ROUTE),
+    CASE_URGENCY_FLAGS(MainActivityConstants.CASE_URGENCY_FLAGS_ROUTE),
+    CRITICAL_DATES(MainActivityConstants.CRITICAL_DATES_ROUTE),
+    WORKLOAD(MainActivityConstants.WORKLOAD_ROUTE),
+    WORKER_MESSAGES(MainActivityConstants.WORKER_MESSAGES_ROUTE),
+    PLACEMENT_COMPATIBILITY(MainActivityConstants.PLACEMENT_COMPATIBILITY_ROUTE),
+    DASHBOARD_PREFERENCES(MainActivityConstants.DASHBOARD_PREFERENCES_ROUTE)
 }
 
 /**
@@ -111,6 +144,10 @@ private enum class AppRoute(val route: String) {
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @javax.inject.Inject
+    lateinit var database: AppDatabase
+
     /**
      * Called when the activity is starting.
      *
@@ -163,7 +200,7 @@ class MainActivity : ComponentActivity() {
 
             // Initialize database with sample data
             LaunchedEffect(Unit) {
-                DatabaseInitializer.initializeDatabase(context)
+                DatabaseInitializer.initializeDatabase(database)
             }
 
             val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -226,22 +263,29 @@ class MainActivity : ComponentActivity() {
             } else {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
-
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
                         ModalDrawerSheet {
-                            DrawerHeader(
-                                profilePhotoUri = profilePhotoUri,
-                                username = currentUser,
-                                role = currentRole,
-                                onLogout = {
-                                    session.clearSession()
-                                    isLoggedIn = false
-                                    scope.launch { drawerState.close() }
-                                }
-                            )
-                            Spacer(Modifier.height(12.dp))
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(1f)
+                            ) {
+                                DrawerHeader(
+                                    profilePhotoUri = profilePhotoUri,
+                                    username = currentUser,
+                                    role = currentRole,
+                                    onLogout = {
+                                        session.clearSession()
+                                        isLoggedIn = false
+                                        scope.launch { drawerState.close() }
+                                    }
+                                )
+                                Spacer(Modifier.height(12.dp))
+                            }
+                            
+                            // Main Navigation Items (above divider)
                             NavigationDrawerItem(
                                 icon = { Icon(Icons.Default.ChildCare, contentDescription = null) },
                                 label = { Text(stringResource(R.string.module_children)) },
@@ -262,6 +306,54 @@ class MainActivity : ComponentActivity() {
                                 },
                                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                             )
+                            
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                            Text(
+                                "Administration",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) },
+                                label = { Text("User Management") },
+                                selected = currentRoute(navController) == AppRoute.USER_MANAGEMENT.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.USER_MANAGEMENT.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Badge, contentDescription = null) },
+                                label = { Text("User Roles") },
+                                selected = currentRoute(navController) == AppRoute.USER_ROLES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.USER_ROLES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                                label = { Text("Background Checks") },
+                                selected = currentRoute(navController) == AppRoute.BACKGROUND_CHECKS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.BACKGROUND_CHECKS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.History, contentDescription = null) },
+                                label = { Text("Audit Logs") },
+                                selected = currentRoute(navController) == AppRoute.AUDIT_LOGS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.AUDIT_LOGS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
                             NavigationDrawerItem(
                                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                                 label = { Text(stringResource(R.string.action_settings)) },
@@ -271,6 +363,163 @@ class MainActivity : ComponentActivity() {
                                     scope.launch { drawerState.close() }
                                 },
                                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                            Text(
+                                "Case Tools",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                                label = { Text("Risk Assessments") },
+                                selected = currentRoute(navController) == AppRoute.RISK_ASSESSMENTS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.RISK_ASSESSMENTS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Map, contentDescription = null) },
+                                label = { Text("Permanency Plans") },
+                                selected = currentRoute(navController) == AppRoute.PERMANENCY_PLANS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.PERMANENCY_PLANS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.History, contentDescription = null) },
+                                label = { Text("Case Activities") },
+                                selected = currentRoute(navController) == AppRoute.CASE_ACTIVITIES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.CASE_ACTIVITIES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+                                label = { Text("Deadlines") },
+                                selected = currentRoute(navController) == AppRoute.CASE_DEADLINES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.CASE_DEADLINES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+                                label = { Text("Approvals") },
+                                selected = currentRoute(navController) == AppRoute.CASE_APPROVALS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.CASE_APPROVALS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.PriorityHigh, contentDescription = null) },
+                                label = { Text("Urgency Flags") },
+                                selected = currentRoute(navController) == AppRoute.CASE_URGENCY_FLAGS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.CASE_URGENCY_FLAGS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Event, contentDescription = null) },
+                                label = { Text("Critical Dates") },
+                                selected = currentRoute(navController) == AppRoute.CRITICAL_DATES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.CRITICAL_DATES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.CompareArrows, contentDescription = null) },
+                                label = { Text("Compatibility") },
+                                selected = currentRoute(navController) == AppRoute.PLACEMENT_COMPATIBILITY.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.PLACEMENT_COMPATIBILITY.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                            Text(
+                                "My Workspace",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.TaskAlt, contentDescription = null) },
+                                label = { Text("My Tasks") },
+                                selected = currentRoute(navController) == AppRoute.TASKS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.TASKS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Checklist, contentDescription = null) },
+                                label = { Text("Action Items") },
+                                selected = currentRoute(navController) == AppRoute.ACTION_ITEMS.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.ACTION_ITEMS.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Message, contentDescription = null) },
+                                label = { Text("Messages") },
+                                selected = currentRoute(navController) == AppRoute.WORKER_MESSAGES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.WORKER_MESSAGES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.DonutLarge, contentDescription = null) },
+                                label = { Text("Workload") },
+                                selected = currentRoute(navController) == AppRoute.WORKLOAD.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.WORKLOAD.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            NavigationDrawerItem(
+                                icon = { Icon(Icons.Default.Tune, contentDescription = null) },
+                                label = { Text("Dashboard Prefs") },
+                                selected = currentRoute(navController) == AppRoute.DASHBOARD_PREFERENCES.route,
+                                onClick = {
+                                    navController.navigate(AppRoute.DASHBOARD_PREFERENCES.route)
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+                            
+                            // Push version to bottom
+                            Spacer(Modifier.weight(1f))
+                            
+                            // App Version at bottom
+                            Text(
+                                text = "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 16.dp)
                             )
                         }
                     }
@@ -396,6 +645,19 @@ private fun AppNavHost(
         composable(MainActivityConstants.COURT_CASES_ROUTE) { CourtCasesScreen(onBack = { navController.popBackStack() }) }
         composable(MainActivityConstants.FOSTER_TASKS_ROUTE) { FosterTasksScreen(onBack = { navController.popBackStack() }) }
         composable(MainActivityConstants.FOSTER_MATCHES_ROUTE) { FosterMatchesScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.TASKS.route) { TasksScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.ACTION_ITEMS.route) { ActionItemsScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.RISK_ASSESSMENTS.route) { RiskAssessmentsScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.PERMANENCY_PLANS.route) { PermanencyPlansScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.CASE_ACTIVITIES.route) { CaseActivitiesScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.CASE_DEADLINES.route) { CaseDeadlinesScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.CASE_APPROVALS.route) { CaseApprovalsScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.CASE_URGENCY_FLAGS.route) { CaseUrgencyFlagsScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.CRITICAL_DATES.route) { CriticalDatesScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.WORKLOAD.route) { WorkloadDashboardScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.WORKER_MESSAGES.route) { WorkerMessagesScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.PLACEMENT_COMPATIBILITY.route) { PlacementCompatibilityScreen(onBack = { navController.popBackStack() }) }
+        // composable(AppRoute.DASHBOARD_PREFERENCES.route) { DashboardPreferencesScreen(onBack = { navController.popBackStack() }) }
     }
 }
 

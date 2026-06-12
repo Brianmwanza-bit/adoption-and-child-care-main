@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for managing user notifications.
+ * 
+ * This ViewModel handles loading notifications, tracking unread counts,
+ * and sending new notifications to users.
+ */
 @HiltViewModel
 class NotificationsViewModel @Inject constructor() : ViewModel() {
 

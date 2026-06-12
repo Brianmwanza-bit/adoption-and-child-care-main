@@ -15,7 +15,7 @@ interface FosterTaskDao {
     suspend fun getAll(): List<FosterTaskEntity>
 
     @Query("SELECT * FROM foster_tasks WHERE task_id = :id")
-    suspend fun getById(id: Int): FosterTaskEntity?
+    suspend fun findById(id: Int): FosterTaskEntity?
 
     @Query("SELECT * FROM foster_tasks WHERE family_id = :familyId")
     suspend fun getByFamilyId(familyId: Int): List<FosterTaskEntity>
@@ -78,4 +78,14 @@ interface FosterTaskDao {
             )
         )
     }
+    
+    @Query("""
+        SELECT * FROM foster_tasks 
+        WHERE description LIKE :query 
+           OR status LIKE :query
+           OR due_date LIKE :query
+           OR created_at LIKE :query
+        ORDER BY created_at DESC
+    """)
+    suspend fun globalSearch(query: String): List<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>
 }

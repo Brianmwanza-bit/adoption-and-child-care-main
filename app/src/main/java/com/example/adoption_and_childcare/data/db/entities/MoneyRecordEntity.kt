@@ -4,6 +4,33 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a financial transaction record in the system.
+ * 
+ * This entity tracks monetary transactions related to children's care,
+ * including allowances, education expenses, medical costs, and M-Pesa payments.
+ * 
+ * @property moneyId Unique identifier for the transaction (auto-generated).
+ * @property childId ID of the child the transaction is for.
+ * @property amount Transaction amount.
+ * @property transactionType Type of transaction (e.g., Allowance, Education, Medical).
+ * @property mpesaReceiptNo M-Pesa receipt number.
+ * @property description Description of the transaction.
+ * @property date Date of the transaction.
+ * @property receiptPath Path to the receipt file.
+ * @property receiptData Binary data of the receipt file.
+ * @property receiptMimeType MIME type of the receipt file.
+ * @property receiptSize Size of the receipt file in bytes.
+ * @property approvedBy User ID of the approver.
+ * @property approvedAt Timestamp when the transaction was approved.
+ * @property createdAt Timestamp when the record was created.
+ * @property createdBy User ID of the creator.
+ * @property paymentMethod Payment method used (e.g., M-Pesa, Bank, Cash).
+ * @property mpesaPhoneNumber Phone number for M-Pesa payment.
+ * @property mpesaTransactionId M-Pesa transaction ID.
+ * @property bankAccount Bank account number.
+ * @property bankReference Bank reference number.
+ */
 @Entity(tableName = "money_records")
 data class MoneyRecordEntity(
     @PrimaryKey(autoGenerate = true)

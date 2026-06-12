@@ -9,6 +9,16 @@ import com.example.adoption_and_childcare.network.RegisterRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Implementation of the UserRepository interface.
+ * 
+ * This class provides concrete implementations for user data operations,
+ * using a local DAO for database access and a remote API service
+ * for server communication.
+ * 
+ * @property userDao DAO for local user database operations.
+ * @property apiService Retrofit API service for remote user operations.
+ */
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,

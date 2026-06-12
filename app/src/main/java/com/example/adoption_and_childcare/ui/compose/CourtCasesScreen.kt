@@ -16,6 +16,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity
+import com.example.adoption_and_childcare.data.repository.CourtCaseRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -29,8 +31,16 @@ import kotlinx.coroutines.launch
 fun CourtCasesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { CourtCaseRepositoryImpl(db.courtCaseDao(), apiService) }
+    
     var cases by remember { mutableStateOf<List<CourtCaseEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
 
     var childId by remember { mutableStateOf(TextFieldValue("")) }
@@ -40,9 +50,18 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
     val statuses = listOf("Pending", "Ongoing", "Closed", "Appealed")
     var showStatusDropdown by remember { mutableStateOf(false) }
 
+    // Load from local DB
     LaunchedEffect(Unit) {
         db.courtCaseDao().observeAll().collectLatest { list ->
             cases = list
+        }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -154,5 +173,33 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
                 TextButton(onClick = { showCreate = false }) { Text("Cancel") }
             }
         )
+    }
+}
+
+/**
+ * Helper function to fetch court cases from API.
+ */
+private fun fetchFromApi(
+    repository: CourtCaseRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch court cases: ${e.message}")
+        }
     }
 }

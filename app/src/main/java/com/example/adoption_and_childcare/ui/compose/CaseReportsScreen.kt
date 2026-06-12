@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
+import com.example.adoption_and_childcare.data.repository.CaseReportRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -22,8 +24,15 @@ import kotlinx.coroutines.launch
 fun CaseReportsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { CaseReportRepositoryImpl(db.caseReportDao(), apiService) }
     var reports by remember { mutableStateOf<List<CaseReportEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -37,6 +46,14 @@ fun CaseReportsScreen(onBack: () -> Unit = {}) {
 
     LaunchedEffect(Unit) {
         db.caseReportDao().observeAll().collectLatest { list -> reports = list }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchCaseReportsFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
+        }
     }
 
     Scaffold(
@@ -200,6 +217,34 @@ fun CaseReportsScreen(onBack: () -> Unit = {}) {
                     }
                 )
             }
+        }
+    }
+}
+
+/**
+ * Helper function to fetch case reports from API.
+ */
+private fun fetchCaseReportsFromApi(
+    repository: CaseReportRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch case reports: ${e.message}")
         }
     }
 }

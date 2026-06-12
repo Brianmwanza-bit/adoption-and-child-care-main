@@ -13,7 +13,7 @@ interface SystemSettingDao {
     suspend fun getAll(): List<SystemSettingEntity>
 
     @Query("SELECT * FROM system_settings WHERE setting_id = :id")
-    suspend fun getById(id: Int): SystemSettingEntity?
+    suspend fun findById(id: Int): SystemSettingEntity?
 
     @Query("SELECT * FROM system_settings WHERE setting_key = :key")
     suspend fun getByKey(key: String): SystemSettingEntity?

@@ -67,9 +67,15 @@ interface DocumentDao {
     @Query("SELECT * FROM documents ORDER BY uploaded_at DESC")
     fun observeAll(): Flow<List<DocumentEntity>>
 
+    @Query("SELECT * FROM documents")
+    suspend fun getAll(): List<DocumentEntity>
+
+    @Query("SELECT * FROM documents WHERE document_id = :id")
+    suspend fun findById(id: Int): DocumentEntity?
+
     @Query("SELECT COUNT(*) FROM documents")
     suspend fun count(): Int
 
-    @Query("SELECT * FROM documents WHERE file_name LIKE :q OR document_type LIKE :q ORDER BY uploaded_at DESC LIMIT :limit")
+    @Query("SELECT * FROM documents WHERE file_name LIKE :q OR description LIKE :q OR document_type LIKE :q ORDER BY uploaded_at DESC LIMIT :limit")
     suspend fun globalSearch(q: String, limit: Int = 5): List<DocumentEntity>
 }

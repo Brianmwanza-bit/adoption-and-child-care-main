@@ -22,6 +22,15 @@ data class SyncStatus(
     val errorMessage: String? = null
 )
 
+/**
+ * ViewModel for managing data synchronization state and operations.
+ * 
+ * This ViewModel tracks the sync status, pending changes count, and provides
+ * methods to trigger synchronization with the remote server.
+ * 
+ * @property syncManager Manager for sync operations.
+ * @property syncQueueDao DAO for accessing the sync queue.
+ */
 @HiltViewModel
 class SyncViewModel @Inject constructor(
     private val syncManager: SyncManager,

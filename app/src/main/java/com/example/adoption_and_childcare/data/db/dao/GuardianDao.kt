@@ -67,6 +67,23 @@ interface GuardianDao {
     @Query("SELECT COUNT(*) FROM guardians")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM guardians")
+    suspend fun getAll(): List<GuardianEntity>
+
+    @Query("SELECT * FROM guardians WHERE guardian_id = :id")
+    suspend fun findById(id: Int): GuardianEntity?
+
     @Query("SELECT child_id FROM guardians WHERE user_id = :userId")
     suspend fun getChildIdsByUserId(userId: Int): List<Int>
+    
+    @Query("""
+        SELECT * FROM guardians 
+        WHERE first_name LIKE :query 
+           OR last_name LIKE :query 
+           OR relationship LIKE :query
+           OR phone LIKE :query
+           OR email LIKE :query
+        ORDER BY first_name, last_name
+    """)
+    suspend fun globalSearch(query: String): List<GuardianEntity>
 }

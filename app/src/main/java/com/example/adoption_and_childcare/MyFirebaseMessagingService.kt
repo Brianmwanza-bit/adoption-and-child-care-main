@@ -19,6 +19,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import android.provider.Settings
 
+/**
+ * Firebase Cloud Messaging service for handling push notifications.
+ * 
+ * This service receives FCM messages, displays notifications to users,
+ * and manages FCM token synchronization with the backend server.
+ * Tokens are stored locally and sent to the server when the user logs in.
+ */
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     private lateinit var sessionManager: SessionManager
 

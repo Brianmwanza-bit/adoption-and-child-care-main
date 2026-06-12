@@ -64,9 +64,22 @@ interface CaseReportDao {
     @Query("SELECT * FROM case_reports WHERE child_id = :childId ORDER BY report_date DESC")
     fun observeForChild(childId: Int): Flow<List<CaseReportEntity>>
 
+    @Query("SELECT * FROM case_reports WHERE report_id = :id")
+    suspend fun findById(id: Int): CaseReportEntity?
+
     @Query("SELECT COUNT(*) FROM case_reports")
     suspend fun count(): Int
 
     @Query("SELECT * FROM case_reports ORDER BY report_date DESC")
     fun observeAll(): Flow<List<CaseReportEntity>>
+    
+    @Query("""
+        SELECT * FROM case_reports 
+        WHERE report_title LIKE :query 
+           OR content LIKE :query
+           OR report_date LIKE :query
+           OR report_type LIKE :query
+        ORDER BY report_date DESC
+    """)
+    suspend fun globalSearch(query: String): List<CaseReportEntity>
 }

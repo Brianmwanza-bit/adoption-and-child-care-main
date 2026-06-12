@@ -4,6 +4,26 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a case report in the system.
+ * 
+ * This entity stores reports written by case workers about children's
+ * progress, incidents, or other case-related information.
+ * 
+ * @property reportId Unique identifier for the report (auto-generated).
+ * @property childId ID of the child the report is about.
+ * @property userId User ID of the report author.
+ * @property reportDate Date of the report.
+ * @property reportTitle Title of the report.
+ * @property reportType Type of report (e.g., Quarterly, Incident).
+ * @property content Detailed content of the report.
+ * @property isConfidential Whether the report is confidential.
+ * @property reportData Binary data of attached report file.
+ * @property reportMimeType MIME type of the report file.
+ * @property reportSize Size of the report file in bytes.
+ * @property createdAt Timestamp when the report was created.
+ * @property updatedAt Timestamp when the report was last updated.
+ */
 @Entity(tableName = "case_reports")
 data class CaseReportEntity(
     @PrimaryKey(autoGenerate = true)

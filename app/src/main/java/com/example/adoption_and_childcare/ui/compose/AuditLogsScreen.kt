@@ -13,7 +13,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.AuditLogEntity
+import com.example.adoption_and_childcare.data.repository.AuditLogRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  * Screen for viewing system audit logs.
@@ -25,11 +28,25 @@ import kotlinx.coroutines.flow.collectLatest
 fun AuditLogsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    // Audit logs are read-only and fetched via sync pull endpoint
     var logs by remember { mutableStateOf<List<AuditLogEntity>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+    
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         db.auditLogDao().observeAll().collectLatest { list ->
             logs = list
+        }
+    }
+    
+    // Fetch from API (via sync pull)
+    LaunchedEffect(Unit) {
+        fetchAuditLogsFromApi(db, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -80,6 +97,26 @@ fun AuditLogsScreen(onBack: () -> Unit = {}) {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Helper function to fetch audit logs from API via sync pull.
+ */
+private fun fetchAuditLogsFromApi(
+    db: AppDatabase,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            // Audit logs are fetched via sync pull endpoint
+            // For now, just load from local DB
+            onLoading(false, null)
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch audit logs: ${e.message}")
         }
     }
 }

@@ -4,6 +4,25 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a document in the system.
+ * 
+ * This entity stores information about various documents related to children,
+ * families, or cases, including file metadata and binary data.
+ * 
+ * @property documentId Unique identifier for the document (auto-generated).
+ * @property childId ID of the child this document belongs to.
+ * @property documentType Type of document (e.g., birth certificate, medical report).
+ * @property fileName Name of the file.
+ * @property fileType File extension/type.
+ * @property fileSize Size of the file in bytes.
+ * @property filePath Path to the file on device.
+ * @property fileData Binary data of the file.
+ * @property mimeType MIME type of the file.
+ * @property description Description of the document content.
+ * @property uploadedAt Timestamp when the document was uploaded.
+ * @property uploadedBy User ID of the uploader.
+ */
 @Entity(tableName = "documents")
 data class DocumentEntity(
     @PrimaryKey(autoGenerate = true)

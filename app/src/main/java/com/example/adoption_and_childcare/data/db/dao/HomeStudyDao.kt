@@ -68,9 +68,25 @@ abstract class HomeStudyDao {
     @Query("SELECT COUNT(*) FROM home_studies")
     abstract suspend fun count(): Int
 
+    @Query("SELECT * FROM home_studies")
+    abstract suspend fun getAll(): List<HomeStudyEntity>
+
+    @Query("SELECT * FROM home_studies WHERE home_study_id = :id")
+    abstract suspend fun findById(id: Int): HomeStudyEntity?
+
     @Query("SELECT * FROM home_studies ORDER BY started_at DESC")
     abstract fun observeAll(): Flow<List<HomeStudyEntity>>
 
     @Query("SELECT * FROM home_studies WHERE completed_at IS NULL ORDER BY started_at ASC")
     abstract fun observeUpcoming(): Flow<List<HomeStudyEntity>>
+    
+    @Query("""
+        SELECT * FROM home_studies 
+        WHERE result LIKE :query 
+           OR notes LIKE :query
+           OR started_at LIKE :query
+           OR completed_at LIKE :query
+        ORDER BY started_at DESC
+    """)
+    abstract suspend fun globalSearch(query: String): List<HomeStudyEntity>
 }

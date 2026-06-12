@@ -69,4 +69,18 @@ interface CourtCaseDao {
 
     @Query("SELECT COUNT(*) FROM court_cases")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM court_cases WHERE case_id = :id")
+    suspend fun findById(id: Int): CourtCaseEntity?
+    
+    @Query("""
+        SELECT * FROM court_cases 
+        WHERE case_number LIKE :query 
+           OR case_type LIKE :query 
+           OR status LIKE :query
+           OR hearing_date LIKE :query
+           OR outcome LIKE :query
+        ORDER BY filing_date DESC
+    """)
+    suspend fun globalSearch(query: String): List<CourtCaseEntity>
 }

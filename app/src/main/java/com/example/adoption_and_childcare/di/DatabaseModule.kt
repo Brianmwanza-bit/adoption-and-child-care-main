@@ -18,20 +18,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            "adoption_childcare.db"
-        )
-            .addMigrations(
-                AppDatabase.MIGRATION_3_4, 
-                AppDatabase.MIGRATION_4_5,
-                AppDatabase.MIGRATION_5_6,
-                AppDatabase.MIGRATION_6_7,
-                AppDatabase.MIGRATION_7_8
-            )
-            .fallbackToDestructiveMigration()
-            .build()
+        return AppDatabase.getInstance(context)
     }
 
     @Provides

@@ -20,4 +20,10 @@ interface PermissionDao {
 
     @Query("SELECT COUNT(*) FROM permissions")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM permissions")
+    suspend fun getAll(): List<PermissionEntity>
+
+    @Query("SELECT * FROM permissions WHERE permission_id = :id")
+    suspend fun findById(id: Int): PermissionEntity?
 }

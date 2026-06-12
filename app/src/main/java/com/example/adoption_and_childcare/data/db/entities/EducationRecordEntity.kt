@@ -4,6 +4,27 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents an education record in the system.
+ * 
+ * This entity stores educational information about children, including
+ * school enrollment, grades, and academic performance.
+ * 
+ * @property recordId Unique identifier for the education record (auto-generated).
+ * @property childId ID of the child the record belongs to.
+ * @property schoolName Name of the school.
+ * @property grade Grade level.
+ * @property enrollmentDate Date of enrollment.
+ * @property exitDate Date when the child left the school.
+ * @property performance Academic performance notes.
+ * @property specialNeeds Special needs or accommodations.
+ * @property teacherContact Contact information for the teacher.
+ * @property reportCardData Binary data of report card file.
+ * @property reportCardMimeType MIME type of the report card file.
+ * @property reportCardSize Size of the report card file in bytes.
+ * @property createdAt Timestamp when the record was created.
+ * @property updatedAt Timestamp when the record was last updated.
+ */
 @Entity(tableName = "education_records")
 data class EducationRecordEntity(
     @PrimaryKey(autoGenerate = true)

@@ -5,6 +5,14 @@ import android.content.SharedPreferences
 import com.example.adoption_and_childcare.MyFirebaseMessagingService
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 
+/**
+ * Manager for user session persistence.
+ * 
+ * This class handles saving and retrieving user session data
+ * including user ID, username, role, and authentication token.
+ * 
+ * @property context Application context for SharedPreferences access.
+ */
 class SessionManager(private val context: Context) {
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences("adoption_session", Context.MODE_PRIVATE)

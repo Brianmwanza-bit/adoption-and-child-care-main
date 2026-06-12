@@ -78,4 +78,14 @@ interface BackgroundCheckDao {
             )
         )
     }
+    
+    @Query("""
+        SELECT * FROM background_checks 
+        WHERE status LIKE :query
+           OR result LIKE :query
+           OR requested_at LIKE :query
+           OR completed_at LIKE :query
+        ORDER BY requested_at DESC
+    """)
+    suspend fun globalSearch(query: String): List<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>
 }

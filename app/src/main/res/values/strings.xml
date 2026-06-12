@@ -17,6 +17,7 @@
     <string name="menu_desc">Menu</string>
     <string name="help_about_label">Help/About</string>
     <string name="add_photo_desc">Add Photo</string>
+    <string name="change_photo_desc">Change Photo</string>
 
     <!-- Quick Access Card Strings -->
     <string name="card_children">Children</string>
@@ -193,10 +194,20 @@
     <string name="dashboard_families_summary">Registered families</string>
 
     <!-- Additional Dashboard UI Strings -->
-    <string name="dashboard_section_urgent_attention">🚨 Require Immediate Attention</string>
-    <string name="dashboard_section_todays_workload">📋 Today\'s Workload</string>
+    <string name="dashboard_section_urgent_attention">Require Immediate Attention</string>
+    <string name="dashboard_section_todays_workload">Today\'s Workload</string>
     <string name="dashboard_all_action_items">All Action Items</string>
     <string name="dashboard_system_modules">System Modules</string>
+    
+    <!-- Dashboard Metrics String Resources -->
+    <string name="metric_total_children">total_children</string>
+    <string name="label_total_children">Total Children</string>
+    <string name="metric_total_families">total_families</string>
+    <string name="label_total_families">Total Families</string>
+    <string name="metric_active_placements">active_placements</string>
+    <string name="label_active_placements">Active Placements</string>
+    <string name="metric_pending_applications">pending_applications</string>
+    <string name="label_pending_applications">Pending Applications</string>
     <string name="dashboard_overdue_tasks_alert">⚠️ %1$d Tasks Overdue</string>
     <string name="dashboard_action_required_today">Action required today</string>
     <string name="dashboard_stat_urgent_cases">Urgent Cases</string>
@@ -221,7 +232,12 @@
     <string name="register_username_hint">Username</string>
     <string name="register_email_hint">Email</string>
     <string name="register_password_hint">Password</string>
-    <string name="register_occupation_hint">Occupation</string>
+    <string name="register_occupation_hint">Role / Occupation</string>
+    <string name="register_phone_hint">Phone Number</string>
+    <string name="register_national_id_hint">National ID Number</string>
+    <string name="register_id_number_hint">ID Number</string>
+    <string name="register_county_hint">County</string>
+    <string name="register_sub_county_hint">Sub-County</string>
     <string name="register_button">Register</string>
     <string name="login_prompt">Already have an account? Login</string>
     <string name="error_fill_all_fields">Please fill in all fields</string>
@@ -310,4 +326,10 @@
     <string name="sync_error_push_failed">Push failed: %1$s</string>
     <string name="sync_error_pull_failed">Pull failed: %1$s</string>
     <string name="sync_error_unknown">Unknown sync error</string>
+
+    <!-- Auto-save Strings -->
+    <string name="autosave_restored">Form data restored from previous session</string>
+
+    <!-- Auth Constants -->
+    <string name="image_mime_type">image/*</string>
 </resources>

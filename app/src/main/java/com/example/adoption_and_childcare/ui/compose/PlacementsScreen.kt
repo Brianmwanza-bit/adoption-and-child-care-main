@@ -14,6 +14,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.PlacementEntity
+import com.example.adoption_and_childcare.data.repository.PlacementRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -22,8 +24,15 @@ import kotlinx.coroutines.launch
 fun PlacementsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val repository = remember { PlacementRepositoryImpl(db.placementDao(), apiService) }
     var items by remember { mutableStateOf<List<PlacementEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -41,6 +50,14 @@ fun PlacementsScreen(onBack: () -> Unit = {}) {
 
     LaunchedEffect(Unit) {
         db.placementDao().observeAll().collectLatest { list -> items = list }
+    }
+    
+    // Fetch from API
+    LaunchedEffect(Unit) {
+        fetchPlacementsFromApi(repository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
+        }
     }
 
     Scaffold(
@@ -253,5 +270,33 @@ fun PlacementsScreen(onBack: () -> Unit = {}) {
             )
         }
     }
+    }
+}
+
+/**
+ * Helper function to fetch placements from API.
+ */
+private fun fetchPlacementsFromApi(
+    repository: PlacementRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch placements: ${e.message}")
+        }
     }
 }

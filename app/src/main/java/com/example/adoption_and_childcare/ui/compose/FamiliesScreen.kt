@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
+import com.example.adoption_and_childcare.data.repository.FamilyRepositoryImpl
+import com.example.adoption_and_childcare.network.RetrofitClient
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -26,9 +28,18 @@ import kotlinx.coroutines.launch
 fun FamiliesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
+    val familyRepository = remember { FamilyRepositoryImpl(db.familyDao(), apiService) }
+    
     var families by remember { mutableStateOf<List<FamilyEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     
+    // UI State
+    var isLoading by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Dialogs
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -48,9 +59,18 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
     val statuses = listOf("Active", "Inactive", "Pending")
     var showStatusDropdown by remember { mutableStateOf(false) }
 
+    // Load data from local DB
     LaunchedEffect(Unit) {
         db.familyDao().observeAll().collectLatest { list ->
             families = list
+        }
+    }
+    
+    // Fetch from API on first load
+    LaunchedEffect(Unit) {
+        fetchFamiliesFromApi(familyRepository, scope) { loading, error ->
+            isLoading = loading
+            errorMessage = error
         }
     }
 
@@ -378,6 +398,35 @@ fun FamilyDetailsScreen(family: FamilyEntity, onBack: () -> Unit) {
             }
             
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+/**
+ * Helper function to fetch families from API and update local database.
+ */
+private fun fetchFamiliesFromApi(
+    repository: FamilyRepositoryImpl,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onLoading: (Boolean, String?) -> Unit
+) {
+    scope.launch {
+        onLoading(true, null)
+        try {
+            // Get token from shared preferences (implement as needed)
+            val token = "" // TODO: Get actual auth token
+            if (token.isNotEmpty()) {
+                val result = repository.fetchFromApi(token)
+                if (result.isFailure) {
+                    onLoading(false, result.exceptionOrNull()?.message)
+                } else {
+                    onLoading(false, null)
+                }
+            } else {
+                onLoading(false, "No authentication token available")
+            }
+        } catch (e: Exception) {
+            onLoading(false, "Failed to fetch families: ${e.message}")
         }
     }
 }

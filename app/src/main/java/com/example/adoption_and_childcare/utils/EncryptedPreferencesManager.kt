@@ -4,6 +4,15 @@ import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
+/**
+ * Manager for encrypted SharedPreferences storage.
+ * 
+ * This class provides secure storage for sensitive data like
+ * authentication tokens, refresh tokens, and biometric data using
+ * Android's EncryptedSharedPreferences with AES-256 encryption.
+ * 
+ * @property context Application context for SharedPreferences access.
+ */
 class EncryptedPreferencesManager(private val context: Context) {
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

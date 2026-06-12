@@ -67,6 +67,12 @@ interface MoneyRecordDao {
     @Query("SELECT COUNT(*) FROM money_records")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM money_records")
+    suspend fun getAll(): List<MoneyRecordEntity>
+
+    @Query("SELECT * FROM money_records WHERE money_id = :id")
+    suspend fun findById(id: Int): MoneyRecordEntity?
+
     @Query("SELECT * FROM money_records ORDER BY date DESC")
     fun observeAll(): Flow<List<MoneyRecordEntity>>
 

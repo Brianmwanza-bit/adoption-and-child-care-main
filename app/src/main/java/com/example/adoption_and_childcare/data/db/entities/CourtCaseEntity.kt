@@ -4,6 +4,26 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a court case in the system.
+ * 
+ * This entity tracks legal proceedings related to adoption cases,
+ * including court dates, judges, and case outcomes.
+ * 
+ * @property caseId Unique identifier for the court case (auto-generated).
+ * @property childId ID of the child involved in the case.
+ * @property caseNumber Case number assigned by the court.
+ * @property courtName Name of the court.
+ * @property judgeName Name of the presiding judge.
+ * @property caseType Type of case (e.g., Adoption, Custody).
+ * @property filingDate Date when the case was filed.
+ * @property hearingDate Date of the hearing.
+ * @property outcome Outcome of the case.
+ * @property status Current status (e.g., Pending, Closed).
+ * @property nextHearingDate Date of the next hearing.
+ * @property createdAt Timestamp when the record was created.
+ * @property updatedAt Timestamp when the record was last updated.
+ */
 @Entity(tableName = "court_cases")
 data class CourtCaseEntity(
     @PrimaryKey(autoGenerate = true)

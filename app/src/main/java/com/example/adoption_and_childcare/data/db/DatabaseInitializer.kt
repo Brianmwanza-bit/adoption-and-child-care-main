@@ -18,13 +18,10 @@ object DatabaseInitializer {
     /**
      * Initializes the database with sample data if it is empty.
      *
-     * @param context The application context used to get the database instance.
+     * @param db The database instance to initialize.
      */
-    fun initializeDatabase(context: Context) {
-        val appContext = context.applicationContext
+    fun initializeDatabase(db: AppDatabase) {
         CoroutineScope(Dispatchers.IO).launch {
-            val db = AppDatabase.getInstance(appContext)
-            
             db.withTransaction {
                 // Check if database is already initialized
                 val userCount = db.userDao().count()

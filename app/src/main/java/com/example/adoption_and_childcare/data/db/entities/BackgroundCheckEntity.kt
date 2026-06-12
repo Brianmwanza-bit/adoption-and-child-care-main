@@ -4,6 +4,23 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a background check in the system.
+ * 
+ * This entity tracks background checks conducted on users for safety
+ * and compliance purposes.
+ * 
+ * @property checkId Unique identifier for the background check (auto-generated).
+ * @property userId ID of the user being checked.
+ * @property status Current status (e.g., Pending, Complete).
+ * @property result Result of the background check.
+ * @property requestedAt Date when the check was requested.
+ * @property completedAt Date when the check was completed.
+ * @property clearanceCertificatePath Path to the clearance certificate.
+ * @property clearanceCertificateData Binary data of the clearance certificate.
+ * @property clearanceMimeType MIME type of the certificate.
+ * @property clearanceSize Size of the certificate in bytes.
+ */
 @Entity(tableName = "background_checks")
 data class BackgroundCheckEntity(
     @PrimaryKey(autoGenerate = true)

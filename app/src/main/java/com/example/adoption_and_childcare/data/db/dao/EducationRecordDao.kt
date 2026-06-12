@@ -67,6 +67,23 @@ interface EducationRecordDao {
     @Query("SELECT COUNT(*) FROM education_records")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM education_records")
+    suspend fun getAll(): List<EducationRecordEntity>
+
+    @Query("SELECT * FROM education_records WHERE record_id = :id")
+    suspend fun findById(id: Int): EducationRecordEntity?
+
     @Query("SELECT * FROM education_records ORDER BY enrollment_date DESC")
     fun observeAll(): Flow<List<EducationRecordEntity>>
+    
+    @Query("""
+        SELECT * FROM education_records 
+        WHERE school_name LIKE :query 
+           OR grade LIKE :query 
+           OR performance LIKE :query
+           OR special_needs LIKE :query
+           OR teacher_contact LIKE :query
+        ORDER BY enrollment_date DESC
+    """)
+    suspend fun globalSearch(query: String): List<EducationRecordEntity>
 }

@@ -67,6 +67,23 @@ interface MedicalRecordDao {
     @Query("SELECT COUNT(*) FROM medical_records")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM medical_records")
+    suspend fun getAll(): List<MedicalRecordEntity>
+
+    @Query("SELECT * FROM medical_records WHERE record_id = :id")
+    suspend fun findById(id: Int): MedicalRecordEntity?
+
     @Query("SELECT * FROM medical_records ORDER BY visit_date DESC")
     fun observeAll(): Flow<List<MedicalRecordEntity>>
+    
+    @Query("""
+        SELECT * FROM medical_records 
+        WHERE diagnosis LIKE :query 
+           OR hospital_name LIKE :query 
+           OR treatment LIKE :query
+           OR visit_date LIKE :query
+           OR medications LIKE :query
+        ORDER BY visit_date DESC
+    """)
+    suspend fun globalSearch(query: String): List<MedicalRecordEntity>
 }

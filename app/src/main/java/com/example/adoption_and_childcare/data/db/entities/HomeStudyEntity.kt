@@ -4,6 +4,21 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Represents a home study evaluation in the system.
+ * 
+ * This entity tracks home study assessments conducted for families
+ * interested in adoption or foster care.
+ * 
+ * @property homeStudyId Unique identifier for the home study (auto-generated).
+ * @property familyId ID of the family being evaluated.
+ * @property startedAt Date when the home study began.
+ * @property completedAt Date when the home study was completed.
+ * @property result Result of the home study (e.g., Approved, Under Review).
+ * @property notes Additional notes about the home study.
+ * @property socialWorkerId User ID of the social worker conducting the study.
+ * @property updatedAt Timestamp when the record was last updated.
+ */
 @Entity(tableName = "home_studies")
 data class HomeStudyEntity(
     @PrimaryKey(autoGenerate = true)

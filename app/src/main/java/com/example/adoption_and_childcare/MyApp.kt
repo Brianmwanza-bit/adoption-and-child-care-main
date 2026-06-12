@@ -6,6 +6,13 @@ import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
+/**
+ * Main application class for the Adoption and Child Care app.
+ * 
+ * This class is annotated with @HiltAndroidApp to enable Hilt dependency injection
+ * throughout the application. It also provides WorkManager configuration
+ * for background task execution.
+ */
 @HiltAndroidApp
 class MyApp : Application(), Configuration.Provider {
 

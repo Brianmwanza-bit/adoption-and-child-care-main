@@ -125,14 +125,15 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
                             val cid = childId.text.toIntOrNull()
                             if (cid != null && visitDate.text.isNotBlank()) {
                                 scope.launch {
-                                    db.medicalRecordDao().insert(
+                                    db.medicalRecordDao().insertWithSync(
                                         MedicalRecordEntity(
                                             childId = cid,
                                             visitDate = visitDate.text,
                                             hospitalName = hospitalName.text.ifBlank { null },
                                             diagnosis = diagnosis.text.ifBlank { null },
                                             treatment = treatment.text.ifBlank { null }
-                                        )
+                                        ),
+                                        db.syncQueueDao()
                                     )
                                     showCreate = false
                                     childId = TextFieldValue("")
@@ -174,7 +175,7 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
                                         diagnosis = diagnosis.text.ifBlank { null },
                                         treatment = treatment.text.ifBlank { null }
                                     )
-                                    db.medicalRecordDao().update(updated)
+                                    db.medicalRecordDao().updateWithSync(updated, db.syncQueueDao())
                                     showEditDialog = false
                                     selectedRecord = null
                                 }
@@ -195,7 +196,9 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
                     confirmButton = {
                         TextButton(onClick = {
                             scope.launch {
-                                db.medicalRecordDao().deleteById(selectedRecord!!.recordId)
+                                selectedRecord?.let {
+                                    db.medicalRecordDao().deleteByIdWithSync(it.recordId, db.syncQueueDao())
+                                }
                                 showDeleteDialog = false
                                 selectedRecord = null
                             }

@@ -53,7 +53,7 @@ fun AnalyticsScreen(onBack: () -> Unit = {}, viewModel: AnalyticsViewModel = vie
             } else if (error != null) {
                 Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(error!!, color = MaterialTheme.colorScheme.error)
+                        Text(error ?: "Unknown error", color = MaterialTheme.colorScheme.error)
                         Button(onClick = { retried = !retried }) { Text("Retry") }
                     }
                 }

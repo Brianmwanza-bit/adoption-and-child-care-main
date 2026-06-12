@@ -1,11 +1,14 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.yourdomain.adoptionchildcare.R
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +23,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun WelcomeScreen(
-    onExploreClicked: () -> Unit,
-    onLoginClicked: () -> Unit
+    onExploreClicked: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -49,11 +51,11 @@ fun WelcomeScreen(
                 color = Color.White
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.ChildCare,
+                    Image(
+                        painter = painterResource(R.drawable.app_logo),
                         contentDescription = "App Logo",
                         modifier = Modifier.size(80.dp),
-                        tint = Color.White
+                        contentScale = ContentScale.Fit
                     )
                 }
             }
@@ -93,7 +95,7 @@ fun WelcomeScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "Explore Dashboard",
+                    text = "Dashboard",
                     color = Color(0xFF4CAF50),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -103,25 +105,6 @@ fun WelcomeScreen(
                     imageVector = Icons.Default.ArrowForward,
                     contentDescription = null,
                     tint = Color(0xFF4CAF50)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedButton(
-                onClick = onLoginClicked,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = "Sign In to Your Account",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
                 )
             }
         }

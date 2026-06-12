@@ -1,11 +1,13 @@
 package com.example.adoption_and_childcare.ui.compose
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,510 +15,411 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.adoption_and_childcare.data.db.entities.AuditLogEntity
-import com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity
-import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
-import com.example.adoption_and_childcare.data.db.entities.NotificationEntity
-import com.example.adoption_and_childcare.viewmodel.DashboardViewModel
-import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.yourdomain.adoptionchildcare.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.data.db.AppDatabase
+import com.example.adoption_and_childcare.data.session.SessionManager
+import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * Data class representing a recent activity item in the dashboard.
- * 
- * @property title The title of the activity.
- * @property description A brief description of what happened.
- * @property time When the activity occurred.
- * @property icon The icon associated with this type of activity.
- * @property color The theme color for the activity icon background.
+ * Data class representing a card in the dashboard.
+ * @property title The title displayed on the card.
+ * @property icon The icon associated with the module.
+ * @property count The numeric value to display.
+ * @property summary A brief description or status.
+ * @property color The theme color for the card.
+ * @property route The navigation route associated with the card.
  */
-data class ActivityItem(
+data class DashboardCard(
     val title: String,
-    val description: String,
-    val time: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color
+    val icon: ImageVector,
+    val count: Int,
+    val summary: String,
+    val color: Color,
+    val route: String? = null
 )
 
 /**
- * Data class representing a priority alert in the dashboard.
- * 
- * @property title The title of the alert.
- * @property description Details about the alert.
- * @property priority The priority level (e.g., "High", "Medium", "Low").
- * @property icon The icon associated with the alert.
- * @property color The theme color for the alert.
+ * Data class representing an actionable task for the user.
+ * @property id Unique identifier for the task.
+ * @property title Title of the action item.
+ * @property priority Level of urgency (urgent, high, normal).
+ * @property dueDate When the task is due.
+ * @property assignee The person responsible for the task.
+ * @property caseId ID of the associated case.
+ * @property childName Name of the child involved.
  */
-data class AlertItem(
+data class ActionItem(
+    val id: String,
     val title: String,
-    val description: String,
     val priority: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color
+    val dueDate: String,
+    val assignee: String,
+    val caseId: String = "",
+    val childName: String = ""
 )
 
 /**
- * Data class representing an upcoming event in the dashboard.
- * 
- * @property title The title of the event.
- * @property date When the event is scheduled.
- * @property type The category of the event (e.g., "Legal", "Review").
- * @property icon The icon associated with the event type.
- * @property color The theme color for the event.
+ * Data class representing the status of a specific case.
+ * @property id Unique identifier for the case.
+ * @property childName Name of the child in the case.
+ * @property status Current status of the case.
+ * @property urgency Level of urgency (critical, high, normal).
+ * @property daysInStatus Number of days since the last status change.
+ * @property nextDeadline Next important date for the case.
+ * @property assignee Case worker assigned.
+ * @property familyName Name of the family involved.
  */
-data class UpcomingEvent(
-    val title: String,
-    val date: String,
-    val type: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color
+data class CaseStatus(
+    val id: String,
+    val childName: String,
+    val status: String,
+    val urgency: String, // critical, high, normal
+    val daysInStatus: Int,
+    val nextDeadline: String,
+    val assignee: String,
+    val familyName: String = ""
 )
 
 /**
- * Data class representing a statistic item in the dashboard.
- * 
- * @property label The name of the statistic.
- * @property value The numerical or string value of the statistic.
- * @property icon The icon representing the statistic.
- * @property color The theme color for the statistic.
- * @property route The navigation route to open when clicked.
- */
-data class StatItem(
-    val label: String,
-    val value: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color,
-    val route: String?
-)
-
-/**
- * Data class representing a management module in the dashboard grid.
- * 
- * @property title The display name of the module.
- * @property icon The icon representing the module.
- * @property color The theme color for the module.
- * @property route The navigation route for the module.
- */
-data class ManagementModule(
-    val title: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color,
-    val route: String
-)
-
-/**
- * The main dashboard screen displaying overview statistics, modules, alerts, and activities.
- * 
- * @param onNavigate Callback for navigation to other screens.
- * @param notificationsViewModel The ViewModel providing notification state.
- * @param dashboardViewModel The ViewModel providing dashboard statistics and data.
+ * Main dashboard screen providing an overview of cases, tasks, and system modules.
+ * @param onNavigate Callback for navigation events.
+ * @param notificationsViewModel ViewModel for managing notification state.
  */
 @Composable
-fun DashboardScreen(
-    onNavigate: (String) -> Unit = {}, 
-    notificationsViewModel: NotificationsViewModel = viewModel(),
-    dashboardViewModel: DashboardViewModel = viewModel()
-) {
+fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: NotificationsViewModel = hiltViewModel()) {
     val loading by notificationsViewModel.loading.collectAsState()
     val error by notificationsViewModel.error.collectAsState()
-    
-    // Database data
-    val childCount by dashboardViewModel.childCount.collectAsState()
-    val placementCount by dashboardViewModel.placementCount.collectAsState()
-    val applicationCount by dashboardViewModel.applicationCount.collectAsState()
-    val homeStudyCount by dashboardViewModel.homeStudyCount.collectAsState()
-    val auditLogs by dashboardViewModel.recentActivities.collectAsState()
-    val alertsData by dashboardViewModel.priorityAlerts.collectAsState()
-    val eventsData by dashboardViewModel.upcomingEvents.collectAsState()
-    
-    // Scroll state for LazyColumn
-    val listState = rememberLazyListState()
-    
-    // Search state
+    val unreadCount by notificationsViewModel.unreadCount.collectAsState()
+
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userRole = sessionManager.getRole() ?: "Guest"
+    var childrenCount by remember { mutableStateOf(0) }
+    var familiesCount by remember { mutableStateOf(0) }
+    var adoptionAppsCount by remember { mutableStateOf(0) }
+    var homeStudiesCount by remember { mutableStateOf(0) }
+    var documentsCount by remember { mutableStateOf(0) }
+    var placementsCount by remember { mutableStateOf(0) }
+    var reportsCount by remember { mutableStateOf(0) }
+    var educationCount by remember { mutableStateOf(0) }
+    var medicalCount by remember { mutableStateOf(0) }
+    var financeCount by remember { mutableStateOf(0) }
+    var overdueTasks by remember { mutableStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
-    
-    // Data for statistics - Now using DB counts
-    val stats = listOf(
-        StatItem(stringResource(R.string.stat_children_care), childCount.toString(), Icons.Default.ChildCare, Color(0xFF4CAF50), stringResource(R.string.route_children_list)),
-        StatItem(stringResource(R.string.stat_active_placements), placementCount.toString(), Icons.Default.Home, Color(0xFF2196F3), stringResource(R.string.route_placements)),
-        StatItem(stringResource(R.string.stat_pending_apps), applicationCount.toString(), Icons.Default.Folder, Color(0xFFFF9800), stringResource(R.string.route_adoption_applications)),
-        StatItem(stringResource(R.string.stat_home_studies), homeStudyCount.toString(), Icons.Default.AssignmentTurnedIn, Color(0xFF9C27B0), stringResource(R.string.route_home_studies))
-    )
-    
-    // Real data for recent activities
-    val recentActivities = auditLogs.map { log ->
-        ActivityItem(
-            title = "${log.action} ${log.tableName.capitalize()}",
-            description = "Record #${log.recordId} modified",
-            time = log.changedAt ?: "Just now",
-            icon = when(log.action) {
-                "INSERT" -> Icons.Default.Add
-                "DELETE" -> Icons.Default.Delete
-                else -> Icons.Default.Edit
-            },
-            color = when(log.action) {
-                "INSERT" -> Color(0xFF4CAF50)
-                "DELETE" -> Color(0xFFF44336)
-                else -> Color(0xFF2196F3)
+
+    LaunchedEffect(Unit) {
+        notificationsViewModel.loadNotifications()
+        val db = AppDatabase.getInstance(context)
+        withContext(Dispatchers.IO) {
+            val c = db.childDao().count()
+            val f = db.familyDao().count()
+            val aa = db.adoptionApplicationDao().count()
+            val hs = db.homeStudyDao().count()
+            val d = db.documentDao().count()
+            val p = db.placementDao().count()
+            val r = db.caseReportDao().count()
+            val e = db.educationRecordDao().count()
+            val m = db.medicalRecordDao().count()
+            val fin = db.moneyRecordDao().count()
+            withContext(Dispatchers.Main) {
+                childrenCount = c
+                familiesCount = f
+                adoptionAppsCount = aa
+                homeStudiesCount = hs
+                documentsCount = d
+                placementsCount = p
+                reportsCount = r
+                educationCount = e
+                medicalCount = m
+                financeCount = fin
+                overdueTasks = (c * 0.15).toInt()
             }
-        )
-    }
-    
-    // Real data for priority alerts
-    val priorityAlerts = alertsData.map { notif ->
-        AlertItem(
-            title = notif.title,
-            description = notif.message,
-            priority = "High", // Mapping could be improved if notification had priority field
-            icon = Icons.Default.Notifications,
-            color = Color(0xFFF44336)
-        )
-    }
-    
-    // Real data for upcoming events
-    val upcomingEvents = eventsData.map { event ->
-        when (event) {
-            is CourtCaseEntity -> UpcomingEvent(
-                title = "Court: ${event.courtName}",
-                date = event.hearingDate ?: "TBD",
-                type = "Legal",
-                icon = Icons.Default.Gavel,
-                color = Color(0xFFE91E63)
-            )
-            is HomeStudyEntity -> UpcomingEvent(
-                title = "Study: Family #${event.familyId}",
-                date = event.startedAt ?: "TBD",
-                type = "Review",
-                icon = Icons.Default.AssignmentTurnedIn,
-                color = Color(0xFFFF9800)
-            )
-            else -> UpcomingEvent("Unknown", "N/A", "System", Icons.Default.Info, Color.Gray)
         }
     }
 
-    val managementModules = listOf(
-        ManagementModule(stringResource(R.string.module_children), Icons.Default.ChildCare, Color(0xFF4CAF50), stringResource(R.string.route_children_list)),
-        ManagementModule(stringResource(R.string.module_families), Icons.Default.FamilyRestroom, Color(0xFF2196F3), stringResource(R.string.route_families)),
-        ManagementModule(stringResource(R.string.module_applications), Icons.Default.Assignment, Color(0xFFFF9800), stringResource(R.string.route_adoption_applications)),
-        ManagementModule(stringResource(R.string.module_home_studies), Icons.Default.AssignmentTurnedIn, Color(0xFF9C27B0), stringResource(R.string.route_home_studies)),
-        ManagementModule(stringResource(R.string.module_documents), Icons.Default.Description, Color(0xFF607D8B), stringResource(R.string.route_documents)),
-        ManagementModule(stringResource(R.string.module_placements), Icons.Default.LocationOn, Color(0xFFE91E63), stringResource(R.string.route_placements)),
-        ManagementModule(stringResource(R.string.module_reports), Icons.Default.Assessment, Color(0xFF795548), stringResource(R.string.route_reports)),
-        ManagementModule(stringResource(R.string.module_education), Icons.Default.School, Color(0xFF009688), stringResource(R.string.route_education)),
-        ManagementModule(stringResource(R.string.module_medical), Icons.Default.LocalHospital, Color(0xFFF44336), stringResource(R.string.route_medical)),
-        ManagementModule(stringResource(R.string.module_finance), Icons.Default.AttachMoney, Color(0xFFFFC107), stringResource(R.string.route_finance))
+    val allModules = listOf(
+        DashboardCard(stringResource(R.string.dashboard_active_cases), Icons.Default.FolderOpen, childrenCount + familiesCount, stringResource(R.string.dashboard_active_cases_summary), Color(0xFF2196F3), route = "children_list"),
+        DashboardCard(stringResource(R.string.dashboard_awaiting_placement), Icons.Default.Schedule, adoptionAppsCount, stringResource(R.string.dashboard_awaiting_placement_summary), Color(0xFFFF9800), route = "adoption_applications"),
+        DashboardCard(stringResource(R.string.dashboard_in_placement), Icons.Default.Home, placementsCount, stringResource(R.string.dashboard_in_placement_summary), Color(0xFF4CAF50), route = "placements"),
+        DashboardCard(stringResource(R.string.dashboard_home_studies), Icons.Default.AssignmentTurnedIn, homeStudiesCount, stringResource(R.string.dashboard_home_studies_summary), Color(0xFF9C27B0), route = "home_studies"),
+        DashboardCard(stringResource(R.string.dashboard_documents), Icons.Default.Description, documentsCount, stringResource(R.string.dashboard_documents_summary), Color(0xFF607D8B), route = "documents"),
+        DashboardCard(stringResource(R.string.dashboard_medical), Icons.Default.LocalHospital, medicalCount, stringResource(R.string.dashboard_medical_summary), Color(0xFFF44336), route = "medical"),
+        DashboardCard(stringResource(R.string.dashboard_education), Icons.Default.School, educationCount, stringResource(R.string.dashboard_education_summary), Color(0xFF3F51B5), route = "education"),
+        DashboardCard(stringResource(R.string.dashboard_finance), Icons.Default.AttachMoney, financeCount, stringResource(R.string.dashboard_finance_summary), Color(0xFF00897B), route = "finance"),
+        DashboardCard(stringResource(R.string.dashboard_reports), Icons.Default.Assessment, reportsCount, stringResource(R.string.dashboard_reports_summary), Color(0xFFE91E63), route = "reports"),
+        DashboardCard(stringResource(R.string.dashboard_families_module), Icons.Default.FamilyRestroom, familiesCount, stringResource(R.string.dashboard_families_summary), Color(0xFF6A1B9A), route = "families")
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (loading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            val currentError = error
-            if (currentError != null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(currentError, color = MaterialTheme.colorScheme.error)
+
+    // Role-based module filtering
+    val filteredModules = when (userRole) {
+        "Admin", "Case Worker", "Supervisor" -> allModules // Full access
+        "Social Worker" -> allModules.filter {
+            it.route in listOf("children_list", "families", "documents", "reports", "home_studies", "placements")
+        }
+        "Foster Parent" -> allModules.filter {
+            it.route in listOf("children_list", "documents", "education", "medical")
+        }
+        else -> allModules.filter {
+            it.route in listOf("children_list", "documents")
+        } // Limited access for other roles
+    }
+    val criticalCases = listOf(
+        CaseStatus("001", "Emma Smith", "Waiting for match", "critical", 45, "2024-07-30", "Sarah Chen", "Approved Family"),
+        CaseStatus("002", "Noah Johnson", "In placement", "high", 15, "2024-07-22", "Mike Wilson", "Foster Keller Family"),
+        CaseStatus("003", "Sophia Brown", "Matched", "high", 7, "2024-07-15", "Lisa Anderson", "Baker Family")
+    )
+
+    val actionItems = listOf(
+        ActionItem("1", "Home Study Review - Smith Family", "urgent", "Today", "You", "001", "Emma S."),
+        ActionItem("2", "Medical Follow-up - Noah J.", "urgent", "Tomorrow", "Dr. Brown", "002", "Noah J."),
+        ActionItem("3", "Document Collection - Sophia B.", "high", "In 2 days", "You", "003", "Sophia B."),
+        ActionItem("4", "Placement Stability Check", "normal", "In 7 days", "Mike Wilson", "002", "Noah J.")
+    )
+
+    Scaffold { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (error != null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(error ?: "Unknown error", color = MaterialTheme.colorScheme.error)
                 }
             } else {
                 LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    // Search Bar
-                    item {
-                        SearchBarComponent(
-                            query = searchQuery,
-                            onQueryChange = { searchQuery = it }
-                        )
-                    }
-
-                    // Management Modules Grid
-                    item {
-                        ManagementModulesGrid(
-                            modules = managementModules,
-                            onNavigate = onNavigate
-                        )
-                    }
-
-                    // Overview Statistics Panel
-                    item {
-                        OverviewStatsPanel(
-                            stats = stats,
-                            onNavigate = onNavigate
-                        )
-                    }
-                    
-                    // Priority Alerts Section
-                    item {
-                        PriorityAlertsSection(
-                            alerts = priorityAlerts
-                        )
-                    }
-                    
-                    // Recent Activity Feed
-                    item {
-                        RecentActivityFeed(
-                            activities = recentActivities
-                        )
-                    }
-                    
-                    // Upcoming Events Section
-                    item {
-                        UpcomingEventsSection(
-                            events = upcomingEvents
-                        )
-                    }
-                    
-                    // Extra padding at bottom to ensure scrolling works well
-                    item {
-                        Spacer(modifier = Modifier.height(32.dp))
-                    }
-                }
-
-                // Custom Scrollbar on the far right
-                DashboardScrollbar(
-                    state = listState,
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight()
-                        .width(8.dp)
-                        .padding(vertical = 4.dp)
-                )
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (loading) {
+                                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator()
+                                }
+                            } else {
+                                DashboardHeaderSection(unreadCount, overdueTasks)
+                                SearchHeaderBar(
+                                    query = searchQuery,
+                                    onQueryChange = { searchQuery = it },
+                                    onSearch = { /* Implement search */ }
+                                )
+                                CriticalAlertsSection(criticalCases, overdueTasks, onNavigate)
+                                TodaysWorkloadSection(actionItems.filter { it.dueDate == "Today" || it.dueDate == "Tomorrow" })
+                            }
+                        }
+                    }
+
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                stringResource(R.string.dashboard_all_action_items),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                            actionItems.forEach { ActionItemCard(it) }
+                        }
+                    }
+
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                stringResource(R.string.dashboard_system_modules),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                items(filteredModules) { card ->
+                                    CompactModuleCard(card) { card.route?.let { onNavigate(it) } }
+                                }
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
             }
         }
     }
 }
 
 /**
- * A custom scrollbar for the dashboard's LazyColumn.
- * 
- * @param state The scroll state of the LazyColumn.
- * @param modifier The modifier for the scrollbar canvas.
+ * Displays an individual action item as a card.
+ * @param item The action item data to display.
  */
 @Composable
-fun DashboardScrollbar(
-    state: LazyListState,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier) {
-        val totalItems = state.layoutInfo.totalItemsCount
-        if (totalItems > 0) {
-            val visibleItems = state.layoutInfo.visibleItemsInfo
-            if (visibleItems.isNotEmpty()) {
-                val viewportHeight = size.height
-                
-                // Calculate how much of the total content is visible
-                val totalContentHeight = totalItems.toFloat() // Using count as a proxy for height
-                val visibleContentHeight = visibleItems.size.toFloat()
-                
-                val scrollbarHeight = (visibleContentHeight / totalContentHeight) * viewportHeight
-                
-                // Calculate scroll position
-                val firstVisibleIndex = state.firstVisibleItemIndex
-                
-                // Approximate position
-                val scrollPosition = (firstVisibleIndex.toFloat() / totalItems) * viewportHeight
-                
-                drawRoundRect(
-                    color = Color.Gray.copy(alpha = 0.5f),
-                    topLeft = Offset(x = 2.dp.toPx(), y = scrollPosition),
-                    size = Size(width = 4.dp.toPx(), height = scrollbarHeight.coerceAtLeast(40.dp.toPx())),
-                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
-                )
-            }
-        }
-    }
-}
-
-/**
- * A grid display of management modules.
- * 
- * @param modules List of management modules to display.
- * @param onNavigate Callback for when a module is clicked.
- */
-@Composable
-fun ManagementModulesGrid(
-    modules: List<ManagementModule>,
-    onNavigate: (String) -> Unit
-) {
+fun ActionItemCard(item: ActionItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_title_management),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            // Chunking modules into rows of 2 for a grid look within LazyColumn
-                for (rowModules in modules.chunked(2)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    for (module in rowModules) {
-                        ModuleCard(
-                            module = module,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onNavigate(module.route) }
-                        )
-                    }
-                    // If row has only 1 item, add a spacer to keep width
-                    if (rowModules.size < 2) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * A card representing an individual management module.
- * 
- * @param module The module data.
- * @param modifier The modifier for the card.
- * @param onClick Callback for when the card is clicked.
- */
-@Composable
-fun ModuleCard(
-    module: ManagementModule,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier.clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = module.color.copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(8.dp),
-                color = module.color
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = module.icon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+        Row(modifier = Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(
+                        when (item.priority) {
+                            "urgent" -> Color(0xFFE91E63)
+                            "high" -> Color(0xFFFF9800)
+                            else -> Color(0xFF4CAF50)
+                        },
+                        CircleShape
                     )
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(item.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(item.assignee, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
-            Text(
-                text = module.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Icon(Icons.Default.ChevronRight, "Navigate", tint = Color.Gray, modifier = Modifier.size(20.dp))
         }
     }
 }
 
 /**
- * A search bar component for filtering dashboard content.
- * 
- * @param query The current search query string.
- * @param onQueryChange Callback for when the search query changes.
+ * Header section of the dashboard showing key summary statistics.
+ * @param unreadCount Number of unread notifications.
+ * @param overdueTasks Number of tasks that are past their due date.
  */
 @Composable
-fun SearchBarComponent(
+fun DashboardHeaderSection(unreadCount: Int, overdueTasks: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF2196F3), RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        HeaderStatCard(stringResource(R.string.dashboard_stat_urgent_cases), "3", Color(0xFFFF5252), Modifier.weight(1f))
+        HeaderStatCard(stringResource(R.string.dashboard_stat_overdue), overdueTasks.toString(), Color(0xFFFF9800), Modifier.weight(1f))
+        HeaderStatCard(stringResource(R.string.dashboard_stat_todays_tasks), "4", Color(0xFF4CAF50), Modifier.weight(1f))
+        HeaderStatCard(stringResource(R.string.dashboard_stat_messages), unreadCount.toString(), Color(0xFFFFC107), Modifier.weight(1f))
+    }
+}
+
+/**
+ * A small stat card used within the dashboard header.
+ * @param label Description of the stat.
+ * @param value The value to display.
+ * @param color Color used for background accent (not currently used for background color).
+ * @param modifier Modifier for layout adjustments.
+ */
+@Composable
+fun HeaderStatCard(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.9f))
+    }
+}
+
+/**
+ * Search bar displayed at the top of the dashboard.
+ * @param query Current search query.
+ * @param onQueryChange Callback when the query text changes.
+ * @param onSearch Callback when the search action is triggered.
+ * @param modifier Modifier for layout adjustments.
+ */
+@Composable
+fun SearchHeaderBar(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp),
         placeholder = { Text(stringResource(R.string.dashboard_search_hint)) },
-        leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.dashboard_search_desc))
-        },
+        leadingIcon = { Icon(Icons.Default.Search, stringResource(R.string.dashboard_search_desc), tint = Color(0xFF2196F3)) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.dashboard_clear_desc))
+                    Icon(Icons.Default.Close, stringResource(R.string.dashboard_clear_desc))
                 }
             }
         },
+        singleLine = true,
         shape = RoundedCornerShape(12.dp),
-        singleLine = true
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color(0xFF2196F3),
+            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+        ),
+        textStyle = MaterialTheme.typography.bodySmall
     )
 }
 
 /**
- * A panel displaying overview statistics.
- * 
- * @param stats List of statistics items to display.
- * @param onNavigate Callback for when a statistic card is clicked.
+ * Section highlighting critical alerts and overdue tasks.
+ * @param cases List of cases requiring immediate attention.
+ * @param overdueTasks Total number of overdue tasks.
+ * @param onNavigate Callback for navigation when an alert is clicked.
  */
 @Composable
-fun OverviewStatsPanel(
-    stats: List<StatItem>,
-    onNavigate: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_title_overview),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+fun CriticalAlertsSection(cases: List<CaseStatus>, overdueTasks: Int, onNavigate: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.dashboard_section_urgent_attention), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        cases.forEach { case ->
+            CriticalCaseCard(case)
+        }
+        if (overdueTasks > 0) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigate("reports") },
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFE91E63))
             ) {
-                for (stat in stats) {
-                    StatCard(
-                        stat = stat,
-                        modifier = Modifier.weight(1f),
-                        onClick = { stat.route?.let { onNavigate(it) } }
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.dashboard_overdue_tasks_alert, overdueTasks), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFFE91E63))
+                        Text(stringResource(R.string.dashboard_action_required_today), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    }
+                    Icon(Icons.Default.ChevronRight, "Navigate", tint = Color(0xFFE91E63))
                 }
             }
         }
@@ -524,349 +427,144 @@ fun OverviewStatsPanel(
 }
 
 /**
- * A card representing an individual statistic.
- * 
- * @param stat The statistic data.
- * @param modifier The modifier for the card.
- * @param onClick Callback for when the card is clicked.
+ * Card representing a single critical case alert.
+ * @param case The case status data to display.
  */
 @Composable
-fun StatCard(
-    stat: StatItem,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
-) {
-    Card(
-        modifier = modifier.clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = stat.color.copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Icon(
-                imageVector = stat.icon,
-                contentDescription = stat.label,
-                tint = stat.color,
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = stat.value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = stat.color
-            )
-            Text(
-                text = stat.label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-        }
-    }
-}
-
-/**
- * A section displaying priority alerts.
- * 
- * @param alerts List of alerts to display.
- */
-@Composable
-fun PriorityAlertsSection(
-    alerts: List<AlertItem>
-) {
+fun CriticalCaseCard(case: CaseStatus) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_title_alerts),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.dashboard_items_count, alerts.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            for (alert in alerts) {
-                AlertCard(alert = alert)
-            }
-        }
-    }
-}
-
-/**
- * A card representing an individual alert.
- * 
- * @param alert The alert data.
- */
-@Composable
-fun AlertCard(alert: AlertItem) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = when(alert.priority) {
-                stringResource(R.string.alert_priority_high) -> Color(0xFFFFEBEE)
-                stringResource(R.string.alert_priority_medium) -> Color(0xFFFFF8E1)
+            containerColor = when (case.urgency) {
+                "critical" -> Color(0xFFFFEBEE)
+                "high" -> Color(0xFFFFF3E0)
                 else -> Color(0xFFF5F5F5)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = alert.icon,
-                contentDescription = null,
-                tint = alert.color,
-                modifier = Modifier.size(20.dp)
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = alert.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = alert.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+        border = androidx.compose.foundation.BorderStroke(
+            1.5.dp,
+            when (case.urgency) {
+                "critical" -> Color(0xFFE91E63)
+                "high" -> Color(0xFFFF9800)
+                else -> Color(0xFFBDBDBD)
             }
-            Surface(
-                shape = RoundedCornerShape(4.dp),
-                color = alert.color
-            ) {
-                Text(
-                    text = alert.priority,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White
-                )
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(case.childName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(case.familyName, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+                Badge(
+                    modifier = Modifier.align(Alignment.Top),
+                    containerColor = when (case.urgency) {
+                        "critical" -> Color(0xFFE91E63)
+                        "high" -> Color(0xFFFF9800)
+                        else -> Color(0xFF9CCC65)
+                    }
+                ) {
+                    Text(case.status, style = MaterialTheme.typography.labelSmall, color = Color.White, fontSize = 8.sp)
+                }
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Days in status: ${case.daysInStatus}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text("Deadline: ${case.nextDeadline}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
+                Text(case.assignee, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF2196F3))
             }
         }
     }
 }
 
 /**
- * A feed displaying recent activities.
- * 
- * @param activities List of activity items to display.
+ * Section displaying the user's workload for the current day.
+ * @param tasks List of tasks scheduled for today or tomorrow.
  */
 @Composable
-fun RecentActivityFeed(
-    activities: List<ActivityItem>
-) {
+fun TodaysWorkloadSection(tasks: List<ActionItem>) {
+    if (tasks.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.dashboard_section_todays_workload), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            tasks.forEach { task ->
+                CompactActionCard(task)
+            }
+        }
+    }
+}
+
+/**
+ * A more compact version of an action card for list displays.
+ * @param item The action item data.
+ */
+@Composable
+fun CompactActionCard(item: ActionItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_title_activity),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.dashboard_view_all),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            for (activity in activities) {
-                ActivityItemRow(activity = activity)
-            }
-        }
-    }
-}
-
-/**
- * A row representing an individual activity item.
- * 
- * @param activity The activity data.
- */
-@Composable
-fun ActivityItemRow(activity: ActivityItem) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            modifier = Modifier.size(40.dp),
-            shape = RoundedCornerShape(8.dp),
-            color = activity.color.copy(alpha = 0.1f)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = activity.icon,
-                    contentDescription = null,
-                    tint = activity.color,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = activity.title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(
+                        when (item.priority) {
+                            "urgent" -> Color(0xFFE91E63)
+                            "high" -> Color(0xFFFF9800)
+                            else -> Color(0xFF4CAF50)
+                        },
+                        CircleShape
+                    )
             )
-            Text(
-                text = activity.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-        }
-        
-        Text(
-            text = activity.time,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        )
-    }
-}
-
-/**
- * A section displaying upcoming events.
- * 
- * @param events List of events to display.
- */
-@Composable
-fun UpcomingEventsSection(
-    events: List<UpcomingEvent>
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_title_events),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.dashboard_view_calendar),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                Text("${item.childName} • ${item.dueDate}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             }
-            
-            for (event in events) {
-                EventCard(event = event)
-            }
+            Icon(Icons.Default.ChevronRight, "Navigate", modifier = Modifier.size(18.dp), tint = Color.Gray)
         }
     }
 }
 
+
 /**
- * A card representing an individual event.
- * 
- * @param event The event data.
+ * A compact square card representing a system module.
+ * @param card The module data.
+ * @param onClick Callback when the module is clicked.
  */
 @Composable
-fun EventCard(event: UpcomingEvent) {
+fun CompactModuleCard(card: DashboardCard, onClick: () -> Unit = {}) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = event.color.copy(alpha = 0.1f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = RoundedCornerShape(8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = card.route != null) { onClick() },
+        colors = CardDefaults.cardColors(containerColor = card.color.copy(alpha = 0.1f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, card.color.copy(alpha = 0.5f))
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = event.icon,
-                contentDescription = null,
-                tint = event.color,
-                modifier = Modifier.size(24.dp)
-            )
-            
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = event.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = event.type,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-            
-            Text(
-                text = event.date,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Medium,
-                color = event.color
-            )
+            Icon(card.icon, card.title, tint = card.color, modifier = Modifier.size(28.dp))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(card.count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = card.color)
+            Text(card.title, style = MaterialTheme.typography.labelSmall, color = card.color, fontSize = 10.sp)
+            Text(card.summary, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 8.sp)
         }
     }
 }
+

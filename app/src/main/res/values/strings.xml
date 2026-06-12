@@ -162,4 +162,152 @@
     <string name="pay_method_bank">Bank Transfer</string>
     <string name="pay_method_mobile">Mobile Banking</string>
     <string name="pay_method_cheque">Cheque</string>
+
+    <!-- Biometric Strings -->
+    <string name="biometric_error_unavailable">Biometric authentication not available on this device</string>
+    <string name="biometric_auth_failed">Authentication failed</string>
+    <string name="biometric_prompt_title">Fingerprint Authentication</string>
+    <string name="biometric_prompt_subtitle">Log in using your fingerprint</string>
+    <string name="biometric_negative_button">Cancel</string>
+
+    <!-- Dashboard Module Titles & Summaries -->
+    <string name="dashboard_active_cases">Active Cases</string>
+    <string name="dashboard_active_cases_summary">Total active cases</string>
+    <string name="dashboard_awaiting_placement">Awaiting Placement</string>
+    <string name="dashboard_awaiting_placement_summary">Cases pending match</string>
+    <string name="dashboard_in_placement">In Placement</string>
+    <string name="dashboard_in_placement_summary">Currently placed</string>
+    <string name="dashboard_home_studies">Home Studies</string>
+    <string name="dashboard_home_studies_summary">Pending reviews</string>
+    <string name="dashboard_documents">Documents</string>
+    <string name="dashboard_documents_summary">Files to process</string>
+    <string name="dashboard_medical">Medical Records</string>
+    <string name="dashboard_medical_summary">Health updates</string>
+    <string name="dashboard_education">Education</string>
+    <string name="dashboard_education_summary">Educational info</string>
+    <string name="dashboard_finance">Finance</string>
+    <string name="dashboard_finance_summary">Transactions</string>
+    <string name="dashboard_reports">Reports</string>
+    <string name="dashboard_reports_summary">Case reports</string>
+    <string name="dashboard_families_module">Families</string>
+    <string name="dashboard_families_summary">Registered families</string>
+
+    <!-- Additional Dashboard UI Strings -->
+    <string name="dashboard_section_urgent_attention">🚨 Require Immediate Attention</string>
+    <string name="dashboard_section_todays_workload">📋 Today\'s Workload</string>
+    <string name="dashboard_all_action_items">All Action Items</string>
+    <string name="dashboard_system_modules">System Modules</string>
+    <string name="dashboard_overdue_tasks_alert">⚠️ %1$d Tasks Overdue</string>
+    <string name="dashboard_action_required_today">Action required today</string>
+    <string name="dashboard_stat_urgent_cases">Urgent Cases</string>
+    <string name="dashboard_stat_overdue">Overdue</string>
+    <string name="dashboard_stat_todays_tasks">Today\'s Tasks</string>
+    <string name="dashboard_stat_messages">Messages</string>
+
+    <!-- Footer Actions -->
+    <string name="footer_action_new_case">New Case</string>
+    <string name="footer_action_log_visit">Log Visit</string>
+    <string name="footer_action_approve">Approve</string>
+    <string name="footer_action_upload">Upload</string>
+    <string name="footer_action_home_study">Home Study</string>
+
+    <!-- Auth Strings -->
+    <string name="login_title">Login</string>
+    <string name="login_email_hint">Email or Username</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="register_prompt">Don\'t have an account? Register</string>
+    <string name="register_title">Register</string>
+    <string name="register_username_hint">Username</string>
+    <string name="register_email_hint">Email</string>
+    <string name="register_password_hint">Password</string>
+    <string name="register_occupation_hint">Occupation</string>
+    <string name="register_button">Register</string>
+    <string name="login_prompt">Already have an account? Login</string>
+    <string name="error_fill_all_fields">Please fill in all fields</string>
+    <string name="error_invalid_credentials">Invalid credentials</string>
+    <string name="error_login_failed">Login failed</string>
+    <string name="error_user_exists">User already exists</string>
+    <string name="error_registration_failed">Registration failed</string>
+
+    <!-- Roles -->
+    <string name="role_admin">Admin</string>
+    <string name="role_case_worker">Case Worker</string>
+    <string name="role_foster_parent">Foster Parent</string>
+    <string name="role_social_worker">Social Worker</string>
+    <string name="role_supervisor">Supervisor</string>
+
+    <!-- Modern Dashboard Strings -->
+    <string name="dashboard_priority_alerts">Priority Alerts</string>
+    <string name="dashboard_urgent">Urgent</string>
+    <string name="dashboard_at_risk">At-Risk</string>
+    <string name="dashboard_upcoming">Upcoming</string>
+    <string name="dashboard_key_metrics">Key Metrics</string>
+    <string name="dashboard_metric_children">Children</string>
+    <string name="dashboard_metric_families">Families</string>
+    <string name="dashboard_metric_placements">Placements</string>
+    <string name="dashboard_metric_applications">Applications</string>
+    <string name="dashboard_trend_children">+12% from last week</string>
+    <string name="dashboard_trend_families">+8% from last week</string>
+    <string name="dashboard_trend_placements">89% stability rate</string>
+    <string name="dashboard_trend_applications">12 pending review</string>
+    <string name="dashboard_overdue_tasks_count">%1$d Tasks Overdue</string>
+    <string name="dashboard_action_items">Action Items</string>
+    <string name="dashboard_recent_updates">Recent Updates</string>
+    <string name="dashboard_quick_access">Quick Access</string>
+    <string name="dashboard_module_documents">Documents</string>
+    <string name="dashboard_module_medical">Medical</string>
+    <string name="dashboard_module_education">Education</string>
+    <string name="dashboard_module_finance">Finance</string>
+    <string name="dashboard_update_1">New adoption application: Brown Family</string>
+    <string name="dashboard_update_2">Document uploaded: School Records (Alex)</string>
+    <string name="dashboard_update_3">Placement changed: Foster Home -> Kinship Care</string>
+    <string name="dashboard_update_4">Court hearing scheduled: 2024-07-15</string>
+    <string name="dashboard_task_1">Home Study Review - Smith Family</string>
+    <string name="dashboard_task_2">Medical Follow-up - Johnny M.</string>
+    <string name="dashboard_task_3">Placement Stability Check</string>
+    <string name="dashboard_priority_urgent_val">urgent</string>
+    <string name="dashboard_priority_high_val">high</string>
+    <string name="dashboard_priority_normal_val">normal</string>
+    <string name="dashboard_due_today">Today</string>
+    <string name="dashboard_due_2days">In 2 days</string>
+    <string name="dashboard_due_7days">In 7 days</string>
+    <string name="dashboard_assignee_sarah">Sarah Chen</string>
+    <string name="dashboard_assignee_dr_brown">Dr. Brown</string>
+    <string name="dashboard_assignee_mike">Mike Wilson</string>
+    <string name="dashboard_entity_home_studies">Home Studies</string>
+    <string name="dashboard_entity_medical">Medical</string>
+    <string name="dashboard_entity_placements">Placements</string>
+
+    <!-- Search Screen Strings -->
+    <string name="search_title">Search Results</string>
+    <string name="search_back_desc">Back</string>
+    <string name="search_no_results">No results found for \'%1$s\'</string>
+    <string name="search_empty_hint">Type in the search bar above to find records</string>
+    <string name="search_other_category">Other</string>
+    <string name="search_child_label">Child Record</string>
+    <string name="search_county_label">County: %1$s</string>
+    <string name="search_na">N/A</string>
+    <string name="search_family_label">Family: %1$s</string>
+    <string name="search_id_label">ID: %1$s</string>
+    <string name="search_staff_label">Staff: %1$s</string>
+    <string name="search_placement_label">Placement #%1$s</string>
+    <string name="search_standard_type">Standard</string>
+    <string name="search_date_label">Date: %1$s</string>
+    <string name="search_amount_label">Ksh %1$s</string>
+    <string name="search_receipt_label">Receipt: %1$s</string>
+    <string name="search_application_label">Application #%1$s</string>
+    <string name="search_status_label">Status: %1$s</string>
+    <string name="search_family_id_label">Family ID: %1$s</string>
+    <string name="search_document_label">Document</string>
+    <string name="search_type_label">Type: %1$s</string>
+    <string name="search_unknown">Unknown</string>
+
+    <!-- Sync Strings -->
+    <string name="sync_prefs_name">sync_prefs</string>
+    <string name="sync_key_last_synced">last_synced_at</string>
+    <string name="sync_auth_prefix">Bearer </string>
+    <string name="sync_error_push_failed">Push failed: %1$s</string>
+    <string name="sync_error_pull_failed">Pull failed: %1$s</string>
+    <string name="sync_error_unknown">Unknown sync error</string>
 </resources>

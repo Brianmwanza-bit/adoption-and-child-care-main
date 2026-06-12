@@ -283,7 +283,7 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                                 bankAccount = if (paymentMethod == context.getString(R.string.pay_method_bank) || paymentMethod == context.getString(R.string.pay_method_mobile) || paymentMethod == context.getString(R.string.pay_method_cheque)) bankAccount.text else null,
                                 bankReference = if (paymentMethod == context.getString(R.string.pay_method_bank) || paymentMethod == context.getString(R.string.pay_method_mobile) || paymentMethod == context.getString(R.string.pay_method_cheque)) bankReference.text else null
                             )
-                            db.moneyRecordDao().insert(moneyRecord)
+                            db.moneyRecordDao().insertWithSync(moneyRecord, db.syncQueueDao())
                             showCreate = false
                             // Reset fields
                             childId = TextFieldValue("")
@@ -439,7 +439,7 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                                 bankAccount = if (paymentMethod == context.getString(R.string.pay_method_bank) || paymentMethod == context.getString(R.string.pay_method_mobile) || paymentMethod == context.getString(R.string.pay_method_cheque)) bankAccount.text else null,
                                 bankReference = if (paymentMethod == context.getString(R.string.pay_method_bank) || paymentMethod == context.getString(R.string.pay_method_mobile) || context.getString(R.string.pay_method_cheque) == paymentMethod) bankReference.text else null
                             )
-                            db.moneyRecordDao().update(updated)
+                            db.moneyRecordDao().updateWithSync(updated, db.syncQueueDao())
                             showEditDialog = false
                             selectedItem = null
                         }
@@ -462,7 +462,7 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
-                        db.moneyRecordDao().deleteById(currentItem.moneyId)
+                        db.moneyRecordDao().deleteByIdWithSync(currentItem.moneyId, db.syncQueueDao())
                         showDeleteDialog = false
                         selectedItem = null
                     }

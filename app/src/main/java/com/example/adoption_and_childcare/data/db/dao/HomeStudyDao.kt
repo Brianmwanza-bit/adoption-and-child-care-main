@@ -30,8 +30,37 @@ abstract class HomeStudyDao {
         )
     }
 
+    @Transaction
+    open suspend fun updateWithSync(entity: HomeStudyEntity, syncQueueDao: SyncQueueDao) {
+        update(entity)
+        val payload = Gson().toJson(entity)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "home_studies",
+                operation = "UPDATE",
+                recordId = entity.homeStudyId.toString(),
+                payload = payload,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     @Query("DELETE FROM home_studies WHERE home_study_id = :id")
     abstract suspend fun deleteById(id: Int)
+
+    @Transaction
+    open suspend fun deleteByIdWithSync(id: Int, syncQueueDao: SyncQueueDao) {
+        deleteById(id)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "home_studies",
+                operation = "DELETE",
+                recordId = id.toString(),
+                payload = "{}",
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 
     @Query("SELECT * FROM home_studies WHERE family_id = :familyId ORDER BY started_at DESC")
     abstract fun observeForFamily(familyId: Int): Flow<List<HomeStudyEntity>>

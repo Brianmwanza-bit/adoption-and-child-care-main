@@ -259,7 +259,9 @@ data class SyncPullResponse(
     val foster_matches: List<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>,
     val permissions: List<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>,
     val user_permissions: List<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>,
-    val system_settings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>
+    val system_settings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>,
+    val users: List<com.example.adoption_and_childcare.data.db.entities.UserEntity>,
+    val sos_locations: List<com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity>
 )
 
 data class UnreadCountResponse(val unread: Int)

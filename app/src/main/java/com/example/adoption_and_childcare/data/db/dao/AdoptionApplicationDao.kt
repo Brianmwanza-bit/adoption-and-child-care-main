@@ -30,8 +30,37 @@ abstract class AdoptionApplicationDao {
         )
     }
 
+    @Transaction
+    open suspend fun updateWithSync(entity: AdoptionApplicationEntity, syncQueueDao: SyncQueueDao) {
+        update(entity)
+        val payload = Gson().toJson(entity)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "adoption_applications",
+                operation = "UPDATE",
+                recordId = entity.applicationId.toString(),
+                payload = payload,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     @Query("DELETE FROM adoption_applications WHERE application_id = :id")
     abstract suspend fun deleteById(id: Int)
+
+    @Transaction
+    open suspend fun deleteByIdWithSync(id: Int, syncQueueDao: SyncQueueDao) {
+        deleteById(id)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "adoption_applications",
+                operation = "DELETE",
+                recordId = id.toString(),
+                payload = "{}",
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 
     @Query("SELECT * FROM adoption_applications ORDER BY submitted_at DESC")
     abstract fun observeAll(): Flow<List<AdoptionApplicationEntity>>

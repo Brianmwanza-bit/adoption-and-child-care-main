@@ -4,6 +4,7 @@
         "redhat.java",
         "vscjava.vscode-gradle",
         "ms-vscode.vscode-json",
-        "robertpiosik.gemini-coder"
+        "robertpiosik.gemini-coder",
+        "anthropic.claude-code"
     ]
 }

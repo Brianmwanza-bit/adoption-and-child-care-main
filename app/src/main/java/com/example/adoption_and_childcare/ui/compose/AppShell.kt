@@ -5,12 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,10 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.yourdomain.adoptionchildcare.R
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
+/**
+ * Header for the navigation drawer displaying user profile information.
+ *
+ * @param profilePhotoUri The URI of the user's profile photo.
+ * @param username The display name of the user.
+ * @param role The role of the user (e.g., Admin, Case Worker).
+ * @param onLogout Callback when the logout button is clicked.
+ */
 @Composable
 fun DrawerHeader(
     profilePhotoUri: Uri?,
@@ -84,18 +86,28 @@ fun DrawerHeader(
             onClick = onLogout,
             colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
         ) {
-            Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(stringResource(R.string.logout_label))
         }
     }
 }
 
+/**
+ * Modern header for the app screens featuring a functional search bar.
+ *
+ * @param profilePhotoUri The URI of the user's profile photo.
+ * @param searchQuery The current text in the search bar.
+ * @param onSearchQueryChange Callback when the search text changes.
+ * @param onImagePicker Callback to launch the image picker.
+ * @param onMenuClick Callback when the menu button is clicked.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GreenHeader(
     profilePhotoUri: Uri?,
-    username: String,
-    role: String,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
     onImagePicker: () -> Unit,
     onMenuClick: () -> Unit = {}
 ) {
@@ -118,19 +130,47 @@ fun GreenHeader(
                 Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu_desc), tint = Color.White)
             }
             
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = username,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Text(
-                    text = role,
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 14.sp
-                )
-            }
+            // Replaced user info with a working search block
+            TextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.dashboard_search_hint),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 14.sp
+                    )
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White.copy(alpha = 0.2f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                shape = RoundedCornerShape(24.dp),
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                },
+                singleLine = true
+            )
             
             Box(
                 modifier = Modifier
@@ -153,89 +193,4 @@ fun GreenHeader(
             }
         }
     }
-}
-
-/**
- * Redesigned BlueFooter with "properly detailed buttons" as requested.
- * Focuses on primary navigation and emergency actions.
- */
-@Composable
-fun BlueFooter(
-    onHomeClick: () -> Unit = {},
-    onSearchClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
-    onEmergencyClick: () -> Unit = {}
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF2196F3),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        tonalElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            FooterActionButton(
-                icon = Icons.Default.Dashboard,
-                label = "Home",
-                onClick = onHomeClick
-            )
-            FooterActionButton(
-                icon = Icons.Default.Search,
-                label = "Search",
-                onClick = onSearchClick
-            )
-            
-            // Detailed Emergency Button
-            Button(
-                onClick = onEmergencyClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF44336),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.height(48.dp)
-            ) {
-                Icon(Icons.Default.Warning, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("EMERGENCY", fontWeight = FontWeight.Bold)
-            }
-
-            FooterActionButton(
-                icon = Icons.Default.Notifications,
-                label = "Alerts",
-                onClick = onNotificationsClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun FooterActionButton(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .clickable { onClick() }
-            .padding(8.dp)
-    ) {
-        Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(24.dp))
-        Text(text = label, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun QuickAccessCardsPane(
-    role: String,
-    modifier: Modifier = Modifier
-) {
-    // ... logic remains same or simplified if needed
 }

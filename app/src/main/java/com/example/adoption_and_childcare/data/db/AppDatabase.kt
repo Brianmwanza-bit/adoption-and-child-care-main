@@ -54,6 +54,11 @@ import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity
 import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
 
+/**
+ * The main database for the Adoption and Child Care application.
+ *
+ * This class provides access to all Data Access Objects (DAOs) and handles database migrations.
+ */
 @Database(
     entities = [
         UserEntity::class,
@@ -84,34 +89,58 @@ import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    /** @return The DAO for interacting with users. */
     abstract fun userDao(): UserDao
+    /** @return The DAO for interacting with children. */
     abstract fun childDao(): ChildDao
+    /** @return The DAO for interacting with documents. */
     abstract fun documentDao(): DocumentDao
+    /** @return The DAO for interacting with placements. */
     abstract fun placementDao(): PlacementDao
+    /** @return The DAO for interacting with families. */
     abstract fun familyDao(): FamilyDao
+    /** @return The DAO for interacting with adoption applications. */
     abstract fun adoptionApplicationDao(): AdoptionApplicationDao
+    /** @return The DAO for interacting with home studies. */
     abstract fun homeStudyDao(): HomeStudyDao
+    /** @return The DAO for interacting with case reports. */
     abstract fun caseReportDao(): CaseReportDao
+    /** @return The DAO for interacting with education records. */
     abstract fun educationRecordDao(): EducationRecordDao
+    /** @return The DAO for interacting with medical records. */
     abstract fun medicalRecordDao(): MedicalRecordDao
+    /** @return The DAO for interacting with money records. */
     abstract fun moneyRecordDao(): MoneyRecordDao
+    /** @return The DAO for interacting with audit logs. */
     abstract fun auditLogDao(): AuditLogDao
+    /** @return The DAO for interacting with court cases. */
     abstract fun courtCaseDao(): CourtCaseDao
+    /** @return The DAO for interacting with guardians. */
     abstract fun guardianDao(): GuardianDao
+    /** @return The DAO for interacting with permissions. */
     abstract fun permissionDao(): PermissionDao
+    /** @return The DAO for interacting with user permissions. */
     abstract fun userPermissionDao(): UserPermissionDao
+    /** @return The DAO for interacting with notifications. */
     abstract fun notificationDao(): NotificationDao
+    /** @return The DAO for interacting with the sync queue. */
     abstract fun syncQueueDao(): SyncQueueDao
+    /** @return The DAO for interacting with SOS locations. */
     abstract fun sosLocationDao(): SOSLocationDao
+    /** @return The DAO for interacting with background checks. */
     abstract fun backgroundCheckDao(): BackgroundCheckDao
+    /** @return The DAO for interacting with foster tasks. */
     abstract fun fosterTaskDao(): FosterTaskDao
+    /** @return The DAO for interacting with foster matches. */
     abstract fun fosterMatchDao(): FosterMatchDao
+    /** @return The DAO for interacting with system settings. */
     abstract fun systemSettingDao(): SystemSettingDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
 
-        val MIGRATION_3_4 = object : Migration(3, 4) {
+        /** Migration from v3 to v4: Adds `sync_queue` table. */
+        val MIGRATION_3_4: Migration = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS `sync_queue` (
@@ -128,7 +157,8 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_4_5 = object : Migration(4, 5) {
+        /** Migration from v4 to v5: Adds `sos_locations` table. */
+        val MIGRATION_4_5: Migration = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS `sos_locations` (
@@ -143,13 +173,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_5_6 = object : Migration(5, 6) {
+        /** Migration from v5 to v6: Version bump only. */
+        val MIGRATION_5_6: Migration = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // No schema changes, version bump for consistency
             }
         }
 
-        val MIGRATION_6_7 = object : Migration(6, 7) {
+        /** Migration from v6 to v7: Adds multiple background management tables. */
+        val MIGRATION_6_7: Migration = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Create background_checks table
                 db.execSQL("""
@@ -209,12 +241,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATION_7_8 = object : Migration(7, 8) {
+        /** Migration from v7 to v8: Version bump. */
+        val MIGRATION_7_8: Migration = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Version bump
             }
         }
 
+        /**
+         * Returns the singleton instance of [AppDatabase].
+         *
+         * @param context Application context.
+         * @return The database instance.
+         */
         fun getInstance(context: Context): AppDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(
                 context.applicationContext,
@@ -222,7 +261,7 @@ abstract class AppDatabase : RoomDatabase() {
                 "adoption_childcare.db"
             )
                 .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(true)
                 .build()
                 .also { INSTANCE = it }
         }

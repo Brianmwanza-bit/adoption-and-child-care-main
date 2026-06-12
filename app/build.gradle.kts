@@ -1,6 +1,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -9,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.yourdomain.adoptionchildcare"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.adoption_and_childcare"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -91,7 +92,6 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.runtime)
     ksp(libs.androidx.room.compiler)
 
     // Retrofit + OkHttp
@@ -130,4 +130,10 @@ dependencies {
 
     // Play Services Location
     implementation(libs.play.services.location)
+
+    // Biometric
+    implementation(libs.androidx.biometric)
+
+    // Security
+    implementation(libs.androidx.security.crypto)
 }

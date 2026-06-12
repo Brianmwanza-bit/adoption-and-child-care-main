@@ -4,8 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +25,10 @@ fun DocumentsScreen(onBack: () -> Unit = {}) {
     var docs by remember { mutableStateOf<List<DocumentEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     var showCreate by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedDoc by remember { mutableStateOf<DocumentEntity?>(null) }
+    
     var childId by remember { mutableStateOf(TextFieldValue("")) }
     var docType by remember { mutableStateOf(TextFieldValue("")) }
     var fileName by remember { mutableStateOf(TextFieldValue("")) }
@@ -54,60 +57,144 @@ fun DocumentsScreen(onBack: () -> Unit = {}) {
             }
         }
     ) { padding ->
-    Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        if (docs.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No documents yet") }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(docs) { d ->
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(d.fileName)
-                            d.documentType?.let { Text("Type: $it", style = MaterialTheme.typography.bodySmall) }
+        Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+            if (docs.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("No documents yet", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(docs) { d ->
+                        ElevatedCard(Modifier.fillMaxWidth()) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(Modifier.padding(12.dp).weight(1f)) {
+                                    Text(d.fileName, style = MaterialTheme.typography.titleMedium)
+                                    Text("Child ID: ${d.childId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                    d.documentType?.let { Text("Type: $it", style = MaterialTheme.typography.bodySmall) }
+                                    d.uploadedAt?.let { Text("Uploaded: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                }
+                                Row(verticalAlignment = Alignment.Top) {
+                                    IconButton(onClick = {
+                                        selectedDoc = d
+                                        showEditDialog = true
+                                        childId = TextFieldValue(d.childId.toString())
+                                        docType = TextFieldValue(d.documentType ?: "")
+                                        fileName = TextFieldValue(d.fileName)
+                                        filePath = TextFieldValue(d.filePath ?: "")
+                                    }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    IconButton(onClick = {
+                                        selectedDoc = d
+                                        showDeleteDialog = true
+                                    }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-        if (showCreate) {
-            AlertDialog(
-                onDismissRequest = { showCreate = false },
-                title = { Text("Add Document") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") })
-                        OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text("Document type") })
-                        OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text("File name") })
-                        OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text("File path") })
+
+            if (showCreate) {
+                AlertDialog(
+                    onDismissRequest = { showCreate = false },
+                    title = { Text("Add Document") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true)
+                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text("Document type") }, singleLine = true)
+                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text("File name") }, singleLine = true)
+                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text("File path") }, singleLine = true)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            val cid = childId.text.toIntOrNull()
+                            if (cid != null && docType.text.isNotBlank() && fileName.text.isNotBlank() && filePath.text.isNotBlank()) {
+                                scope.launch {
+                                    db.documentDao().insertWithSync(
+                                        DocumentEntity(
+                                            childId = cid,
+                                            documentType = docType.text,
+                                            fileName = fileName.text,
+                                            filePath = filePath.text
+                                        ),
+                                        db.syncQueueDao()
+                                    )
+                                    showCreate = false
+                                    childId = TextFieldValue("")
+                                    docType = TextFieldValue("")
+                                    fileName = TextFieldValue("")
+                                    filePath = TextFieldValue("")
+                                }
+                            }
+                        }) { Text("Save") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showCreate = false }) { Text("Cancel") }
                     }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val cid = childId.text.toIntOrNull()
-                        if (cid != null && docType.text.isNotBlank() && fileName.text.isNotBlank() && filePath.text.isNotBlank()) {
-                            scope.launch {
-                                db.documentDao().insert(
-                                    DocumentEntity(
-                                        childId = cid,
+                )
+            }
+
+            if (showEditDialog && selectedDoc != null) {
+                AlertDialog(
+                    onDismissRequest = { showEditDialog = false },
+                    title = { Text("Edit Document") },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true, enabled = false)
+                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text("Document type") }, singleLine = true)
+                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text("File name") }, singleLine = true)
+                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text("File path") }, singleLine = true)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (fileName.text.isNotBlank()) {
+                                scope.launch {
+                                    val updated = selectedDoc!!.copy(
                                         documentType = docType.text,
                                         fileName = fileName.text,
                                         filePath = filePath.text
                                     )
-                                )
-                                showCreate = false
-                                childId = TextFieldValue("")
-                                docType = TextFieldValue("")
-                                fileName = TextFieldValue("")
-                                filePath = TextFieldValue("")
+                                    db.documentDao().updateWithSync(updated, db.syncQueueDao())
+                                    showEditDialog = false
+                                    selectedDoc = null
+                                }
                             }
-                        }
-                    }) { Text("Save") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showCreate = false }) { Text("Cancel") }
-                }
-            )
+                        }) { Text("Update") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEditDialog = false; selectedDoc = null }) { Text("Cancel") }
+                    }
+                )
+            }
+
+            if (showDeleteDialog && selectedDoc != null) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false; selectedDoc = null },
+                    title = { Text("Delete Document") },
+                    text = { Text("Are you sure you want to delete ${selectedDoc!!.fileName}?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            scope.launch {
+                                db.documentDao().deleteByIdWithSync(selectedDoc!!.documentId, db.syncQueueDao())
+                                showDeleteDialog = false
+                                selectedDoc = null
+                            }
+                        }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false; selectedDoc = null }) { Text("Cancel") }
+                    }
+                )
+            }
         }
-    }
     }
 }

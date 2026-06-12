@@ -1,11 +1,9 @@
 package com.example.adoption_and_childcare.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
+import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -13,11 +11,55 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(user: UserEntity): Long
 
+    @Transaction
+    suspend fun insertWithSync(user: UserEntity, syncQueueDao: SyncQueueDao) {
+        val id = insert(user)
+        val payload = Gson().toJson(user)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "users",
+                operation = "INSERT",
+                recordId = id.toString(),
+                payload = payload,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     @Update
     suspend fun update(user: UserEntity)
 
+    @Transaction
+    suspend fun updateWithSync(user: UserEntity, syncQueueDao: SyncQueueDao) {
+        update(user)
+        val payload = Gson().toJson(user)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "users",
+                operation = "UPDATE",
+                recordId = user.userId.toString(),
+                payload = payload,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     @Query("DELETE FROM users WHERE user_id = :id")
     suspend fun deleteById(id: Int)
+
+    @Transaction
+    suspend fun deleteByIdWithSync(id: Int, syncQueueDao: SyncQueueDao) {
+        deleteById(id)
+        syncQueueDao.insert(
+            SyncQueueEntity(
+                tableName = "users",
+                operation = "DELETE",
+                recordId = id.toString(),
+                payload = "{}",
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 
     @Query("SELECT * FROM users ORDER BY user_id DESC")
     fun observeAll(): Flow<List<UserEntity>>

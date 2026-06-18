@@ -13,6 +13,7 @@ import androidx.room.PrimaryKey
  * @property caseId ID of the flagged case.
  * @property flagType Type of flag (critical, high, normal).
  * @property reason Reason for the flag.
+ * @property riskLevel Risk level (High, Medium, Normal).
  * @property description Detailed description.
  * @property createdAt Date when the flag was raised.
  * @property createdBy User ID who raised the flag.
@@ -26,6 +27,7 @@ data class CaseUrgencyFlagEntity(
     @ColumnInfo(name = "case_id") val caseId: Int,
     @ColumnInfo(name = "flag_type") val flagType: String,
     @ColumnInfo(name = "reason") val reason: String? = null,
+    @ColumnInfo(name = "risk_level") val riskLevel: String? = null,
     @ColumnInfo(name = "description") val description: String? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "created_by") val createdBy: Int? = null,

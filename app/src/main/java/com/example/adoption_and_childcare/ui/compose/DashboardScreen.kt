@@ -27,6 +27,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import com.example.adoption_and_childcare.viewmodel.CaseToolsViewModel
 import com.example.adoption_and_childcare.data.repository.DashboardMetricsRepositoryImpl
 import com.example.adoption_and_childcare.utils.AuthManager
 import com.example.adoption_and_childcare.network.RetrofitClient
@@ -100,10 +101,18 @@ data class CaseStatus(
  * @param notificationsViewModel ViewModel for managing notification state.
  */
 @Composable
-fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: NotificationsViewModel = hiltViewModel()) {
+fun DashboardScreen(
+    onNavigate: (String) -> Unit = {}, 
+    notificationsViewModel: NotificationsViewModel = hiltViewModel(),
+    caseToolsViewModel: CaseToolsViewModel = hiltViewModel()
+) {
     val loading by notificationsViewModel.loading.collectAsState()
     val error by notificationsViewModel.error.collectAsState()
     val unreadCount by notificationsViewModel.unreadCount.collectAsState()
+
+    // Dashboard Preferences
+    val dashboardPrefs by caseToolsViewModel.dashboardPreferences.collectAsState()
+    val latestPrefs = dashboardPrefs.lastOrNull()
 
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -157,7 +166,8 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
             }
         }
         
-        // Fetch real-time metrics from API
+        /* 
+        // Fetch real-time metrics from API - Disabled for local-only Room mode
         scope.launch {
             try {
                 val token = authManager.getAuthToken() ?: ""
@@ -171,6 +181,7 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
                 println("Failed to fetch dashboard metrics: ${e.message}")
             }
         }
+        */
     }
 
     val allModules = listOf(
@@ -193,7 +204,7 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
         "Social Worker" -> allModules.filter {
             it.route in listOf("children_list", "families", "documents", "reports", "home_studies", "placements")
         }
-        "Foster Parent" -> allModules.filter {
+        "Guardian" -> allModules.filter {
             it.route in listOf("children_list", "documents", "education", "medical")
         }
         else -> allModules.filter {
@@ -242,46 +253,60 @@ fun DashboardScreen(onNavigate: (String) -> Unit = {}, notificationsViewModel: N
                                     onQueryChange = { searchQuery = it },
                                     onSearch = { /* Implement search */ }
                                 )
-                                CriticalAlertsSection(criticalCases, overdueTasks, onNavigate)
+                                if (latestPrefs?.showAlerts != false) {
+                                    CriticalAlertsSection(criticalCases, overdueTasks, onNavigate)
+                                }
                                 TodaysWorkloadSection(actionItems.filter { it.dueDate == "Today" || it.dueDate == "Tomorrow" })
                             }
                         }
                     }
 
-                    item {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.dashboard_all_action_items),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            )
-                            actionItems.forEach { ActionItemCard(it) }
+                    if (latestPrefs?.showActionItems != false) {
+                        item {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    stringResource(R.string.dashboard_all_action_items),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                                actionItems.forEach { ActionItemCard(it) }
+                            }
                         }
                     }
 
-                    item {
-                        Column(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.dashboard_system_modules),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            )
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    if (latestPrefs?.showQuickActions != false) {
+                        item {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(filteredModules) { card ->
-                                    CompactModuleCard(card) { card.route?.let { onNavigate(it) } }
+                                Text(
+                                    stringResource(R.string.dashboard_system_modules),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                                
+                                // Modern Item Arrangement (Rows and weights)
+                                filteredModules.chunked(2).forEach { rowModules ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        rowModules.forEach { card ->
+                                            Box(modifier = Modifier.weight(1f)) {
+                                                CompactModuleCard(card) { card.route?.let { onNavigate(it) } }
+                                            }
+                                        }
+                                        // Add a spacer if there's only one item in the row to maintain layout
+                                        if (rowModules.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
                                 }
                             }
                         }

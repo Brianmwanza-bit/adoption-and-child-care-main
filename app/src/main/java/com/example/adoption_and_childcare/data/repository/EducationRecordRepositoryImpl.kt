@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.EducationRecordDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for education record data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class EducationRecordRepositoryImpl @Inject constructor(
     private val educationRecordDao: EducationRecordDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,19 @@ class EducationRecordRepositoryImpl @Inject constructor(
     
     suspend fun insert(record: EducationRecordEntity, token: String): Result<Long> {
         return try {
-            val localId = educationRecordDao.insert(record)
+            // Insert with sync queue support
+            educationRecordDao.insertWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createEducationRecord(authHeader, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync education record with API: ${response.message()}")
-                    }
+                    apiService.createEducationRecord(authHeader, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for education record insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(record.recordId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +44,17 @@ class EducationRecordRepositoryImpl @Inject constructor(
     
     suspend fun update(record: EducationRecordEntity, token: String): Result<Unit> {
         return try {
-            educationRecordDao.update(record)
+            // Update with sync queue support
+            educationRecordDao.updateWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateEducationRecord(authHeader, record.recordId, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync education record update with API: ${response.message()}")
-                    }
+                    apiService.updateEducationRecord(authHeader, record.recordId, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for education record update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +64,17 @@ class EducationRecordRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            educationRecordDao.deleteById(id)
+            // Delete with sync queue support
+            educationRecordDao.deleteByIdWithSync(id, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteEducationRecord(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for education record delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.MedicalRecordDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for medical record data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class MedicalRecordRepositoryImpl @Inject constructor(
     private val medicalRecordDao: MedicalRecordDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,19 @@ class MedicalRecordRepositoryImpl @Inject constructor(
     
     suspend fun insert(record: MedicalRecordEntity, token: String): Result<Long> {
         return try {
-            val localId = medicalRecordDao.insert(record)
+            // Insert with sync queue support
+            medicalRecordDao.insertWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createMedicalRecord(authHeader, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync medical record with API: ${response.message()}")
-                    }
+                    apiService.createMedicalRecord(authHeader, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for medical record insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(record.recordId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +44,17 @@ class MedicalRecordRepositoryImpl @Inject constructor(
     
     suspend fun update(record: MedicalRecordEntity, token: String): Result<Unit> {
         return try {
-            medicalRecordDao.update(record)
+            // Update with sync queue support
+            medicalRecordDao.updateWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateMedicalRecord(authHeader, record.recordId, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync medical record update with API: ${response.message()}")
-                    }
+                    apiService.updateMedicalRecord(authHeader, record.recordId, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for medical record update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +64,17 @@ class MedicalRecordRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            medicalRecordDao.deleteById(id)
+            // Delete with sync queue support
+            medicalRecordDao.deleteByIdWithSync(id, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteMedicalRecord(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for medical record delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

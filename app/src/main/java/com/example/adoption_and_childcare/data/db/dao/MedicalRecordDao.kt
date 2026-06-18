@@ -73,6 +73,9 @@ interface MedicalRecordDao {
     @Query("SELECT * FROM medical_records WHERE record_id = :id")
     suspend fun findById(id: Int): MedicalRecordEntity?
 
+    @Query("SELECT * FROM medical_records WHERE record_id = :id")
+    fun observeById(id: Int): Flow<MedicalRecordEntity?>
+
     @Query("SELECT * FROM medical_records ORDER BY visit_date DESC")
     fun observeAll(): Flow<List<MedicalRecordEntity>>
     

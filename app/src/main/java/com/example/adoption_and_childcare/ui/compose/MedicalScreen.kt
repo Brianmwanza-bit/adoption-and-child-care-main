@@ -1,6 +1,9 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -16,16 +19,21 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity
 import com.example.adoption_and_childcare.data.repository.MedicalRecordRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicalScreen(onBack: () -> Unit = {}) {
+fun MedicalScreen(
+    onBack: () -> Unit = {},
+    onRecordClick: (Int) -> Unit = {}
+) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { MedicalRecordRepositoryImpl(db.medicalRecordDao(), apiService) }
+    val repository = remember { MedicalRecordRepositoryImpl(db.medicalRecordDao(), db.syncQueueDao(), apiService, authManager) }
     
     var records by remember { mutableStateOf<List<MedicalRecordEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -52,7 +60,7 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -75,9 +83,17 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
             }
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             if (records.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.LocalHospital, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -85,42 +101,45 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
                     }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(records) { r ->
-                        ElevatedCard(Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.padding(12.dp).weight(1f)) {
-                                    Text("Record #${r.recordId}", style = MaterialTheme.typography.titleMedium)
-                                    Text("Child ID: ${r.childId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    Text("Date: ${r.visitDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    r.hospitalName?.let { Text("Hospital: $it", style = MaterialTheme.typography.bodySmall) }
-                                    r.diagnosis?.let { Text("Diagnosis: $it", style = MaterialTheme.typography.bodySmall) }
-                                }
-                                Row(verticalAlignment = Alignment.Top) {
-                                    IconButton(onClick = {
-                                        selectedRecord = r
-                                        showEditDialog = true
-                                        childId = TextFieldValue(r.childId.toString())
-                                        visitDate = TextFieldValue(r.visitDate)
-                                        hospitalName = TextFieldValue(r.hospitalName ?: "")
-                                        diagnosis = TextFieldValue(r.diagnosis ?: "")
-                                        treatment = TextFieldValue(r.treatment ?: "")
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        selectedRecord = r
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                    IconButton(onClick = {
-                                        val csvContent = "ID,Child ID,Visit Date,Hospital,Diagnosis,Treatment\n${r.recordId},${r.childId},${r.visitDate},${r.hospitalName},${r.diagnosis},${r.treatment}"
-                                    }) {
-                                        Icon(Icons.Default.Download, contentDescription = "Download", tint = MaterialTheme.colorScheme.secondary)
-                                    }
-                                }
-                            }
+                records.forEachIndexed { index, r ->
+                    FormRecordCard(
+                        title = "MEDICAL RECORD #${r.recordId}",
+                        subtitle = "Hospital: ${r.hospitalName ?: "N/A"}",
+                        pageNumber = index + 1,
+                        onEdit = {
+                            selectedRecord = r
+                            showEditDialog = true
+                            childId = TextFieldValue(r.childId.toString())
+                            visitDate = TextFieldValue(r.visitDate)
+                            hospitalName = TextFieldValue(r.hospitalName ?: "")
+                            diagnosis = TextFieldValue(r.diagnosis ?: "")
+                            treatment = TextFieldValue(r.treatment ?: "")
+                        },
+                        onDelete = {
+                            selectedRecord = r
+                            showDeleteDialog = true
+                        },
+                        onDownloadPdf = {
+                            // TODO: Implement PDF Generation
+                        },
+                        headerIcon = Icons.Default.LocalHospital
+                    ) {
+                        FormDetailRow(label = "Child ID", value = r.childId.toString())
+                        FormDetailRow(label = "Visit Date", value = r.visitDate)
+                        FormDetailRow(label = "Diagnosis", value = r.diagnosis ?: "N/A")
+                        
+                        if (!r.treatment.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Treatment",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = r.treatment!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
@@ -237,13 +256,14 @@ fun MedicalScreen(onBack: () -> Unit = {}) {
  */
 private fun fetchFromApi(
     repository: MedicalRecordRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

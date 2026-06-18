@@ -44,24 +44,9 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Root route to prevent "blank page"
+// Root route - serve index.html
 app.get('/', (req, res) => {
-  res.send(`
-    <html>
-      <head><title>Adoption & Child Care API</title></head>
-      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-        <h1>Adoption & Child Care API is Running</h1>
-        <p>Status: <span style="color: green;">Online</span></p>
-        <div style="margin-top: 20px;">
-          <a href="/api-docs" style="padding: 10px 20px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">View API Documentation</a>
-        </div>
-        <p style="margin-top: 30px; font-size: 0.8em; color: gray;">
-          Target Database: ${process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db'}<br>
-          Port: ${process.env.DB_PORT || '3306'}
-        </p>
-      </body>
-    </html>
-  `);
+  res.sendFile(path.join(__dirname, '..', 'src', 'index.html'));
 });
 
 // Admin DB Status check
@@ -78,8 +63,14 @@ app.get('/admin-db-status', (req, res) => {
 });
 
 app.use(cors({ origin: '*', credentials: true }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
 app.use(express.json());
+
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '..', 'src')));
 
 // Apply rate limiting to all API routes
 const apiLimiter = rateLimit({
@@ -353,11 +344,13 @@ function initializeTables(dbName) {
       );
       CREATE TABLE IF NOT EXISTS audit_logs (
         log_id INT AUTO_INCREMENT PRIMARY KEY,
-        table_name VARCHAR(255),
-        record_id INT,
-        action VARCHAR(255),
-        user_id INT,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        table_name VARCHAR(100) NOT NULL,
+        record_id INT NOT NULL,
+        action VARCHAR(20) NOT NULL,
+        changed_by INT,
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        old_data LONGTEXT,
+        new_data LONGTEXT
       );
       CREATE TABLE IF NOT EXISTS permissions (
         permission_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -371,17 +364,17 @@ function initializeTables(dbName) {
       CREATE TABLE IF NOT EXISTS adoption_applications (
         application_id INT AUTO_INCREMENT PRIMARY KEY,
         family_id INT NOT NULL,
-        child_id INT NOT NULL,
+        child_id INT DEFAULT NULL,
         status VARCHAR(50) DEFAULT 'Pending',
         notes TEXT,
         application_number VARCHAR(50) UNIQUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (family_id) REFERENCES family_profile(family_id),
+        FOREIGN KEY (family_id) REFERENCES families(family_id),
         FOREIGN KEY (child_id) REFERENCES children(child_id)
       );
       CREATE TABLE IF NOT EXISTS home_studies (
-        study_id INT AUTO_INCREMENT PRIMARY KEY,
+        home_study_id INT AUTO_INCREMENT PRIMARY KEY,
         family_id INT NOT NULL,
         result VARCHAR(50),
         notes TEXT,
@@ -389,7 +382,7 @@ function initializeTables(dbName) {
         completed_at DATE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (family_id) REFERENCES family_profile(family_id)
+        FOREIGN KEY (family_id) REFERENCES families(family_id)
       );
       CREATE TABLE IF NOT EXISTS foster_tasks (
         task_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -442,7 +435,7 @@ function initializeTables(dbName) {
       );
       CREATE TABLE IF NOT EXISTS counties (
         county_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) UNIQUE NOT NULL,
+        county_name VARCHAR(100) UNIQUE NOT NULL,
         police_headquarters_phone VARCHAR(20)
       );
       CREATE TABLE IF NOT EXISTS emergency_events (
@@ -487,11 +480,36 @@ function initializeTables(dbName) {
 
 function seedCounties() {
   const counties = [
-    ['Nairobi', '+254722000000'],
-    ['Mombasa', '+254722111111'],
-    ['Kisumu', '+254722222222']
+    ['Nairobi', 'NBI', 'Nairobi'],
+    ['Mombasa', 'MSA', 'Coast'],
+    ['Kisumu', 'KSM', 'Nyanza']
   ];
-  db.query('INSERT IGNORE INTO counties (name, police_headquarters_phone) VALUES ?', [counties]);
+  // Check if county_name column exists and seed accordingly
+  db.query('SHOW COLUMNS FROM counties', (err, columns) => {
+    if (err) {
+      console.error('Error checking counties columns:', err.message);
+      return;
+    }
+    const colNames = columns.map(c => c.Field);
+    if (colNames.includes('county_code') && colNames.includes('region')) {
+      db.query('INSERT IGNORE INTO counties (county_name, county_code, region) VALUES ?', [counties], (err) => {
+        if (err) console.error('Error seeding counties:', err.message);
+        else console.log('Counties seeded successfully.');
+      });
+    } else if (colNames.includes('police_headquarters_phone')) {
+      const countiesOld = [['Nairobi', '+254722000000'], ['Mombasa', '+254722111111'], ['Kisumu', '+254722222222']];
+      db.query('INSERT IGNORE INTO counties (county_name, police_headquarters_phone) VALUES ?', [countiesOld], (err) => {
+        if (err) console.error('Error seeding counties:', err.message);
+        else console.log('Counties seeded successfully.');
+      });
+    } else {
+      const countiesSimple = [['Nairobi'], ['Mombasa'], ['Kisumu']];
+      db.query('INSERT IGNORE INTO counties (county_name) VALUES ?', [countiesSimple], (err) => {
+        if (err) console.error('Error seeding counties:', err.message);
+        else console.log('Counties seeded successfully.');
+      });
+    }
+  });
 }
 
 function runMigrations() {
@@ -579,12 +597,12 @@ function formatError(code, message, details) {
 // Auth Endpoints
 app.post('/auth/register', async (req, res, next) => {
   try {
-    const { username, email, password, role, phone, id_number, county, sub_county } = req.body;
+    const { username, email, password, role, phone, id_number, national_id_no, county, sub_county } = req.body;
     if (!username || !email || !password) return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing fields'));
     const hashedPassword = await bcrypt.hash(password, 10);
     const userRole = role ? role.toLowerCase() : 'viewer';
-    db.query('INSERT INTO users (username, email, password_hash, role, phone, id_number, county, sub_county) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, userRole, phone, id_number, county, sub_county],
+    db.query('INSERT INTO users (username, email, password_hash, role, phone, id_number, national_id_no, county, sub_county) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, userRole, phone, id_number, national_id_no, county, sub_county],
       (err, results) => {
         if (err) return next({ code: 'DB_ERROR', message: err.message });
         const token = jwt.sign({ user_id: results.insertId, role: userRole }, SECRET, { expiresIn: '7d' });
@@ -602,9 +620,50 @@ app.post('/auth/login', async (req, res, next) => {
       const user = results[0];
       if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json(formatError('AUTH_ERROR', 'Invalid credentials'));
       const token = jwt.sign({ user_id: user.user_id, role: user.role }, SECRET, { expiresIn: '1h' });
-      res.json({ success: true, user: { user_id: user.user_id, username: user.username, email: user.email, role: user.role }, token });
+      const { password_hash, ...userWithoutHash } = user;
+      res.json({ success: true, user: userWithoutHash, token });
     });
   } catch (err) { next(err); }
+});
+
+// Analytics summary endpoint
+app.get('/analytics/summary', authenticateToken, (req, res, next) => {
+  const queries = {
+    totalChildren: 'SELECT COUNT(*) as count FROM children',
+    totalFamilies: 'SELECT COUNT(*) as count FROM families',
+    totalUsers: 'SELECT COUNT(*) as count FROM users',
+    activePlacements: 'SELECT COUNT(*) as count FROM placements WHERE is_current = 1',
+    pendingApplications: "SELECT COUNT(*) as count FROM adoption_applications WHERE status = 'pending'",
+    pendingBackgroundChecks: "SELECT COUNT(*) as count FROM background_checks WHERE status = 'Pending' OR status = 'pending'"
+  };
+  const result = {};
+  let completed = 0;
+  const total = Object.keys(queries).length;
+  for (const [key, query] of Object.entries(queries)) {
+    db.query(query, (err, rows) => {
+      completed++;
+      result[key] = err ? 0 : rows[0].count;
+      if (completed === total) {
+        res.json({ success: true, ...result });
+      }
+    });
+  }
+});
+
+// Recent activity endpoint
+app.get('/analytics/recent-activity', authenticateToken, (req, res, next) => {
+  db.query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 20', (err, results) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message });
+    const activities = results.map(r => ({
+      id: r.log_id,
+      action: r.action,
+      tableName: r.table_name,
+      recordId: r.record_id,
+      changedAt: r.created_at,
+      changedBy: r.user_id ? r.user_id.toString() : null
+    }));
+    res.json({ success: true, data: activities });
+  });
 });
 
 // Dynamic CRUD Endpoints
@@ -620,11 +679,21 @@ const dbTables = [
   { name: 'documents', pk: 'document_id' },
   { name: 'users', pk: 'user_id' },
   { name: 'adoption_applications', pk: 'application_id' },
-  { name: 'home_studies', pk: 'study_id' },
+  { name: 'home_studies', pk: 'home_study_id' },
   { name: 'foster_tasks', pk: 'task_id' },
   { name: 'foster_matches', pk: 'match_id' },
   { name: 'background_checks', pk: 'check_id' },
   { name: 'notifications', pk: 'notification_id' },
+  { name: 'guardians', pk: 'guardian_id' },
+  { name: 'court_cases', pk: 'case_id' },
+  { name: 'counties', pk: 'county_id' },
+  { name: 'permissions', pk: 'permission_id' },
+  { name: 'user_permissions', pk: 'id' },
+  { name: 'system_settings', pk: 'setting_id' },
+  { name: 'audit_logs', pk: 'log_id' },
+  { name: 'fcm_tokens', pk: 'token_id' },
+  { name: 'emergency_events', pk: 'event_id' },
+  { name: 'sos_location_history', pk: 'history_id' },
   { name: 'tasks', pk: 'task_id' },
   { name: 'action_items', pk: 'action_id' },
   { name: 'dashboard_metrics', pk: 'metric_id' },
@@ -642,28 +711,79 @@ const dbTables = [
   { name: 'workload_tracking', pk: 'workload_id' }
 ];
 
+// Helper: convert table name to hyphenated route (e.g. court_cases → court-cases)
+function toHyphenated(name) {
+  return name.replace(/_/g, '-');
+}
+
 dbTables.forEach(table => {
-  app.get(`/${table.name}`, authenticateToken, (req, res, next) => {
-    db.query(`SELECT * FROM ${table.name}`, (err, results) => {
-      if (err) return next({ code: 'DB_ERROR', message: err.message });
-      res.json({ success: true, data: results });
+  const hyphenRoute = toHyphenated(table.name);
+  const underscoreRoute = table.name;
+
+  // Register routes for BOTH underscore and hyphenated URL styles
+  [underscoreRoute, hyphenRoute].forEach(route => {
+    // Skip if route would be duplicate (no underscores)
+    if (route === hyphenRoute && route === underscoreRoute && route !== table.name) return;
+
+    app.get(`/${route}`, authenticateToken, (req, res, next) => {
+      db.query(`SELECT * FROM ${table.name}`, (err, results) => {
+        if (err) return next({ code: 'DB_ERROR', message: err.message });
+        res.json({ success: true, data: results });
+      });
+    });
+
+    app.get(`/${route}/:id`, authenticateToken, (req, res, next) => {
+      db.query(`SELECT * FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err, results) => {
+        if (err) return next({ code: 'DB_ERROR', message: err.message });
+        if (results.length === 0) return res.status(404).json(formatError('NOT_FOUND', `${table.name} record not found`));
+        res.json({ success: true, data: results[0] });
+      });
+    });
+
+    app.post(`/${route}`, authenticateToken, (req, res, next) => {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      db.query(`INSERT INTO ${table.name} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, values, (err, results) => {
+        if (err) return next({ code: 'DB_ERROR', message: err.message });
+        logAudit(table.name, results.insertId, 'create', req.user.user_id);
+        res.json({ success: true, id: results.insertId });
+      });
+    });
+
+    app.put(`/${route}/:id`, authenticateToken, (req, res, next) => {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      const setClause = keys.map(k => `${k} = ?`).join(', ');
+      db.query(`UPDATE ${table.name} SET ${setClause} WHERE ${table.pk} = ?`, [...values, req.params.id], (err, results) => {
+        if (err) return next({ code: 'DB_ERROR', message: err.message });
+        logAudit(table.name, parseInt(req.params.id), 'update', req.user.user_id);
+        res.json({ success: true, affected: results.affectedRows });
+      });
+    });
+
+    app.delete(`/${route}/:id`, authenticateToken, (req, res, next) => {
+      db.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err) => {
+        if (err) return next({ code: 'DB_ERROR', message: err.message });
+        logAudit(table.name, parseInt(req.params.id), 'delete', req.user.user_id);
+        res.json({ success: true });
+      });
     });
   });
-  app.post(`/${table.name}`, authenticateToken, (req, res, next) => {
-    const keys = Object.keys(req.body);
-    const values = Object.values(req.body);
-    db.query(`INSERT INTO ${table.name} (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`, values, (err, results) => {
-      if (err) return next({ code: 'DB_ERROR', message: err.message });
-      logAudit(table.name, results.insertId, 'create', req.user.user_id);
-      res.json({ success: true, id: results.insertId });
-    });
+});
+
+// Notification-specific routes
+app.get('/notifications/unread-count', authenticateToken, (req, res, next) => {
+  const userId = req.user.user_id;
+  db.query('SELECT COUNT(*) as unread FROM notifications WHERE user_id = ? AND is_read = 0', [userId], (err, results) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message });
+    res.json({ success: true, unread: results[0].unread });
   });
-  app.delete(`/${table.name}/:id`, authenticateToken, (req, res, next) => {
-    db.query(`DELETE FROM ${table.name} WHERE ${table.pk} = ?`, [req.params.id], (err) => {
-      if (err) return next({ code: 'DB_ERROR', message: err.message });
-      logAudit(table.name, req.params.id, 'delete', req.user.user_id);
-      res.json({ success: true });
-    });
+});
+
+app.post('/notifications/:id/read', authenticateToken, (req, res, next) => {
+  db.query('UPDATE notifications SET is_read = 1 WHERE notification_id = ?', [req.params.id], (err) => {
+    if (err) return next({ code: 'DB_ERROR', message: err.message });
+    res.json({ success: true });
   });
 });
 
@@ -802,7 +922,7 @@ tablePkMap['court_cases'] = 'case_id';
 tablePkMap['guardians'] = 'guardian_id';
 tablePkMap['audit_logs'] = 'log_id';
 tablePkMap['permissions'] = 'permission_id';
-tablePkMap['user_permissions'] = 'user_permission_id';
+tablePkMap['user_permissions'] = 'id';
 tablePkMap['system_settings'] = 'setting_id';
 tablePkMap['families'] = 'family_id';
 tablePkMap['emergency_events'] = 'event_id';

@@ -1,3 +1,4 @@
+@file:Suppress("SpellCheckingInspection")
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
@@ -19,8 +20,23 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity
 import com.example.adoption_and_childcare.data.repository.MoneyRecordRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import coil.compose.rememberAsyncImagePainter
 
 /**
  * Screen for managing financial records related to child care.
@@ -33,8 +49,9 @@ import kotlinx.coroutines.launch
 fun FinanceScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { MoneyRecordRepositoryImpl(db.moneyRecordDao(), apiService) }
+    val repository = remember { MoneyRecordRepositoryImpl(db.moneyRecordDao(), db.syncQueueDao(), apiService, authManager) }
     
     var items by remember { mutableStateOf<List<MoneyRecordEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -84,8 +101,8 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
-            isLoading = loading
+        fetchFromApi(repository, authManager, scope) { loadingState, error ->
+            isLoading = loadingState
             errorMessage = error
         }
     }
@@ -106,10 +123,18 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.finance_add_txn_desc))
             }
         }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+    ) { paddingValues ->
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             if (items.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { 
+                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) { 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.AttachMoney, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -117,57 +142,62 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                     }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(items) { moneyRecord ->
-                        ElevatedCard(Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.padding(12.dp).weight(1f)) {
-                                    Text(stringResource(R.string.finance_txn_id, moneyRecord.moneyId), style = MaterialTheme.typography.titleMedium)
-                                    Text(stringResource(R.string.finance_child_id_label, moneyRecord.childId), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text(stringResource(R.string.finance_amount_label, moneyRecord.amount), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                                    Text(stringResource(R.string.finance_type_label, moneyRecord.transactionType ?: ""), style = MaterialTheme.typography.bodySmall)
-                                    Text(stringResource(R.string.finance_date_label, moneyRecord.date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    moneyRecord.description?.let { Text(stringResource(R.string.finance_note_label, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline) }
-                                }
-                                Row(verticalAlignment = Alignment.Top) {
-                                    IconButton(onClick = {
-                                        selectedItem = moneyRecord
-                                        showEditDialog = true
-                                        childId = TextFieldValue(moneyRecord.childId.toString())
-                                        amount = TextFieldValue(moneyRecord.amount.toString())
-                                        date = TextFieldValue(moneyRecord.date)
-                                        description = TextFieldValue(moneyRecord.description ?: "")
-                                        transactionType = moneyRecord.transactionType ?: context.getString(R.string.txn_type_allowance)
-                                        paymentMethod = moneyRecord.paymentMethod ?: context.getString(R.string.pay_method_cash)
-                                        mpesaPhoneNumber = TextFieldValue(moneyRecord.mpesaPhoneNumber ?: "")
-                                        mpesaTransactionId = TextFieldValue(moneyRecord.mpesaTransactionId ?: "")
-                                        bankAccount = TextFieldValue(moneyRecord.bankAccount ?: "")
-                                        bankReference = TextFieldValue(moneyRecord.bankReference ?: "")
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.finance_edit_desc), tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        selectedItem = moneyRecord
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.finance_delete_desc), tint = MaterialTheme.colorScheme.error)
-                                    }
-                                    IconButton(onClick = {
-                                        // Save to file implementation
-                                        scope.launch {
-                                            // TODO: Save to device storage
-                                        }
-                                    }) {
-                                        Icon(Icons.Default.Download, contentDescription = stringResource(R.string.finance_download_desc), tint = MaterialTheme.colorScheme.secondary)
-                                    }
-                                }
-                            }
+                items.forEachIndexed { index, moneyRecord ->
+                    FormRecordCard(
+                        title = "FINANCIAL RECORD #${moneyRecord.moneyId}",
+                        subtitle = "Date: ${moneyRecord.date}",
+                        pageNumber = index + 1,
+                        onEdit = {
+                            selectedItem = moneyRecord
+                            showEditDialog = true
+                            childId = TextFieldValue(moneyRecord.childId.toString())
+                            amount = TextFieldValue(moneyRecord.amount.toString())
+                            date = TextFieldValue(moneyRecord.date)
+                            description = TextFieldValue(moneyRecord.description ?: "")
+                            transactionType = moneyRecord.transactionType ?: context.getString(R.string.txn_type_allowance)
+                            paymentMethod = moneyRecord.paymentMethod ?: context.getString(R.string.pay_method_cash)
+                            mpesaPhoneNumber = TextFieldValue(moneyRecord.mpesaPhoneNumber ?: "")
+                            mpesaTransactionId = TextFieldValue(moneyRecord.mpesaTransactionId ?: "")
+                            bankAccount = TextFieldValue(moneyRecord.bankAccount ?: "")
+                            bankReference = TextFieldValue(moneyRecord.bankReference ?: "")
+                        },
+                        onDelete = {
+                            selectedItem = moneyRecord
+                            showDeleteDialog = true
+                        },
+                        onDownloadPdf = {
+                            // TODO: Implement PDF Generation
+                        },
+                        headerIcon = Icons.Default.AttachMoney
+                    ) {
+                        FormDetailRow(label = "Child ID", value = moneyRecord.childId.toString())
+                        FormDetailRow(label = "Amount", value = "KES ${moneyRecord.amount}", valueColor = MaterialTheme.colorScheme.primary)
+                        FormDetailRow(label = "Type", value = moneyRecord.transactionType ?: "N/A")
+                        FormDetailRow(label = "Payment Method", value = moneyRecord.paymentMethod ?: "N/A")
+                        
+                        if (!moneyRecord.mpesaTransactionId.isNullOrBlank()) {
+                            FormDetailRow(label = "M-Pesa ID", value = moneyRecord.mpesaTransactionId!!)
+                        }
+                        
+                        if (!moneyRecord.description.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Description",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = moneyRecord.description!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
             }
         }
     }
+    // ... rest of the dialogs (Create/Edit/Delete) ...
 
     // Create Transaction Dialog
     if (showCreate) {
@@ -205,9 +235,9 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                             expanded = showTransactionTypeDropdown,
                             onDismissRequest = { showTransactionTypeDropdown = false }
                         ) {
-                            transactionTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = {
-                                    transactionType = type
+                            transactionTypes.forEach { typeOption ->
+                                DropdownMenuItem(text = { Text(typeOption) }, onClick = {
+                                    transactionType = typeOption
                                     showTransactionTypeDropdown = false
                                 })
                             }
@@ -229,9 +259,9 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                             expanded = showPaymentMethodDropdown,
                             onDismissRequest = { showPaymentMethodDropdown = false }
                         ) {
-                            paymentMethods.forEach { method ->
-                                DropdownMenuItem(text = { Text(method) }, onClick = {
-                                    paymentMethod = method
+                            paymentMethods.forEach { methodOption ->
+                                DropdownMenuItem(text = { Text(methodOption) }, onClick = {
+                                    paymentMethod = methodOption
                                     showPaymentMethodDropdown = false
                                 })
                             }
@@ -362,9 +392,9 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                             expanded = showTransactionTypeDropdown,
                             onDismissRequest = { showTransactionTypeDropdown = false }
                         ) {
-                            transactionTypes.forEach { type ->
-                                DropdownMenuItem(text = { Text(type) }, onClick = {
-                                    transactionType = type
+                            transactionTypes.forEach { typeOption ->
+                                DropdownMenuItem(text = { Text(typeOption) }, onClick = {
+                                    transactionType = typeOption
                                     showTransactionTypeDropdown = false
                                 })
                             }
@@ -386,9 +416,9 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
                             expanded = showPaymentMethodDropdown,
                             onDismissRequest = { showPaymentMethodDropdown = false }
                         ) {
-                            paymentMethods.forEach { method ->
-                                DropdownMenuItem(text = { Text(method) }, onClick = {
-                                    paymentMethod = method
+                            paymentMethods.forEach { methodOption ->
+                                DropdownMenuItem(text = { Text(methodOption) }, onClick = {
+                                    paymentMethod = methodOption
                                     showPaymentMethodDropdown = false
                                 })
                             }
@@ -498,16 +528,22 @@ fun FinanceScreen(onBack: () -> Unit = {}) {
 
 /**
  * Helper function to fetch finance records from API.
+ * 
+ * @param repository The finance repository implementation.
+ * @param authManager Manager for authentication tokens.
+ * @param scope Coroutine scope for network operations.
+ * @param onLoading Callback to update loading state and error messages.
  */
 private fun fetchFromApi(
     repository: MoneyRecordRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {
@@ -516,10 +552,22 @@ private fun fetchFromApi(
                     onLoading(false, null)
                 }
             } else {
-                onLoading(false, "No authentication token available")
+                onLoading(false, null)
             }
         } catch (e: Exception) {
-            onLoading(false, "Failed to fetch finance records: ${e.message}")
+            onLoading(false, null)
         }
     }
+}
+
+@Composable
+fun FinancialFormPage(
+    index: Int,
+    moneyRecord: MoneyRecordEntity,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onDownloadPdf: () -> Unit
+) {
+    // This function is now deprecated in favor of FormRecordCard in CommonComponents.kt
+    // Leaving it for reference if needed during transition, but it's no longer used.
 }

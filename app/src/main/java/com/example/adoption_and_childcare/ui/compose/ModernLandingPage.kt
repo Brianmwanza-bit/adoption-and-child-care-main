@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import com.yourdomain.adoptionchildcare.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +48,8 @@ fun ModernLandingPagePreview() {
 @Composable
 fun ModernLandingPage(
     onGetStarted: () -> Unit,
-    onLogin: () -> Unit
+    onLogin: () -> Unit,
+    hasLoggedInBefore: Boolean = false
 ) {
     val scrollState = rememberScrollState()
     var isVisible by remember { mutableStateOf(false) }
@@ -58,7 +60,7 @@ fun ModernLandingPage(
 
     Scaffold(
         bottomBar = {
-            BottomStickyCTA(onGetStarted)
+            BottomStickyCTA(onGetStarted, hasLoggedInBefore)
         }
     ) { padding ->
         Column(
@@ -69,7 +71,7 @@ fun ModernLandingPage(
                 .background(Color(0xFFF8F9FA))
         ) {
             // 1. HERO SECTION
-            HeroSection(isVisible, onLogin)
+            HeroSection(isVisible, onLogin, hasLoggedInBefore)
 
             // 2. IMPACT STATS
             ImpactStatsSection()
@@ -86,7 +88,7 @@ fun ModernLandingPage(
 }
 
 @Composable
-fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
+fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,14 +133,14 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = Color.White.copy(alpha = 0.2f),
-                    modifier = Modifier.size(80.dp)
+                    color = Color.White,
+                    modifier = Modifier.size(100.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ChildCare,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.padding(16.dp).size(48.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "App Logo",
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Crop
                     )
                 }
             }
@@ -146,7 +148,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Building Families,\nNurturing Dreams",
+                text = if (hasLoggedInBefore) "Welcome Back to\nYour Portal" else "Building Families,\nNurturing Dreams",
                 style = MaterialTheme.typography.displaySmall,
                 color = Color.White,
                 fontWeight = FontWeight.ExtraBold,
@@ -157,22 +159,24 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "The all-in-one platform for modern adoption management and child welfare tracking.",
+                text = if (hasLoggedInBefore) "Sign in to access your dashboard and manage your cases seamlessly." else "The all-in-one platform for modern adoption management and child welfare tracking.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.White.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            if (!hasLoggedInBefore) {
+                Spacer(modifier = Modifier.height(32.dp))
 
-            TextButton(onClick = onLogin) {
-                Text(
-                    "Already have an account? Sign In",
-                    color = Color.White,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                )
+                TextButton(onClick = onLogin) {
+                    Text(
+                        "Already have an account? Sign In",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold,
+                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                    )
+                }
             }
         }
     }
@@ -329,7 +333,7 @@ fun QuoteSection() {
 }
 
 @Composable
-fun BottomStickyCTA(onGetStarted: () -> Unit) {
+fun BottomStickyCTA(onGetStarted: () -> Unit, hasLoggedInBefore: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
@@ -340,17 +344,21 @@ fun BottomStickyCTA(onGetStarted: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Ready to start?", fontWeight = FontWeight.Bold)
-                Text("Join 500+ agencies worldwide", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(if (hasLoggedInBefore) "Access your portal" else "Ready to start?", fontWeight = FontWeight.Bold)
+                Text(if (hasLoggedInBefore) "Manage cases and track progress" else "Join 500+ agencies worldwide", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             }
             Button(
                 onClick = onGetStarted,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
             ) {
-                Text("Get Started", fontWeight = FontWeight.Bold)
+                Text(if (hasLoggedInBefore) "Go to Dashboard" else "Get Started", fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(
+                    if (hasLoggedInBefore) Icons.Default.Dashboard else Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
             }
         }
     }

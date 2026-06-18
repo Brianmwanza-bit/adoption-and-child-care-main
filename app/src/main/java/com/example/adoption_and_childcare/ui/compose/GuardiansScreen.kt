@@ -18,6 +18,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.GuardianEntity
 import com.example.adoption_and_childcare.data.repository.GuardianRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -31,8 +32,9 @@ import kotlinx.coroutines.launch
 fun GuardiansScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { GuardianRepositoryImpl(db.guardianDao(), apiService) }
+    val repository = remember { GuardianRepositoryImpl(db.guardianDao(), db.syncQueueDao(), apiService, authManager) }
     
     var guardians by remember { mutableStateOf<List<GuardianEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -58,7 +60,7 @@ fun GuardiansScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -165,13 +167,14 @@ fun GuardiansScreen(onBack: () -> Unit = {}) {
  */
 private fun fetchFromApi(
     repository: GuardianRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

@@ -1,6 +1,8 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.PlacementEntity
 import com.example.adoption_and_childcare.data.repository.PlacementRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -24,8 +27,9 @@ import kotlinx.coroutines.launch
 fun PlacementsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { PlacementRepositoryImpl(db.placementDao(), apiService) }
+    val repository = remember { PlacementRepositoryImpl(db.placementDao(), db.syncQueueDao(), apiService, authManager) }
     var items by remember { mutableStateOf<List<PlacementEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     
@@ -77,54 +81,66 @@ fun PlacementsScreen(onBack: () -> Unit = {}) {
             }
         }
     ) { padding ->
-    Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-        if (items.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("No placements yet", style = MaterialTheme.typography.bodyLarge)
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (items.isEmpty()) {
+                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("No placements yet", style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
-            }
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(items) { p ->
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column(Modifier.padding(12.dp).weight(1f)) {
-                                Text("Placement #${p.placementId}", style = MaterialTheme.typography.titleMedium)
-                                Text("Child ID: ${p.childId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                p.destinationFamilyId?.let { Text("Family ID: $it", style = MaterialTheme.typography.bodySmall) }
-                                Text("Start: ${p.startDate}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                p.endDate?.let { Text("End: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                p.placementType?.let { Text("Type: $it", style = MaterialTheme.typography.bodySmall) }
-                                p.isCurrent.let { if (it) Text("Current Placement", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
-                            }
-                            Row(verticalAlignment = Alignment.Top) {
-                                IconButton(onClick = {
-                                    selectedPlacement = p
-                                    showEditDialog = true
-                                    childId = TextFieldValue(p.childId.toString())
-                                    destinationFamilyId = TextFieldValue(p.destinationFamilyId?.toString() ?: "")
-                                    startDate = TextFieldValue(p.startDate)
-                                    endDate = TextFieldValue(p.endDate ?: "")
-                                    placementType = p.placementType ?: "Foster Home"
-                                    notes = TextFieldValue(p.notes ?: "")
-                                }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                }
-                                IconButton(onClick = {
-                                    selectedPlacement = p
-                                    showDeleteDialog = true
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                }
-                                IconButton(onClick = {
-                                    val csvContent = "ID,Child ID,Family ID,Start Date,End Date,Type,Notes,Current\n${p.placementId},${p.childId},${p.destinationFamilyId},${p.startDate},${p.endDate},${p.placementType},${p.notes},${p.isCurrent}"
-                                }) {
-                                    Icon(Icons.Default.Download, contentDescription = "Download", tint = MaterialTheme.colorScheme.secondary)
-                                }
-                            }
+            } else {
+                items.forEachIndexed { index, p ->
+                    FormRecordCard(
+                        title = "PLACEMENT RECORD #${p.placementId}",
+                        subtitle = "Type: ${p.placementType ?: "N/A"}",
+                        pageNumber = index + 1,
+                        onEdit = {
+                            selectedPlacement = p
+                            showEditDialog = true
+                            childId = TextFieldValue(p.childId.toString())
+                            destinationFamilyId = TextFieldValue(p.destinationFamilyId?.toString() ?: "")
+                            startDate = TextFieldValue(p.startDate)
+                            endDate = TextFieldValue(p.endDate ?: "")
+                            placementType = p.placementType ?: "Foster Home"
+                            notes = TextFieldValue(p.notes ?: "")
+                        },
+                        onDelete = {
+                            selectedPlacement = p
+                            showDeleteDialog = true
+                        },
+                        onDownloadPdf = {
+                            // TODO: Implement PDF Generation
+                        },
+                        headerIcon = Icons.Default.Place
+                    ) {
+                        FormDetailRow(label = "Child ID", value = p.childId.toString())
+                        FormDetailRow(label = "Family ID", value = p.destinationFamilyId?.toString() ?: "N/A")
+                        FormDetailRow(label = "Start Date", value = p.startDate)
+                        FormDetailRow(label = "End Date", value = p.endDate ?: "Active")
+                        FormDetailRow(label = "Status", value = if (p.isCurrent) "Current Placement" else "Past Placement", valueColor = if (p.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary)
+
+                        if (!p.notes.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Notes",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = p.notes!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
@@ -269,7 +285,6 @@ fun PlacementsScreen(onBack: () -> Unit = {}) {
                 }
             )
         }
-    }
     }
 }
 

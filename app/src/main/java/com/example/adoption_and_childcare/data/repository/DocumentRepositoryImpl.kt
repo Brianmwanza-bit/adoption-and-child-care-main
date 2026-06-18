@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.DocumentDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for document data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class DocumentRepositoryImpl @Inject constructor(
     private val documentDao: DocumentDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -25,23 +27,20 @@ class DocumentRepositoryImpl @Inject constructor(
     
     suspend fun insert(doc: DocumentEntity, token: String): Result<Long> {
         return try {
-            // Insert locally first
-            val localId = documentDao.insert(doc)
+            // Insert with sync queue support
+            documentDao.insertWithSync(doc, syncQueueDao)
             
-            // Sync to API in background
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createDocument(authHeader, doc)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync document with API: ${response.message()}")
-                    }
+                    apiService.createDocument(authHeader, doc)
                 }
             } catch (e: Exception) {
-                println("API sync failed for document insert: ${e.message}")
+                // Ignore
             }
             
-            Result.success(localId)
+            Result.success(doc.documentId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -49,18 +48,16 @@ class DocumentRepositoryImpl @Inject constructor(
     
     suspend fun update(doc: DocumentEntity, token: String): Result<Unit> {
         return try {
-            documentDao.update(doc)
+            // Update with sync queue support
+            documentDao.updateWithSync(doc, syncQueueDao)
             
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateDocument(authHeader, doc.documentId, doc)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync document update with API: ${response.message()}")
-                    }
+                    apiService.updateDocument(authHeader, doc.documentId, doc)
                 }
             } catch (e: Exception) {
-                println("API sync failed for document update: ${e.message}")
+                // Ignore
             }
             
             Result.success(Unit)
@@ -71,7 +68,8 @@ class DocumentRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            documentDao.deleteById(id)
+            // Delete with sync queue support
+            documentDao.deleteByIdWithSync(id, syncQueueDao)
             
             try {
                 val authHeader = authManager.getAuthHeader()
@@ -79,7 +77,7 @@ class DocumentRepositoryImpl @Inject constructor(
                     apiService.deleteDocument(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for document delete: ${e.message}")
+                // Ignore
             }
             
             Result.success(Unit)

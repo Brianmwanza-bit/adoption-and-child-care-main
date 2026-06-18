@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.CaseReportDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for case report data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class CaseReportRepositoryImpl @Inject constructor(
     private val caseReportDao: CaseReportDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,17 +24,19 @@ class CaseReportRepositoryImpl @Inject constructor(
     
     suspend fun insert(report: CaseReportEntity, token: String): Result<Long> {
         return try {
-            val localId = caseReportDao.insert(report)
+            // Insert with sync queue support
+            caseReportDao.insertWithSync(report, syncQueueDao)
+            
+            // Immediate sync attempt (optional)
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    // Case reports synced via push/pull sync endpoint
-                    println("Case report inserted locally, will sync via push endpoint")
+                    // apiService.createCaseReport(authHeader, report)
                 }
             } catch (e: Exception) {
-                println("API sync failed for case report insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(report.reportId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -40,14 +44,16 @@ class CaseReportRepositoryImpl @Inject constructor(
     
     suspend fun update(report: CaseReportEntity, token: String): Result<Unit> {
         return try {
-            caseReportDao.update(report)
+            // Update with sync queue support
+            caseReportDao.updateWithSync(report, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    println("Case report updated locally, will sync via push endpoint")
+                    // apiService.updateCaseReport(authHeader, report.reportId, report)
                 }
             } catch (e: Exception) {
-                println("API sync failed for case report update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -57,14 +63,16 @@ class CaseReportRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            caseReportDao.deleteById(id)
+            // Delete with sync queue support
+            caseReportDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    println("Case report deleted locally, will sync via push endpoint")
+                    // apiService.deleteCaseReport(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for case report delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

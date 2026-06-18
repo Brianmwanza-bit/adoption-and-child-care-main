@@ -183,6 +183,83 @@ fun SearchResultItem(result: SearchResult) {
             stringResource(R.string.search_type_label, result.type ?: unknown),
             Color(0xFF607D8B)
         )
+        is SearchResult.CourtCase -> Quintet(
+            Icons.Default.Gavel,
+            result.caseNumber,
+            stringResource(R.string.search_court_case_label),
+            stringResource(R.string.search_status_label, result.status ?: na),
+            Color(0xFF673AB7)
+        )
+        is SearchResult.Guardian -> Quintet(
+            Icons.Default.SupervisorAccount,
+            result.name,
+            stringResource(R.string.search_guardian_label, result.relationship ?: na),
+            stringResource(R.string.search_phone_label, result.phone ?: na),
+            Color(0xFF009688)
+        )
+        is SearchResult.MedicalRecord -> Quintet(
+            Icons.Default.MedicalServices,
+            result.diagnosis ?: unknown,
+            stringResource(R.string.search_medical_label),
+            result.hospital ?: na,
+            Color(0xFFF44336)
+        )
+        is SearchResult.EducationRecord -> Quintet(
+            Icons.Default.School,
+            result.school ?: unknown,
+            stringResource(R.string.search_education_label, result.grade ?: na),
+            result.year ?: na,
+            Color(0xFF3F51B5)
+        )
+        is SearchResult.HomeStudy -> Quintet(
+            Icons.Default.HomeWork,
+            stringResource(R.string.search_home_study_label, result.familyId),
+            result.result ?: unknown,
+            result.worker ?: na,
+            Color(0xFFFFC107)
+        )
+        is SearchResult.FosterTask -> Quintet(
+            Icons.Default.TaskAlt,
+            result.description ?: unknown,
+            stringResource(R.string.search_task_label),
+            stringResource(R.string.search_due_label, result.dueDate ?: na),
+            Color(0xFF795548)
+        )
+        is SearchResult.FosterMatch -> Quintet(
+            Icons.Default.Handshake,
+            stringResource(R.string.search_match_label, result.id),
+            result.status ?: unknown,
+            result.matchedAt ?: na,
+            Color(0xFF00BCD4)
+        )
+        is SearchResult.BackgroundCheck -> Quintet(
+            Icons.Default.VerifiedUser,
+            result.type ?: unknown,
+            stringResource(R.string.search_bg_check_label),
+            result.status ?: na,
+            Color(0xFF4CAF50)
+        )
+        is SearchResult.CaseReport -> Quintet(
+            Icons.Default.Assessment,
+            result.title ?: unknown,
+            stringResource(R.string.search_case_report_label),
+            result.reportDate ?: na,
+            Color(0xFF607D8B)
+        )
+        is SearchResult.Task -> Quintet(
+            Icons.Default.Checklist,
+            result.title,
+            stringResource(R.string.search_task_label),
+            stringResource(R.string.search_priority_label, result.priority ?: na),
+            Color(0xFFFF5722)
+        )
+        is SearchResult.Notification -> Quintet(
+            Icons.Default.Notifications,
+            result.title,
+            result.message ?: "",
+            result.createdAt ?: na,
+            Color(0xFF607D8B)
+        )
     }
 
     ElevatedCard(

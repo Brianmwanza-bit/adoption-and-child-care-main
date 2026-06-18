@@ -10,284 +10,441 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.yourdomain.adoptionchildcare.R
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
-import com.example.adoption_and_childcare.data.repository.UserRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
  * Screen for managing system users.
  *
- * @param onBack Callback invoked when the user navigates back.
+ * @param onBack Callback invoked when the user navigates back to the previous screen.
+ * @param viewModel ViewModel for user management operations.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserManagementScreen(onBack: () -> Unit = {}) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { UserRepositoryImpl(db.userDao(), apiService) }
-    
+fun UserManagementScreen(
+    onBack: () -> Unit = {},
+    viewModel: UserManagementViewModel = hiltViewModel()
+) {
     var users by remember { mutableStateOf<List<UserEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
-    
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
     
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedUser by remember { mutableStateOf<UserEntity?>(null) }
 
-    var username by remember { mutableStateOf(TextFieldValue("")) }
-    var email by remember { mutableStateOf(TextFieldValue("")) }
-    var role by remember { mutableStateOf("Staff") }
-    val roles = listOf("Admin", "Case Worker", "Foster Parent", "Social Worker", "Supervisor", "Staff")
+    val defaultRole = stringResource(R.string.role_staff)
+    var usernameState by remember { mutableStateOf(TextFieldValue("")) }
+    var emailState by remember { mutableStateOf(TextFieldValue("")) }
+    var roleState by remember { mutableStateOf(defaultRole) }
+    
+    val roles = listOf(
+        stringResource(R.string.role_admin),
+        stringResource(R.string.role_case_worker),
+        stringResource(R.string.role_guardian),
+        stringResource(R.string.role_social_worker),
+        stringResource(R.string.role_supervisor),
+        stringResource(R.string.role_staff)
+    )
     var showRoleDropdown by remember { mutableStateOf(false) }
+    val sampleHash = stringResource(R.string.user_management_sample_hash)
 
     // Load from local DB
     LaunchedEffect(Unit) {
-        db.userDao().observeAll().collectLatest { list ->
-            users = list
-        }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
+        viewModel.users.collectLatest {
+            users = it
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("User Management") },
+                title = { Text(stringResource(R.string.user_management_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.user_management_back))
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        scope.launch {
+                            viewModel.fetchUsersFromApi()
+                        }
+                    }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh from API")
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add User")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.user_management_add_user))
             }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            if (users.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No users found", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(users) { user ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(user.username, style = MaterialTheme.typography.titleMedium)
-                                    Text("Role: ${user.role}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    user.email?.let { Text("Email: $it", style = MaterialTheme.typography.bodySmall) }
-                                    Text("Status: ${if (user.isActive) "Active" else "Inactive"}", style = MaterialTheme.typography.bodySmall)
-                                }
-                                Row {
-                                    IconButton(onClick = {
-                                        selectedUser = user
-                                        showEditDialog = true
-                                        username = TextFieldValue(user.username)
-                                        email = TextFieldValue(user.email ?: "")
-                                        role = user.role
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        selectedUser = user
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+    ) {
+        UserList(
+            users = users,
+            modifier = Modifier.padding(it),
+            onEdit = {
+                selectedUser = it
+                usernameState = TextFieldValue(it.username)
+                emailState = TextFieldValue(it.email ?: "")
+                roleState = it.role
+                showEditDialog = true
+            },
+            onDelete = {
+                selectedUser = it
+                showDeleteDialog = true
             }
-        }
+        )
     }
 
     if (showCreate) {
-        AlertDialog(
-            onDismissRequest = { showCreate = false },
-            title = { Text("Add User") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true)
-                    ExposedDropdownMenuBox(expanded = showRoleDropdown, onExpandedChange = { showRoleDropdown = !showRoleDropdown }) {
-                        OutlinedTextField(
-                            value = role,
-                            onValueChange = { },
-                            readOnly = true,
-                            label = { Text("Role") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
+        UserFormDialog(
+            title = stringResource(R.string.user_management_add_user),
+            confirmLabel = stringResource(R.string.user_management_save),
+            username = usernameState,
+            onUsernameChange = { usernameState = it },
+            email = emailState,
+            onEmailChange = { emailState = it },
+            role = roleState,
+            onRoleChange = { roleState = it },
+            roles = roles,
+            showRoleDropdown = showRoleDropdown,
+            onToggleRoleDropdown = { showRoleDropdown = it },
+            onDismiss = { showCreate = false },
+            onConfirm = {
+                if (usernameState.text.isNotBlank()) {
+                    scope.launch {
+                        viewModel.insert(
+                            UserEntity(
+                                username = usernameState.text,
+                                email = emailState.text.ifBlank { null },
+                                role = roleState,
+                                passwordHash = sampleHash
+                            )
                         )
-                        ExposedDropdownMenu(expanded = showRoleDropdown, onDismissRequest = { showRoleDropdown = false }) {
-                            roles.forEach { r ->
-                                DropdownMenuItem(text = { Text(r) }, onClick = {
-                                    role = r
-                                    showRoleDropdown = false
-                                })
-                            }
-                        }
+                        showCreate = false
+                        usernameState = TextFieldValue("")
+                        emailState = TextFieldValue("")
+                        roleState = defaultRole
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (username.text.isNotBlank()) {
-                        scope.launch {
-                            db.userDao().insertWithSync(
-                                UserEntity(
-                                    username = username.text,
-                                    email = email.text.ifBlank { null },
-                                    role = role,
-                                    passwordHash = "sample_hash",
-                                    isActive = true
-                                ),
-                                db.syncQueueDao()
-                            )
-                            showCreate = false
-                            username = TextFieldValue("")
-                            email = TextFieldValue("")
-                            role = "Staff"
-                        }
-                    }
-                }) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("Cancel") }
             }
         )
     }
 
     if (showEditDialog && selectedUser != null) {
-        AlertDialog(
-            onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit User") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true)
-                    ExposedDropdownMenuBox(expanded = showRoleDropdown, onExpandedChange = { showRoleDropdown = !showRoleDropdown }) {
-                        OutlinedTextField(
-                            value = role,
-                            onValueChange = { },
-                            readOnly = true,
-                            label = { Text("Role") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = showRoleDropdown, onDismissRequest = { showRoleDropdown = false }) {
-                            roles.forEach { r ->
-                                DropdownMenuItem(text = { Text(r) }, onClick = {
-                                    role = r
-                                    showRoleDropdown = false
-                                })
-                            }
-                        }
-                    }
-                }
+        UserFormDialog(
+            title = stringResource(R.string.user_management_edit_user),
+            confirmLabel = stringResource(R.string.user_management_update),
+            username = usernameState,
+            onUsernameChange = { usernameState = it },
+            email = emailState,
+            onEmailChange = { emailState = it },
+            role = roleState,
+            onRoleChange = { roleState = it },
+            roles = roles,
+            showRoleDropdown = showRoleDropdown,
+            onToggleRoleDropdown = { showRoleDropdown = it },
+            onDismiss = { 
+                showEditDialog = false
+                selectedUser = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (username.text.isNotBlank()) {
-                        scope.launch {
-                            val updated = selectedUser!!.copy(
-                                username = username.text,
-                                email = email.text.ifBlank { null },
-                                role = role
+            onConfirm = {
+                if (usernameState.text.isNotBlank()) {
+                    scope.launch {
+                        selectedUser?.let {
+                            val updated = it.copy(
+                                username = usernameState.text,
+                                email = emailState.text.ifBlank { null },
+                                role = roleState
                             )
-                            db.userDao().updateWithSync(updated, db.syncQueueDao())
+                            viewModel.update(updated)
                             showEditDialog = false
                             selectedUser = null
                         }
                     }
-                }) { Text("Update") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditDialog = false; selectedUser = null }) { Text("Cancel") }
+                }
             }
         )
     }
 
     if (showDeleteDialog && selectedUser != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false; selectedUser = null },
-            title = { Text("Delete User") },
-            text = { Text("Are you sure you want to delete user '${selectedUser!!.username}'?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        db.userDao().deleteByIdWithSync(selectedUser!!.userId, db.syncQueueDao())
+        DeleteConfirmationDialog(
+            user = selectedUser,
+            onDismiss = { 
+                showDeleteDialog = false
+                selectedUser = null
+            },
+            onConfirm = {
+                scope.launch {
+                    selectedUser?.let {
+                        viewModel.deleteById(it.userId)
                         showDeleteDialog = false
                         selectedUser = null
                     }
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; selectedUser = null }) { Text("Cancel") }
+                }
             }
         )
     }
 }
 
 /**
- * Helper function to fetch users from API.
+ * Displays the list of users or an empty state message.
+ *
+ * @param users The list of user entities to display.
+ * @param modifier Layout modifier.
+ * @param onEdit Callback when a user edit button is clicked.
+ * @param onDelete Callback when a user delete button is clicked.
  */
-private fun fetchFromApi(
-    repository: UserRepositoryImpl,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoading: (Boolean, String?) -> Unit
+@Composable
+private fun UserList(
+    users: List<UserEntity>,
+    modifier: Modifier = Modifier,
+    onEdit: (UserEntity) -> Unit,
+    onDelete: (UserEntity) -> Unit
 ) {
-    scope.launch {
-        onLoading(true, null)
-        try {
-            val token = "" // TODO: Get actual auth token
-            if (token.isNotEmpty()) {
-                val result = repository.fetchFromApi(token)
-                if (result.isFailure) {
-                    onLoading(false, result.exceptionOrNull()?.message)
-                } else {
-                    onLoading(false, null)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        if (users.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Group, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(64.dp), 
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.user_management_no_users), 
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
-            } else {
-                onLoading(false, "No authentication token available")
             }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch users: ${e.message}")
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(users) {
+                    UserItemCard(
+                        user = it,
+                        onEdit = { onEdit(it) },
+                        onDelete = { onDelete(it) }
+                    )
+                }
+            }
         }
     }
+}
+
+/**
+ * A card displaying details for a specific user.
+ *
+ * @param user The user entity to display.
+ * @param onEdit Callback for editing the user.
+ * @param onDelete Callback for deleting the user.
+ */
+@Composable
+private fun UserItemCard(
+    user: UserEntity,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(user.username, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = stringResource(R.string.user_management_role, user.role),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                user.email?.let {
+                    UserEmailDisplay(emailVal = it)
+                }
+                Text(
+                    text = stringResource(
+                        R.string.user_management_status,
+                        if (user.isActive) stringResource(R.string.user_management_active)
+                        else stringResource(R.string.user_management_inactive)
+                    ),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        Icons.Default.Edit, 
+                        contentDescription = stringResource(R.string.user_management_edit), 
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete, 
+                        contentDescription = stringResource(R.string.user_management_delete), 
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Helper to display documented email text.
+ * 
+ * @param emailVal The email address string.
+ */
+@Composable
+private fun UserEmailDisplay(emailVal: String) {
+    Text(
+        text = stringResource(R.string.user_management_email, emailVal),
+        style = MaterialTheme.typography.bodySmall
+    )
+}
+
+/**
+ * Reusable dialog for creating or editing user details.
+ *
+ * @param title Dialog title.
+ * @param confirmLabel Text for the confirm button.
+ * @param username Current username state.
+ * @param onUsernameChange Callback for username updates.
+ * @param email Current email state.
+ * @param onEmailChange Callback for email updates.
+ * @param role Currently selected role.
+ * @param onRoleChange Callback for role updates.
+ * @param roles List of available roles.
+ * @param showRoleDropdown Whether the role dropdown is expanded.
+ * @param onToggleRoleDropdown Callback to toggle dropdown visibility.
+ * @param onDismiss Callback to close the dialog.
+ * @param onConfirm Callback when the confirm button is clicked.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UserFormDialog(
+    title: String,
+    confirmLabel: String,
+    username: TextFieldValue,
+    onUsernameChange: (TextFieldValue) -> Unit,
+    email: TextFieldValue,
+    onEmailChange: (TextFieldValue) -> Unit,
+    role: String,
+    onRoleChange: (String) -> Unit,
+    roles: List<String>,
+    showRoleDropdown: Boolean,
+    onToggleRoleDropdown: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = onUsernameChange,
+                    label = { Text(stringResource(R.string.user_management_username_label)) },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = onEmailChange,
+                    label = { Text(stringResource(R.string.user_management_email_label)) },
+                    singleLine = true
+                )
+                ExposedDropdownMenuBox(
+                    expanded = showRoleDropdown,
+                    onExpandedChange = onToggleRoleDropdown
+                ) {
+                    OutlinedTextField(
+                        value = role,
+                        onValueChange = { },
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.user_management_role_label)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleDropdown) },
+                        modifier = Modifier
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showRoleDropdown,
+                        onDismissRequest = { onToggleRoleDropdown(false) }
+                    ) {
+                        roles.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it) },
+                                onClick = {
+                                    onRoleChange(it)
+                                    onToggleRoleDropdown(false)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(confirmLabel) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.user_management_cancel)) }
+        }
+    )
+}
+
+/**
+ * Confirmation dialog for user deletion.
+ *
+ * @param user The user entity to be deleted.
+ * @param onDismiss Callback to cancel the deletion.
+ * @param onConfirm Callback to confirm the deletion.
+ */
+@Composable
+private fun DeleteConfirmationDialog(
+    user: UserEntity?,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.user_management_delete_user)) },
+        text = {
+            Text(
+                stringResource(
+                    R.string.user_management_delete_confirm,
+                    user?.username ?: ""
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { 
+                Text(
+                    stringResource(R.string.user_management_delete), 
+                    color = MaterialTheme.colorScheme.error
+                ) 
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.user_management_cancel)) }
+        }
+    )
 }

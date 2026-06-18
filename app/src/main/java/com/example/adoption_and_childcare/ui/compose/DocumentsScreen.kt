@@ -16,6 +16,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
 import com.example.adoption_and_childcare.data.repository.DocumentRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -24,8 +25,9 @@ import kotlinx.coroutines.launch
 fun DocumentsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { DocumentRepositoryImpl(db.documentDao(), apiService) }
+    val repository = remember { DocumentRepositoryImpl(db.documentDao(), db.syncQueueDao(), apiService, authManager) }
     
     var docs by remember { mutableStateOf<List<DocumentEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()

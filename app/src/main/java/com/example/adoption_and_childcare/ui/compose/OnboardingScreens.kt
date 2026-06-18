@@ -51,7 +51,7 @@ fun TermsAndConditionsScreen(onAccept: () -> Unit) {
                     
                     1. Data Privacy: All data entered regarding children and families is strictly confidential and protected under child welfare regulations.
                     
-                    2. Professional Use: This app is intended for authorized case workers, social workers, and foster parents. Unauthorized access is prohibited.
+                    2. Professional Use: This app is intended for authorized case workers, social workers, and guardians. Unauthorized access is prohibited.
                     
                     3. Reporting: Users are responsible for the accuracy of reports and case notes entered into the system.
                     

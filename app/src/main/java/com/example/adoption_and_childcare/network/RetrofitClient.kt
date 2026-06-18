@@ -2,6 +2,8 @@ package com.example.adoption_and_childcare.network
 
 import android.content.Context
 import com.example.adoption_and_childcare.data.session.AppSettings
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -45,23 +47,16 @@ object RetrofitClient {
         synchronized(this) {
             if (retrofit == null || currentUrl != baseUrl) {
                 currentUrl = baseUrl
+                val gson = GsonBuilder()
+                    .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                    .create()
+                
                 retrofit = Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .build()
             }
             return retrofit!!
         }
-    }
-
-    /**
-     * Static access for standard API service (Legacy support).
-     */
-    val apiService: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:50000/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
     }
 }

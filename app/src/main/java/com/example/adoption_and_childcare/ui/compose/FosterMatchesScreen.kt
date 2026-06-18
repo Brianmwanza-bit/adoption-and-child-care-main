@@ -16,6 +16,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity
 import com.example.adoption_and_childcare.data.repository.FosterMatchRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -24,8 +25,9 @@ import kotlinx.coroutines.launch
 fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { FosterMatchRepositoryImpl(db.fosterMatchDao(), apiService) }
+    val repository = remember { FosterMatchRepositoryImpl(db.fosterMatchDao(), db.syncQueueDao(), apiService, authManager) }
     
     var matches by remember { mutableStateOf<List<FosterMatchEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()

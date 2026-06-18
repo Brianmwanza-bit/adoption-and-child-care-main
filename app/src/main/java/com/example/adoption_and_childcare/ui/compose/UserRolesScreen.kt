@@ -21,6 +21,7 @@ import com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity
 import com.example.adoption_and_childcare.data.repository.PermissionRepositoryImpl
 import com.example.adoption_and_childcare.data.repository.UserPermissionRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -34,9 +35,10 @@ import kotlinx.coroutines.launch
 fun UserRolesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val permissionRepository = remember { PermissionRepositoryImpl(db.permissionDao(), apiService) }
-    val userPermissionRepository = remember { UserPermissionRepositoryImpl(db.userPermissionDao(), apiService) }
+    val permissionRepository = remember { PermissionRepositoryImpl(db.permissionDao(), db.syncQueueDao(), apiService, authManager) }
+    val userPermissionRepository = remember { UserPermissionRepositoryImpl(db.userPermissionDao(), db.syncQueueDao(), apiService, authManager) }
     var permissions by remember { mutableStateOf<List<PermissionEntity>>(emptyList()) }
     var userPermissions by remember { mutableStateOf<List<UserPermissionEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()

@@ -16,6 +16,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
 import com.example.adoption_and_childcare.data.repository.HomeStudyRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -24,8 +25,9 @@ import kotlinx.coroutines.launch
 fun HomeStudiesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { HomeStudyRepositoryImpl(db.homeStudyDao(), apiService) }
+    val repository = remember { HomeStudyRepositoryImpl(db.homeStudyDao(), db.syncQueueDao(), apiService, authManager) }
     
     var studies by remember { mutableStateOf<List<HomeStudyEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()

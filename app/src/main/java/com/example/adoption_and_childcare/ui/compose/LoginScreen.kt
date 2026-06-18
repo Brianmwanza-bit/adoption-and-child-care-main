@@ -7,8 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
@@ -25,17 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.yourdomain.adoptionchildcare.R
-import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
-import com.example.adoption_and_childcare.data.session.SessionManager
+import com.example.adoption_and_childcare.data.model.UserRole
 import com.example.adoption_and_childcare.utils.AutoSaveManager
-import com.example.adoption_and_childcare.utils.Security
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
+import com.yourdomain.adoptionchildcare.R
 import kotlinx.coroutines.launch
-
 
 /**
  * A reusable background component for authentication screens.
@@ -59,22 +58,25 @@ fun AuthBackground(content: @Composable () -> Unit) {
  *
  * @param onLoginSuccess Callback triggered when login is successful, providing the [UserEntity].
  * @param onNavigateToRegister Callback to navigate to the registration screen.
+ * @param successMessage Optional message to display upon navigation (e.g., after successful registration).
+ * @param viewModel ViewModel for user management operations.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: (UserEntity) -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    successMessage: String = "",
+    viewModel: UserManagementViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val session = remember { SessionManager(context) }
-    val db = remember { AppDatabase.getInstance(context) }
     val scope = rememberCoroutineScope()
     val autoSave = remember { AutoSaveManager(context) }
 
     var email by remember { mutableStateOf(autoSave.getLoginField(AutoSaveManager.LOGIN_EMAIL)) }
     var password by remember { mutableStateOf(autoSave.getLoginField(AutoSaveManager.LOGIN_PASSWORD)) }
     var errorMessage by remember { mutableStateOf("") }
+    var infoMessage by remember { mutableStateOf(successMessage) }
     var isLoading by remember { mutableStateOf(false) }
 
     AuthBackground {
@@ -128,33 +130,41 @@ fun LoginScreen(
                     visualTransformation = PasswordVisualTransformation()
                 )
 
+                if (infoMessage.isNotEmpty()) {
+                    Text(infoMessage, color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                }
+
                 if (errorMessage.isNotEmpty()) {
                     Text(errorMessage, color = Color.Red, fontSize = 12.sp)
                 }
 
                 val fillAllFieldsError = stringResource(R.string.error_fill_all_fields)
-                val invalidCredentialsError = stringResource(R.string.error_invalid_credentials)
-                val loginFailedError = stringResource(R.string.error_login_failed)
+                val loginFailedMsg = stringResource(R.string.login_error_failed)
+                val tryAgainMsg = stringResource(R.string.error_try_again)
 
                 Button(
                     onClick = {
-                        if (email.isBlank() || password.isBlank()) {
+                        val trimmedEmail = email.trim()
+                        val trimmedPassword = password.trim()
+                        if (trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
                             errorMessage = fillAllFieldsError
                         } else {
                             isLoading = true
+                            errorMessage = ""
                             scope.launch {
                                 try {
-                                    val user = db.userDao().findByEmail(email) ?: db.userDao().findByUsername(email)
-                                    val hashed = Security.hashPassword(password)
-                                    if (user != null && user.passwordHash == hashed) {
+                                    val result = viewModel.login(trimmedEmail, trimmedPassword)
+                                    result.onSuccess { userEntity: UserEntity ->
                                         autoSave.clearLoginData()
-                                        session.saveSession(user)
-                                        onLoginSuccess(user)
-                                    } else {
-                                        errorMessage = invalidCredentialsError
+                                        onLoginSuccess(userEntity)
+                                    }.onFailure { e: Throwable ->
+                                        errorMessage = e.message ?: loginFailedMsg
                                     }
                                 } catch (e: Exception) {
-                                    errorMessage = e.message ?: loginFailedError
+                                    errorMessage = context.getString(
+                                        R.string.login_error_general,
+                                        e.message ?: tryAgainMsg
+                                    )
                                 } finally {
                                     isLoading = false
                                 }
@@ -185,15 +195,16 @@ fun LoginScreen(
  *
  * @param onRegisterSuccess Callback triggered when registration is successful.
  * @param onNavigateToLogin Callback to navigate to the login screen.
+ * @param viewModel ViewModel for user management operations.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onRegisterSuccess: (String) -> Unit,
+    onNavigateToLogin: () -> Unit,
+    viewModel: UserManagementViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val autoSave = remember { AutoSaveManager(context) }
@@ -206,24 +217,18 @@ fun RegisterScreen(
     var idNumber by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_ID_NUMBER)) }
     var county by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_COUNTY)) }
     var subCounty by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_SUB_COUNTY)) }
-    var occupation by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_OCCUPATION)) }
+    var occupationRoleName by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_OCCUPATION)) }
     var showOccupationDropdown by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
 
-    val occupations = listOf(
-        stringResource(R.string.role_admin),
-        stringResource(R.string.role_case_worker),
-        stringResource(R.string.role_foster_parent),
-        stringResource(R.string.role_social_worker),
-        stringResource(R.string.role_supervisor)
-    )
+    val roles = UserRole.entries
 
     /** Callback that stores the selected profile photo URI, or null if selection was canceled. */
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { profilePhotoUri = it }
+    ) { uri: Uri? -> profilePhotoUri = uri }
 
     AuthBackground {
         Card(
@@ -383,7 +388,7 @@ fun RegisterScreen(
                     onExpandedChange = { showOccupationDropdown = !showOccupationDropdown }
                 ) {
                     OutlinedTextField(
-                        value = occupation,
+                        value = if (occupationRoleName.isEmpty()) "" else UserRole.fromRoleName(occupationRoleName).getLabel(),
                         onValueChange = { },
                         readOnly = true,
                         label = { Text(stringResource(R.string.register_occupation_hint)) },
@@ -397,12 +402,12 @@ fun RegisterScreen(
                         expanded = showOccupationDropdown,
                         onDismissRequest = { showOccupationDropdown = false }
                     ) {
-                        occupations.forEach {
+                        roles.forEach { role: UserRole ->
                             DropdownMenuItem(
-                                text = { Text(it) },
+                                text = { Text(role.getLabel()) },
                                 onClick = {
-                                    occupation = it
-                                    autoSave.saveRegisterField(AutoSaveManager.REG_OCCUPATION, it)
+                                    occupationRoleName = role.roleName
+                                    autoSave.saveRegisterField(AutoSaveManager.REG_OCCUPATION, role.roleName)
                                     showOccupationDropdown = false
                                 }
                             )
@@ -439,38 +444,47 @@ fun RegisterScreen(
                 }
 
                 val fillAllFieldsError = stringResource(R.string.error_fill_all_fields)
-                val userExistsError = stringResource(R.string.error_user_exists)
-                val registrationFailedError = stringResource(R.string.error_registration_failed)
+                val registerSuccessMsg = stringResource(R.string.register_success_msg)
+                val registerFailedMsg = stringResource(R.string.register_error_failed)
+                val tryAgainMsg = stringResource(R.string.error_try_again)
 
                 Button(
                     onClick = {
-                        if (username.isBlank() || email.isBlank() || password.isBlank() || occupation.isBlank() || phone.isBlank()) {
+                        val trimmedUsername = username.trim()
+                        val trimmedEmail = email.trim()
+                        val trimmedPassword = password.trim()
+                        val trimmedPhone = phone.trim()
+                        if (trimmedUsername.isBlank() || trimmedEmail.isBlank() || trimmedPassword.isBlank() || occupationRoleName.isBlank() || trimmedPhone.isBlank()) {
                             errorMessage = fillAllFieldsError
                         } else {
                             isLoading = true
+                            errorMessage = ""
                             scope.launch {
                                 try {
-                                    val existing = db.userDao().findByEmail(email) ?: db.userDao().findByUsername(username)
-                                    if (existing != null) {
-                                        errorMessage = userExistsError
-                                    } else {
-                                        val entity = UserEntity(
-                                            username = username,
-                                            passwordHash = Security.hashPassword(password),
-                                            role = occupation,
-                                            email = email,
-                                            phone = phone,
-                                            nationalIdNo = nationalIdNo.ifBlank { null },
-                                            idNumber = idNumber.ifBlank { null },
-                                            county = county.ifBlank { null },
-                                            subCounty = subCounty.ifBlank { null }
-                                        )
-                                        db.userDao().insertWithSync(entity, db.syncQueueDao())
+                                    val entity = UserEntity(
+                                        username = trimmedUsername,
+                                        passwordHash = "", // Will be hashed on server or handled by repository
+                                        role = occupationRoleName,
+                                        email = trimmedEmail,
+                                        phone = trimmedPhone,
+                                        nationalIdNo = nationalIdNo.trim().ifBlank { null },
+                                        idNumber = idNumber.trim().ifBlank { null },
+                                        county = county.trim().ifBlank { null },
+                                        subCounty = subCounty.trim().ifBlank { null }
+                                    )
+                                    
+                                    val result = viewModel.register(entity, trimmedPassword)
+                                    result.onSuccess {
                                         autoSave.clearRegisterData()
-                                        onRegisterSuccess()
+                                        onRegisterSuccess(registerSuccessMsg)
+                                    }.onFailure { e: Throwable ->
+                                        errorMessage = e.message ?: registerFailedMsg
                                     }
                                 } catch (e: Exception) {
-                                    errorMessage = e.message ?: registrationFailedError
+                                    errorMessage = context.getString(
+                                        R.string.register_error_general,
+                                        e.message ?: tryAgainMsg
+                                    )
                                 } finally {
                                     isLoading = false
                                 }

@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.ChildDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.ChildEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -13,15 +14,18 @@ import javax.inject.Singleton
  * 
  * This repository manages ChildEntity objects, providing:
  * - Real-time observation via Flow from local Room database
- * - CRUD operations that sync with the backend API
+ * - CRUD operations that sync with the backend API via a sync queue
  * - Offline-first architecture with automatic synchronization
  * 
  * @property childDao Local database DAO for child operations.
+ * @property syncQueueDao DAO for managing the local sync queue.
  * @property apiService Retrofit API service for backend communication.
+ * @property authManager Manager for authentication tokens.
  */
 @Singleton
 class ChildRepositoryImpl @Inject constructor(
     private val childDao: ChildDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) : ChildRepository {
@@ -36,23 +40,20 @@ class ChildRepositoryImpl @Inject constructor(
 
     override suspend fun insert(child: ChildEntity, token: String): Result<Long> {
         return try {
-            // Insert locally first
-            val localId = childDao.insert(child)
+            // Insert with sync queue support
+            childDao.insertWithSync(child, syncQueueDao)
             
-            // Sync with API in background using AuthManager
+            // Immediate sync attempt (optional, SyncWorker will also handle it)
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createChild(authHeader, child)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync child with API: ${response.message()}")
-                    }
+                    apiService.createChild(authHeader, child)
                 }
             } catch (e: Exception) {
-                println("API sync failed for child insert: ${e.message}")
+                // Ignore failure here; the record is in the sync queue
             }
             
-            Result.success(localId)
+            Result.success(child.childId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -60,20 +61,17 @@ class ChildRepositoryImpl @Inject constructor(
 
     override suspend fun update(child: ChildEntity, token: String): Result<Unit> {
         return try {
-            // Update locally first
-            childDao.update(child)
+            // Update with sync queue support
+            childDao.updateWithSync(child, syncQueueDao)
             
-            // Sync with API in background using AuthManager
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateChild(authHeader, child.childId, child)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync child update with API: ${response.message()}")
-                    }
+                    apiService.updateChild(authHeader, child.childId, child)
                 }
             } catch (e: Exception) {
-                println("API sync failed for child update: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)
@@ -84,20 +82,17 @@ class ChildRepositoryImpl @Inject constructor(
 
     override suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            // Delete locally first
-            childDao.deleteById(id)
+            // Delete with sync queue support
+            childDao.deleteByIdWithSync(id, syncQueueDao)
             
-            // Sync with API in background using AuthManager
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.deleteChild(authHeader, id)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync child deletion with API: ${response.message()}")
-                    }
+                    apiService.deleteChild(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for child deletion: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)

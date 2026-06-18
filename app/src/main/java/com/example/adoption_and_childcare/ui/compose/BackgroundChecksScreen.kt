@@ -17,6 +17,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity
 import com.example.adoption_and_childcare.data.repository.BackgroundCheckRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -30,8 +31,9 @@ import kotlinx.coroutines.launch
 fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { BackgroundCheckRepositoryImpl(db.backgroundCheckDao(), apiService) }
+    val repository = remember { BackgroundCheckRepositoryImpl(db.backgroundCheckDao(), db.syncQueueDao(), apiService, authManager) }
     
     var checks by remember { mutableStateOf<List<BackgroundCheckEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -61,7 +63,7 @@ fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -262,13 +264,14 @@ fun BackgroundChecksScreen(onBack: () -> Unit = {}) {
  */
 private fun fetchFromApi(
     repository: BackgroundCheckRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

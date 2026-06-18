@@ -2,10 +2,7 @@ package com.example.adoption_and_childcare.data.db
 
 import android.content.Context
 import com.example.adoption_and_childcare.data.db.entities.*
-import com.example.adoption_and_childcare.data.security.Security
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.example.adoption_and_childcare.utils.Security
 
 import androidx.room.withTransaction
 
@@ -20,9 +17,8 @@ object DatabaseInitializer {
      *
      * @param db The database instance to initialize.
      */
-    fun initializeDatabase(db: AppDatabase) {
-        CoroutineScope(Dispatchers.IO).launch {
-            db.withTransaction {
+    suspend fun initializeDatabase(db: AppDatabase) {
+        db.withTransaction {
                 // Check if database is already initialized
                 val userCount = db.userDao().count()
                 if (userCount > 0) return@withTransaction // Already initialized
@@ -196,7 +192,36 @@ object DatabaseInitializer {
                     )
                     db.auditLogDao().insert(log)
                 }
+
+                // 14. Seed New v15 Tables
+                for (i in 0..4) {
+                    // Investigation
+                    db.investigationDao().insert(InvestigationEntity(
+                        childId = childIds[i],
+                        caseNumber = "INV-2024-00$i",
+                        investigationType = "Safety Assessment",
+                        openedDate = "2024-06-01",
+                        status = "Open",
+                        allegation = "Standard periodic review allegation mock."
+                    ))
+                    
+                    // Service Plan
+                    db.servicePlanDao().insert(ServicePlanEntity(
+                        childId = childIds[i],
+                        planName = "Permanency Plan 2024-Q3",
+                        startDate = "2024-07-01",
+                        status = "Active",
+                        goalsSummary = "Reunification with biological family."
+                    ))
+
+                    // Vaccination
+                    db.vaccinationRecordDao().insert(VaccinationRecordEntity(
+                        childId = childIds[i],
+                        vaccineName = "BCG",
+                        administrationDate = "2024-05-10",
+                        status = "Completed"
+                    ))
+                }
             }
-        }
     }
 }

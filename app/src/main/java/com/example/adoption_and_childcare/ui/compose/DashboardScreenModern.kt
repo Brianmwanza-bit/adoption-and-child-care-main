@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.CompareArrows
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +25,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
+import com.example.adoption_and_childcare.viewmodel.CaseToolsViewModel
+import com.example.adoption_and_childcare.MainActivityConstants
+import com.example.adoption_and_childcare.canAccessRoute
 import com.yourdomain.adoptionchildcare.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -53,18 +58,26 @@ data class ActionItemModern(
 /**
  * Main dashboard screen providing a modern overview of the adoption system.
  *
+ * @param userRole The role of the current user.
  * @param onNavigate Callback for navigation to different routes.
  * @param notificationsViewModel ViewModel for managing notifications.
+ * @param caseToolsViewModel ViewModel for managing case-specific tools and dashboard preferences.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreenModern(
+    userRole: String = stringResource(R.string.dashboard_guest),
     onNavigate: (String) -> Unit = {},
-    notificationsViewModel: NotificationsViewModel = hiltViewModel()
+    notificationsViewModel: NotificationsViewModel = hiltViewModel(),
+    caseToolsViewModel: CaseToolsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+
+    // Dashboard Preferences
+    val dashboardPrefs by caseToolsViewModel.dashboardPreferences.collectAsState()
+    val latestPrefs = dashboardPrefs.lastOrNull()
 
     // Data states
     var childrenCount by remember { mutableIntStateOf(0) }
@@ -98,26 +111,32 @@ fun DashboardScreenModern(
         }
     }
 
-    // Observe tasks and audit logs for dynamic items
+    // Observe tasks for dynamic items
     LaunchedEffect(Unit) {
-        db.fosterTaskDao().observeAll().collectLatest { tasks ->
-            dynamicActionItems = tasks.take(3).map {
+        db.fosterTaskDao().observeAll().collectLatest { tasksList ->
+            val taskDefault = context.getString(R.string.dashboard_task_default)
+            val priorityNormal = context.getString(R.string.dashboard_priority_normal)
+            val noDate = context.getString(R.string.dashboard_no_date)
+            val staffAssignee = context.getString(R.string.dashboard_staff_assignee)
+            val fosterTasksEntity = context.getString(R.string.dashboard_foster_tasks_entity)
+
+            dynamicActionItems = tasksList.take(3).map { task ->
                 ActionItemModern(
-                    id = it.taskId.toString(),
-                    title = it.description ?: "Task",
-                    priority = it.status?.lowercase() ?: "normal",
-                    dueDate = it.dueDate ?: "No date",
-                    assignee = "Staff",
-                    relatedEntity = "Foster Tasks"
+                    id = task.taskId.toString(),
+                    title = task.description ?: taskDefault,
+                    priority = task.status?.lowercase() ?: priorityNormal,
+                    dueDate = task.dueDate ?: noDate,
+                    assignee = staffAssignee,
+                    relatedEntity = fosterTasksEntity
                 )
             }
         }
     }
 
     LaunchedEffect(Unit) {
-        db.auditLogDao().observeAll().collectLatest { logs ->
-            dynamicUpdates = logs.take(4).map {
-                "${it.action} on ${it.tableName} (ID: ${it.recordId})"
+        db.auditLogDao().observeAll().collectLatest { auditLogs ->
+            dynamicUpdates = auditLogs.take(4).map { log ->
+                context.getString(R.string.dashboard_audit_update_format, log.action, log.tableName, log.recordId)
             }
         }
     }
@@ -145,23 +164,28 @@ fun DashboardScreenModern(
                 modifier = Modifier.fillMaxSize()
             ) {
                 // PRIORITY ALERT SECTION
-                item {
-                    PriorityAlertSectionModern(
-                        urgentCount = 2,
-                        atRiskCount = atRiskCount,
-                        upcomingCount = 5
-                    )
+                if (latestPrefs?.showAlerts != false) {
+                    item {
+                        PriorityAlertSectionModern(
+                            urgentCount = 2,
+                            atRiskCount = atRiskCount,
+                            upcomingCount = 5
+                        )
+                    }
                 }
 
                 // KEY METRICS SECTION
-                item {
-                    KeyMetricsSectionModern(
-                        childrenCount = childrenCount,
-                        familiesCount = familiesCount,
-                        placementsCount = placementsCount,
-                        adoptionAppsCount = adoptionAppsCount,
-                        onNavigate = onNavigate
-                    )
+                if (latestPrefs?.showStats != false) {
+                    item {
+                        KeyMetricsSectionModern(
+                            userRole = userRole,
+                            childrenCount = childrenCount,
+                            familiesCount = familiesCount,
+                            placementsCount = placementsCount,
+                            adoptionAppsCount = adoptionAppsCount,
+                            onNavigate = onNavigate
+                        )
+                    }
                 }
 
                 // OVERDUE TASKS SECTION
@@ -174,28 +198,105 @@ fun DashboardScreenModern(
                 }
 
                 // ACTION ITEMS SECTION
-                item {
-                    ActionItemsSectionModern(
-                        items = dynamicActionItems,
-                        onNavigate = onNavigate
-                    )
+                if (latestPrefs?.showActionItems != false) {
+                    item {
+                        ActionItemsSectionModern(
+                            items = dynamicActionItems,
+                            onNavigate = onNavigate
+                        )
+                    }
                 }
 
                 // RECENT UPDATES SECTION
-                item {
-                    RecentUpdatesSectionModern(
-                        updates = dynamicUpdates
-                    )
+                if (latestPrefs?.showRecentActivity != false) {
+                    item {
+                        RecentUpdatesSectionModern(
+                            updates = dynamicUpdates,
+                            onViewAll = { onNavigate(context.getString(R.string.route_audit_logs)) }
+                        )
+                    }
                 }
 
                 // QUICK ACCESS MODULES
-                item {
-                    QuickAccessModulesModern(onNavigate = onNavigate)
+                if (latestPrefs?.showQuickActions != false) {
+                    item {
+                        QuickAccessModulesModern(userRole = userRole, onNavigate = onNavigate)
+                    }
                 }
 
-                // ALL SCREENS GRID (14 items)
+                // ALL SCREENS GRID
                 item {
-                    AllScreensGridModern(onNavigate = onNavigate)
+                    AllScreensGridModern(userRole = userRole, onNavigate = onNavigate)
+                }
+
+                // CASE TOOLS SECTION
+                item {
+                    CaseToolsGridModern(userRole = userRole, onNavigate = onNavigate)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Grid displaying case-specific tools with modern card design.
+ *
+ * @param userRole The role of the current user.
+ * @param onNavigate Navigation callback.
+ */
+@Composable
+fun CaseToolsGridModern(userRole: String, onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
+    
+    val allTools = listOf(
+        Triple(R.string.dashboard_label_risk_assessments, R.string.dashboard_desc_risk_assessments, Triple(Icons.Default.Shield, Color(0xFFE91E63), MainActivityConstants.RISK_ASSESSMENTS_ROUTE)),
+        Triple(R.string.dashboard_label_permanency_plans, R.string.dashboard_desc_permanency_plans, Triple(Icons.Default.Map, Color(0xFF2196F3), MainActivityConstants.PERMANENCY_PLANS_ROUTE)),
+        Triple(R.string.dashboard_label_case_activities, R.string.dashboard_desc_case_activities, Triple(Icons.Default.History, Color(0xFF4CAF50), MainActivityConstants.CASE_ACTIVITIES_ROUTE)),
+        Triple(R.string.dashboard_label_deadlines, R.string.dashboard_desc_deadlines, Triple(Icons.Default.Schedule, Color(0xFFFF9800), MainActivityConstants.CASE_DEADLINES_ROUTE)),
+        Triple(R.string.dashboard_label_approvals, R.string.dashboard_desc_approvals, Triple(Icons.Default.CheckCircle, Color(0xFF9C27B0), MainActivityConstants.CASE_APPROVALS_ROUTE)),
+        Triple(R.string.dashboard_label_urgency_flags, R.string.dashboard_desc_urgency_flags, Triple(Icons.Default.PriorityHigh, Color(0xFFF44336), MainActivityConstants.CASE_URGENCY_FLAGS_ROUTE)),
+        Triple(R.string.dashboard_label_critical_dates, R.string.dashboard_desc_critical_dates, Triple(Icons.Default.Event, Color(0xFF607D8B), MainActivityConstants.CRITICAL_DATES_ROUTE)),
+        Triple(R.string.dashboard_label_compatibility, R.string.dashboard_desc_compatibility, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF009688), MainActivityConstants.PLACEMENT_COMPATIBILITY_ROUTE)),
+        Triple(R.string.dashboard_label_investigations, R.string.dashboard_desc_investigations, Triple(Icons.Default.Search, Color(0xFF795548), MainActivityConstants.INVESTIGATIONS_ROUTE)),
+        Triple(R.string.dashboard_label_service_plans, R.string.dashboard_desc_service_plans, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFF00BCD4), MainActivityConstants.SERVICE_PLANS_ROUTE)),
+        Triple(R.string.dashboard_label_visitation, R.string.dashboard_desc_visitation, Triple(Icons.Default.Event, Color(0xFFCDDC39), MainActivityConstants.VISITATION_SCHEDULES_ROUTE)),
+        Triple(R.string.dashboard_label_aftercare, R.string.dashboard_desc_aftercare, Triple(Icons.Default.LocalHospital, Color(0xFF795548), MainActivityConstants.AFTERCARE_PLANS_ROUTE)),
+        Triple(R.string.dashboard_label_disruptions, R.string.dashboard_desc_disruptions, Triple(Icons.Default.WarningAmber, Color(0xFFFF5722), MainActivityConstants.PLACEMENT_DISRUPTIONS_ROUTE)),
+        Triple(R.string.dashboard_label_foster_training_alt, R.string.dashboard_desc_foster_training_alt, Triple(Icons.Default.School, Color(0xFF3F51B5), MainActivityConstants.FOSTER_TRAINING_ROUTE))
+    )
+
+    val filteredTools = allTools.filter { canAccessRoute(it.third.third, userRole) }
+
+    if (filteredTools.isNotEmpty()) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text(
+                stringResource(R.string.dashboard_case_tools),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A1A1A)
+            )
+            
+            filteredTools.chunked(2).forEach { rowTools ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    rowTools.forEach { tool ->
+                        ModernScreenCard(
+                            label = stringResource(tool.first),
+                            description = stringResource(tool.second),
+                            icon = tool.third.first,
+                            color = tool.third.second,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onNavigate(tool.third.third) }
+                        )
+                    }
+                    if (rowTools.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -327,6 +428,7 @@ fun AlertCardModern(
 /**
  * Section displaying key metrics like children, families, and placements count.
  *
+ * @param userRole The role of the current user.
  * @param childrenCount Total children.
  * @param familiesCount Total families.
  * @param placementsCount Total active placements.
@@ -335,63 +437,58 @@ fun AlertCardModern(
  */
 @Composable
 fun KeyMetricsSectionModern(
+    userRole: String,
     childrenCount: Int,
     familiesCount: Int,
     placementsCount: Int,
     adoptionAppsCount: Int,
     onNavigate: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            stringResource(R.string.dashboard_key_metrics),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MetricCardModern(
-                title = stringResource(R.string.dashboard_metric_children),
-                count = childrenCount,
-                icon = Icons.Default.ChildCare,
-                color = Color(0xFF4CAF50),
-                trend = stringResource(R.string.dashboard_trend_children),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("children_list") }
+    val context = LocalContext.current
+    
+    val allMetrics = listOf(
+        Triple(R.string.dashboard_metric_children, childrenCount, Triple(Icons.Default.ChildCare, Color(0xFF4CAF50), MainActivityConstants.CHILDREN_LIST_ROUTE)),
+        Triple(R.string.dashboard_metric_families, familiesCount, Triple(Icons.Default.FamilyRestroom, Color(0xFF2196F3), MainActivityConstants.FAMILIES_ROUTE)),
+        Triple(R.string.dashboard_metric_placements, placementsCount, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.PLACEMENTS_ROUTE)),
+        Triple(R.string.dashboard_metric_applications, adoptionAppsCount, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ADOPTION_APPS_ROUTE))
+    )
+
+    val filteredMetrics = allMetrics.filter { canAccessRoute(it.third.third, userRole) }
+
+    if (filteredMetrics.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.dashboard_key_metrics),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
             )
-            MetricCardModern(
-                title = stringResource(R.string.dashboard_metric_families),
-                count = familiesCount,
-                icon = Icons.Default.FamilyRestroom,
-                color = Color(0xFF2196F3),
-                trend = stringResource(R.string.dashboard_trend_families),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("families") }
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MetricCardModern(
-                title = stringResource(R.string.dashboard_metric_placements),
-                count = placementsCount,
-                icon = Icons.Default.Home,
-                color = Color(0xFF8BC34A),
-                trend = stringResource(R.string.dashboard_trend_placements),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("placements") }
-            )
-            MetricCardModern(
-                title = stringResource(R.string.dashboard_metric_applications),
-                count = adoptionAppsCount,
-                icon = Icons.Default.Folder,
-                color = Color(0xFF9C27B0),
-                trend = stringResource(R.string.dashboard_trend_applications),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("adoption_applications") }
-            )
+            
+            filteredMetrics.chunked(2).forEach { rowMetrics ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowMetrics.forEach { metric ->
+                        MetricCardModern(
+                            title = stringResource(metric.first),
+                            count = metric.second,
+                            icon = metric.third.first,
+                            color = metric.third.second,
+                            trend = when (metric.first) {
+                                R.string.dashboard_metric_children -> stringResource(R.string.dashboard_trend_children)
+                                R.string.dashboard_metric_families -> stringResource(R.string.dashboard_trend_families)
+                                R.string.dashboard_metric_placements -> stringResource(R.string.dashboard_trend_placements)
+                                else -> stringResource(R.string.dashboard_trend_applications)
+                            },
+                            modifier = Modifier.weight(1f),
+                            onClick = { onNavigate(metric.third.third) }
+                        )
+                    }
+                    if (rowMetrics.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
         }
     }
 }
@@ -454,7 +551,7 @@ fun OverdueTasksSectionModern(count: Int, onViewTasks: () -> Unit) {
             .fillMaxWidth()
             .clickable { onViewTasks() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE91E63))
     ) {
         Row(
@@ -514,14 +611,14 @@ fun ActionItemsSectionModern(
         }
         if (items.isEmpty()) {
             Text(
-                "No pending action items",
+                stringResource(R.string.dashboard_no_action_items),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.padding(8.dp)
             )
         } else {
-            items.forEach { item ->
-                ActionItemCardModern(item)
+            items.forEach { actionItem ->
+                ActionItemCardModern(actionItem)
             }
         }
     }
@@ -530,10 +627,10 @@ fun ActionItemsSectionModern(
 /**
  * A card representing a single action item.
  *
- * @param item The action item details.
+ * @param actionItem The action item details.
  */
 @Composable
-fun ActionItemCardModern(item: ActionItemModern) {
+fun ActionItemCardModern(actionItem: ActionItemModern) {
     val urgentVal = stringResource(R.string.dashboard_priority_urgent_val)
     val highVal = stringResource(R.string.dashboard_priority_high_val)
 
@@ -554,7 +651,7 @@ fun ActionItemCardModern(item: ActionItemModern) {
                 modifier = Modifier
                     .size(8.dp)
                     .background(
-                        when (item.priority) {
+                        when (actionItem.priority) {
                             urgentVal -> Color(0xFFE91E63)
                             highVal -> Color(0xFFFF9800)
                             else -> Color(0xFF4CAF50)
@@ -563,16 +660,16 @@ fun ActionItemCardModern(item: ActionItemModern) {
                     )
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(actionItem.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(item.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(item.assignee, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(actionItem.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(actionItem.assignee, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
             }
-            Icon(Icons.Default.ChevronRight, stringResource(R.string.footer_action_approve), tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.footer_action_approve), tint = Color.Gray, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -581,24 +678,38 @@ fun ActionItemCardModern(item: ActionItemModern) {
  * Section displaying a list of recent updates from the system.
  *
  * @param updates List of update description strings.
+ * @param onViewAll Callback to navigate to all audit logs.
  */
 @Composable
-fun RecentUpdatesSectionModern(updates: List<String>) {
+fun RecentUpdatesSectionModern(updates: List<String>, onViewAll: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            stringResource(R.string.dashboard_recent_updates),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.dashboard_recent_updates),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                stringResource(R.string.dashboard_view_all),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF9C27B0),
+                modifier = Modifier.clickable { onViewAll() }
+            )
+        }
+
         if (updates.isEmpty()) {
             Text(
-                "No recent system updates",
+                stringResource(R.string.dashboard_no_updates),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.padding(8.dp)
             )
         } else {
-            updates.forEach { update ->
+            updates.forEach { updateText ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -606,7 +717,7 @@ fun RecentUpdatesSectionModern(updates: List<String>) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.Info, stringResource(R.string.activity_doc_uploaded), tint = Color(0xFF9C27B0), modifier = Modifier.size(20.dp))
-                    Text(update, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    Text(updateText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -616,230 +727,123 @@ fun RecentUpdatesSectionModern(updates: List<String>) {
 /**
  * Section providing quick access to document, medical, education, and finance modules.
  *
+ * @param userRole The role of the current user.
  * @param onNavigate Navigation callback.
  */
 @Composable
-fun QuickAccessModulesModern(onNavigate: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            stringResource(R.string.dashboard_quick_access),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            QuickAccessButtonModern(
-                stringResource(R.string.dashboard_module_documents),
-                Icons.Default.Description,
-                Color(0xFF607D8B),
-                Modifier.weight(1f)
+fun QuickAccessModulesModern(userRole: String, onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
+    val allButtons = listOf(
+        Triple(R.string.dashboard_module_documents, Icons.Default.Description, Pair(Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
+        Triple(R.string.dashboard_module_medical, Icons.Default.LocalHospital, Pair(Color(0xFFF44336), MainActivityConstants.MEDICAL_ROUTE)),
+        Triple(R.string.dashboard_module_education, Icons.Default.School, Pair(Color(0xFF3F51B5), MainActivityConstants.EDUCATION_ROUTE)),
+        Triple(R.string.dashboard_module_finance, Icons.Default.AttachMoney, Pair(Color(0xFF4CAF50), MainActivityConstants.FINANCE_ROUTE))
+    )
+
+    val filteredButtons = allButtons.filter { canAccessRoute(it.third.second, userRole) }
+
+    if (filteredButtons.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.dashboard_quick_access),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                onNavigate("documents")
-            }
-            QuickAccessButtonModern(
-                stringResource(R.string.dashboard_module_medical),
-                Icons.Default.LocalHospital,
-                Color(0xFFF44336),
-                Modifier.weight(1f)
-            ) {
-                onNavigate("medical")
-            }
-            QuickAccessButtonModern(
-                stringResource(R.string.dashboard_module_education),
-                Icons.Default.School,
-                Color(0xFF3F51B5),
-                Modifier.weight(1f)
-            ) {
-                onNavigate("education")
-            }
-            QuickAccessButtonModern(
-                stringResource(R.string.dashboard_module_finance),
-                Icons.Default.AttachMoney,
-                Color(0xFF4CAF50),
-                Modifier.weight(1f)
-            ) {
-                onNavigate("finance")
+                filteredButtons.forEach { btn ->
+                    QuickAccessButtonModern(
+                        stringResource(btn.first),
+                        btn.second,
+                        btn.third.first,
+                        Modifier.weight(1f)
+                    ) {
+                        onNavigate(btn.third.second)
+                    }
+                }
+                // Fill up the row if less than 4 items to keep size consistent
+                repeat(4 - filteredButtons.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }
 }
 
 /**
- * Grid displaying all 14 main screens for easy navigation with modern card design.
+ * Grid displaying all main screens for easy navigation with modern card design.
  *
+ * @param userRole The role of the current user.
  * @param onNavigate Navigation callback.
  */
 @Composable
-fun AllScreensGridModern(onNavigate: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            "All Screens",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
-        )
-        
-        // Row 1: Analytics, Guardians
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Analytics",
-                description = "View insights & reports",
-                icon = Icons.Default.Analytics,
-                color = Color(0xFF673AB7),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("analytics") }
+fun AllScreensGridModern(userRole: String, onNavigate: (String) -> Unit) {
+    val context = LocalContext.current
+    
+    val allScreens = listOf(
+        Triple(R.string.dashboard_label_analytics, R.string.dashboard_desc_analytics, Triple(Icons.Default.Analytics, Color(0xFF673AB7), MainActivityConstants.ANALYTICS_ROUTE)),
+        Triple(R.string.dashboard_label_guardians, R.string.dashboard_desc_guardians, Triple(Icons.Default.People, Color(0xFF00BCD4), MainActivityConstants.GUARDIANS_ROUTE)),
+        Triple(R.string.dashboard_label_court_cases, R.string.dashboard_desc_court_cases, Triple(Icons.Default.Gavel, Color(0xFF795548), MainActivityConstants.COURT_CASES_ROUTE)),
+        Triple(R.string.dashboard_label_foster_tasks, R.string.dashboard_desc_foster_tasks, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFFFF5722), MainActivityConstants.FOSTER_TASKS_ROUTE)),
+        Triple(R.string.dashboard_label_foster_matches, R.string.dashboard_desc_foster_matches, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF8BC34A), MainActivityConstants.FOSTER_MATCHES_ROUTE)),
+        Triple(R.string.dashboard_label_notifications, R.string.dashboard_desc_notifications, Triple(Icons.Default.Notifications, Color(0xFFFF9800), MainActivityConstants.NOTIFICATIONS_ROUTE)),
+        Triple(R.string.dashboard_label_background_checks, R.string.dashboard_desc_background_checks, Triple(Icons.Default.Shield, Color(0xFF3F51B5), MainActivityConstants.BACKGROUND_CHECKS_ROUTE)),
+        Triple(R.string.dashboard_label_map, R.string.dashboard_desc_map, Triple(Icons.Default.Map, Color(0xFF4CAF50), MainActivityConstants.MAP_ROUTE)),
+        Triple(R.string.dashboard_label_user_roles, R.string.dashboard_desc_user_roles, Triple(Icons.Default.Badge, Color(0xFFE91E63), MainActivityConstants.USER_ROLES_ROUTE)),
+        Triple(R.string.dashboard_label_camera, R.string.dashboard_desc_camera, Triple(Icons.Default.CameraAlt, Color(0xFF009688), MainActivityConstants.CAMERA_ROUTE)),
+        Triple(R.string.dashboard_label_home_studies_alt, R.string.dashboard_desc_home_studies_alt, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.HOME_STUDIES_ROUTE)),
+        Triple(R.string.dashboard_label_adoption_apps, R.string.dashboard_desc_adoption_apps, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ADOPTION_APPS_ROUTE)),
+        Triple(R.string.dashboard_label_vaccinations, R.string.dashboard_desc_vaccinations, Triple(Icons.Default.Vaccines, Color(0xFF4CAF50), MainActivityConstants.VACCINATION_RECORDS_ROUTE)),
+        Triple(R.string.dashboard_label_behavior, R.string.dashboard_desc_behavior, Triple(Icons.Default.Psychology, Color(0xFF9C27B0), MainActivityConstants.BEHAVIOR_ASSESSMENTS_ROUTE)),
+        Triple(R.string.dashboard_label_incidents, R.string.dashboard_desc_incidents, Triple(Icons.Default.ReportProblem, Color(0xFFF44336), MainActivityConstants.WELFARE_INCIDENTS_ROUTE)),
+        Triple(R.string.dashboard_label_consent, R.string.dashboard_desc_consent, Triple(Icons.Default.Description, Color(0xFF607D8B), MainActivityConstants.CONSENT_RECORDS_ROUTE)),
+        Triple(R.string.dashboard_label_partners, R.string.dashboard_desc_partners, Triple(Icons.Default.Business, Color(0xFF2196F3), MainActivityConstants.ORG_PARTNERS_ROUTE)),
+        Triple(R.string.dashboard_label_providers, R.string.dashboard_desc_providers, Triple(Icons.Default.MiscellaneousServices, Color(0xFF9C27B0), MainActivityConstants.SERVICE_PROVIDERS_ROUTE)),
+        Triple(R.string.dashboard_label_donors, R.string.dashboard_desc_donors, Triple(Icons.Default.VolunteerActivism, Color(0xFF4CAF50), MainActivityConstants.DONOR_FUNDING_ROUTE)),
+        Triple(R.string.dashboard_label_budgets, R.string.dashboard_desc_budgets, Triple(Icons.Default.AccountBalance, Color(0xFF607D8B), MainActivityConstants.BUDGET_ALLOCATIONS_ROUTE)),
+        Triple(R.string.dashboard_label_counties_alt, R.string.dashboard_desc_counties_alt, Triple(Icons.Default.LocationCity, Color(0xFF3F51B5), MainActivityConstants.COUNTIES_ROUTE)),
+        Triple(R.string.dashboard_label_county_offices, R.string.dashboard_desc_county_offices, Triple(Icons.Default.Apartment, Color(0xFF795548), MainActivityConstants.COUNTIES_ROUTE)), // Mapped to COUNTIES_ROUTE for now
+        Triple(R.string.dashboard_label_reports_alt, R.string.dashboard_desc_reports_alt, Triple(Icons.Default.PictureAsPdf, Color(0xFFE91E63), MainActivityConstants.REPORTS_ROUTE)),
+        Triple(R.string.dashboard_label_emergency, R.string.dashboard_desc_emergency, Triple(Icons.Default.Sos, Color(0xFFF44336), MainActivityConstants.EMERGENCY_EVENTS_ROUTE)),
+        Triple(R.string.dashboard_label_doc_storage, R.string.dashboard_desc_doc_storage, Triple(Icons.Default.CloudUpload, Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
+        Triple(R.string.dashboard_label_transfers, R.string.dashboard_desc_transfers, Triple(Icons.Default.SwapHoriz, Color(0xFFFF9800), MainActivityConstants.INTER_COUNTY_TRANSFERS_ROUTE)),
+        Triple(R.string.dashboard_label_siblings, R.string.dashboard_desc_siblings, Triple(Icons.Default.FamilyRestroom, Color(0xFF00BCD4), MainActivityConstants.SIBLINGS_ROUTE)),
+        Triple(R.string.dashboard_label_worker_loc, R.string.dashboard_desc_worker_loc, Triple(Icons.Default.LocationOn, Color(0xFF4CAF50), MainActivityConstants.WORKER_LOCATIONS_ROUTE))
+    )
+
+    val filteredScreens = allScreens.filter { canAccessRoute(it.third.third, userRole) }
+
+    if (filteredScreens.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                stringResource(R.string.dashboard_all_screens),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A1A1A)
             )
-            ModernScreenCard(
-                label = "Guardians",
-                description = "Manage guardians",
-                icon = Icons.Default.People,
-                color = Color(0xFF00BCD4),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("guardians") }
-            )
-        }
-        
-        // Row 2: Court Cases, Foster Tasks
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Court Cases",
-                description = "Legal proceedings",
-                icon = Icons.Default.Gavel,
-                color = Color(0xFF795548),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("court_cases") }
-            )
-            ModernScreenCard(
-                label = "Foster Tasks",
-                description = "Task management",
-                icon = Icons.Default.Assignment,
-                color = Color(0xFFFF5722),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("foster_tasks") }
-            )
-        }
-        
-        // Row 3: Foster Matches, User Management
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Foster Matches",
-                description = "Placement matching",
-                icon = Icons.Default.CompareArrows,
-                color = Color(0xFF8BC34A),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("foster_matches") }
-            )
-            ModernScreenCard(
-                label = "User Management",
-                description = "Manage users",
-                icon = Icons.Default.AdminPanelSettings,
-                color = Color(0xFF607D8B),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("user_management") }
-            )
-        }
-        
-        // Row 4: Notifications, Audit Logs
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Notifications",
-                description = "Alerts & messages",
-                icon = Icons.Default.Notifications,
-                color = Color(0xFFFF9800),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("notifications") }
-            )
-            ModernScreenCard(
-                label = "Audit Logs",
-                description = "System activity",
-                icon = Icons.Default.History,
-                color = Color(0xFF9E9E9E),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("audit_logs") }
-            )
-        }
-        
-        // Row 5: Background Checks, Map
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Background Checks",
-                description = "Verification status",
-                icon = Icons.Default.Shield,
-                color = Color(0xFF3F51B5),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("background_checks") }
-            )
-            ModernScreenCard(
-                label = "Map",
-                description = "Location view",
-                icon = Icons.Default.Map,
-                color = Color(0xFF4CAF50),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("map") }
-            )
-        }
-        
-        // Row 6: User Roles, Camera
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "User Roles",
-                description = "Role management",
-                icon = Icons.Default.Badge,
-                color = Color(0xFFE91E63),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("user_roles") }
-            )
-            ModernScreenCard(
-                label = "Camera",
-                description = "Photo capture",
-                icon = Icons.Default.CameraAlt,
-                color = Color(0xFF009688),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("camera") }
-            )
-        }
-        
-        // Row 7: Analytics2, Guardians2
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ModernScreenCard(
-                label = "Home Studies",
-                description = "Home assessments",
-                icon = Icons.Default.Home,
-                color = Color(0xFF8BC34A),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("home_studies") }
-            )
-            ModernScreenCard(
-                label = "Adoption Apps",
-                description = "Applications",
-                icon = Icons.Default.Folder,
-                color = Color(0xFF9C27B0),
-                modifier = Modifier.weight(1f),
-                onClick = { onNavigate("adoption_applications") }
-            )
+            
+            filteredScreens.chunked(2).forEach { rowScreens ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    rowScreens.forEach { screen ->
+                        ModernScreenCard(
+                            label = stringResource(screen.first),
+                            description = stringResource(screen.second),
+                            icon = screen.third.first,
+                            color = screen.third.second,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onNavigate(screen.third.third) }
+                        )
+                    }
+                    if (rowScreens.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
         }
     }
 }
@@ -932,7 +936,7 @@ fun QuickAccessButtonModern(
             .clickable { onClick() }
             .aspectRatio(1f),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.1f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, color)
     ) {
         Column(

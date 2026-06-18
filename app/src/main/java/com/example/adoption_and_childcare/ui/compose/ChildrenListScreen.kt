@@ -27,6 +27,7 @@ import com.example.adoption_and_childcare.data.security.PermissionHelper
 import com.example.adoption_and_childcare.data.repository.ChildRepositoryImpl
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -35,8 +36,9 @@ import kotlinx.coroutines.launch
 fun ChildrenListScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val childRepository = remember { ChildRepositoryImpl(db.childDao(), apiService) }
+    val childRepository = remember { ChildRepositoryImpl(db.childDao(), db.syncQueueDao(), apiService, authManager) }
     
     var children by remember { mutableStateOf<List<ChildEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -76,14 +78,14 @@ fun ChildrenListScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API on first load
     LaunchedEffect(Unit) {
-        fetchChildrenFromApi(childRepository, scope) { loading, error ->
+        fetchChildrenFromApi(childRepository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
     }
 
     if (showDetails && selectedChild != null) {
-        ChildDetailsScreen(
+        ChildProfileScreen(
             child = selectedChild!!,
             onBack = { showDetails = false; selectedChild = null }
         )
@@ -358,135 +360,20 @@ fun ChildrenListScreen(onBack: () -> Unit = {}) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ChildDetailsScreen(child: ChildEntity, onBack: () -> Unit) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Child Profile") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* TODO: Export to PDF */ }) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = "Export")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Profile Header
-            Surface(
-                modifier = Modifier.size(120.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(80.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = listOfNotNull(child.firstName, child.middleName, child.lastName).joinToString(" "),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            child.caseNumber?.let {
-                Text(
-                    text = "Case #$it",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Info Sections
-            DetailSection("Basic Information") {
-                DetailRow("Gender", child.gender ?: "Not Specified")
-                DetailRow("Date of Birth", child.dateOfBirth ?: "Not Specified")
-                DetailRow("Nationality", child.nationality ?: "Not Specified")
-                DetailRow("Birth Certificate", child.birthCertificateNo ?: "Not Specified")
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            DetailSection("Location & Status") {
-                DetailRow("Current County", child.currentCounty ?: "Not Specified")
-                DetailRow("Status", child.currentStatus ?: "Active")
-                DetailRow("Is Emancipated", if (child.isEmancipated) "Yes" else "No")
-                if (child.isEmancipated) {
-                    DetailRow("Emancipation Date", child.emancipationDate ?: "N/A")
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            DetailSection("System Metadata") {
-                DetailRow("Remote ID", child.remoteId ?: "Local Only")
-                DetailRow("Sync Status", child.syncStatus)
-                DetailRow("Last Synced", child.lastSyncedAt?.toString() ?: "Never")
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
-
-@Composable
-fun DetailSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
-            content()
-        }
-    }
-}
-
-@Composable
-fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-    }
-}
-
 /**
  * Helper function to fetch children from API and update local database.
  */
 private fun fetchChildrenFromApi(
     repository: ChildRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            // Get token from shared preferences (implement as needed)
-            val token = "" // TODO: Get actual auth token
+            // Get token from shared preferences
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.CourtCaseDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for court case data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class CourtCaseRepositoryImpl @Inject constructor(
     private val courtCaseDao: CourtCaseDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,18 @@ class CourtCaseRepositoryImpl @Inject constructor(
     
     suspend fun insert(courtCase: CourtCaseEntity, token: String): Result<Long> {
         return try {
-            val localId = courtCaseDao.insert(courtCase)
+            // Insert with sync queue support
+            courtCaseDao.insertWithSync(courtCase, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createCourtCase(authHeader, courtCase)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync court case with API: ${response.message()}")
-                    }
+                    apiService.createCourtCase(authHeader, courtCase)
                 }
             } catch (e: Exception) {
-                println("API sync failed for court case insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(courtCase.caseId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +43,16 @@ class CourtCaseRepositoryImpl @Inject constructor(
     
     suspend fun update(courtCase: CourtCaseEntity, token: String): Result<Unit> {
         return try {
-            courtCaseDao.update(courtCase)
+            // Update with sync queue support
+            courtCaseDao.updateWithSync(courtCase, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateCourtCase(authHeader, courtCase.caseId, courtCase)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync court case update with API: ${response.message()}")
-                    }
+                    apiService.updateCourtCase(authHeader, courtCase.caseId, courtCase)
                 }
             } catch (e: Exception) {
-                println("API sync failed for court case update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +62,16 @@ class CourtCaseRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            courtCaseDao.deleteById(id)
+            // Delete with sync queue support
+            courtCaseDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteCourtCase(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for court case delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

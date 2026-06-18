@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.HomeStudyDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for home study data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class HomeStudyRepositoryImpl @Inject constructor(
     private val homeStudyDao: HomeStudyDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -23,21 +25,19 @@ class HomeStudyRepositoryImpl @Inject constructor(
     
     suspend fun insert(study: HomeStudyEntity, token: String): Result<Long> {
         return try {
-            val localId = homeStudyDao.insert(study)
+            // Insert with sync queue support
+            homeStudyDao.insertWithSync(study, syncQueueDao)
             
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createHomeStudy(authHeader, study)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync home study with API: ${response.message()}")
-                    }
+                    apiService.createHomeStudy(authHeader, study)
                 }
             } catch (e: Exception) {
-                println("API sync failed for home study insert: ${e.message}")
+                // Ignore failure; sync queue will handle it
             }
             
-            Result.success(localId)
+            Result.success(study.homeStudyId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -45,18 +45,16 @@ class HomeStudyRepositoryImpl @Inject constructor(
     
     suspend fun update(study: HomeStudyEntity, token: String): Result<Unit> {
         return try {
-            homeStudyDao.update(study)
+            // Update with sync queue support
+            homeStudyDao.updateWithSync(study, syncQueueDao)
             
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateHomeStudy(authHeader, study.homeStudyId, study)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync home study update with API: ${response.message()}")
-                    }
+                    apiService.updateHomeStudy(authHeader, study.homeStudyId, study)
                 }
             } catch (e: Exception) {
-                println("API sync failed for home study update: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)
@@ -67,7 +65,8 @@ class HomeStudyRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            homeStudyDao.deleteById(id)
+            // Delete with sync queue support
+            homeStudyDao.deleteByIdWithSync(id, syncQueueDao)
             
             try {
                 val authHeader = authManager.getAuthHeader()
@@ -75,7 +74,7 @@ class HomeStudyRepositoryImpl @Inject constructor(
                     apiService.deleteHomeStudy(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for home study delete: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)

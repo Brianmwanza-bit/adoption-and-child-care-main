@@ -1,6 +1,8 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +22,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 import com.example.adoption_and_childcare.data.repository.FamilyRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -28,8 +31,9 @@ import kotlinx.coroutines.launch
 fun FamiliesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val familyRepository = remember { FamilyRepositoryImpl(db.familyDao(), apiService) }
+    val familyRepository = remember { FamilyRepositoryImpl(db.familyDao(), db.syncQueueDao(), apiService, authManager) }
     
     var families by remember { mutableStateOf<List<FamilyEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -75,7 +79,7 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
     }
 
     if (showDetails && selectedFamily != null) {
-        FamilyDetailsScreen(
+        FamilyHubScreen(
             family = selectedFamily!!,
             onBack = { showDetails = false; selectedFamily = null }
         )
@@ -97,14 +101,17 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                 }
             }
         ) { padding ->
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
                     .padding(padding)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (families.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.FamilyRestroom, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                             Spacer(modifier = Modifier.height(16.dp))
@@ -112,49 +119,41 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                         }
                     }
                 } else {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(families) { family ->
-                            ElevatedCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    selectedFamily = family
-                                    showDetails = true
-                                }
-                            ) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Column(Modifier.padding(12.dp).weight(1f)) {
-                                        Text(family.primaryContactName, style = MaterialTheme.typography.titleMedium)
-                                        family.secondaryContactName?.let { Text("Secondary: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                        family.phone?.let { Text("Phone: $it", style = MaterialTheme.typography.bodySmall) }
-                                        family.email?.let { Text("Email: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                        val details = listOfNotNull(family.city, family.county).joinToString(", ")
-                                        if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        family.status?.let { Text("Status: $it", style = MaterialTheme.typography.bodySmall, color = if (it == "Active") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error) }
-                                    }
-                                    Row(verticalAlignment = Alignment.Top) {
-                                        IconButton(onClick = {
-                                            selectedFamily = family
-                                            showEditDialog = true
-                                            primary = TextFieldValue(family.primaryContactName)
-                                            secondary = TextFieldValue(family.secondaryContactName ?: "")
-                                            email = TextFieldValue(family.email ?: "")
-                                            phone = TextFieldValue(family.phone ?: "")
-                                            nationalId = TextFieldValue(family.nationalIdNo ?: "")
-                                            address = TextFieldValue(family.address ?: "")
-                                            city = TextFieldValue(family.city ?: "")
-                                            county = TextFieldValue(family.county ?: "")
-                                            status = family.status ?: "Active"
-                                        }) {
-                                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                        }
-                                        IconButton(onClick = {
-                                            selectedFamily = family
-                                            showDeleteDialog = true
-                                        }) {
-                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                        }
-                                    }
-                                }
+                    families.forEachIndexed { index, family ->
+                        FormRecordCard(
+                            title = "FAMILY RECORD #${family.familyId}",
+                            subtitle = family.primaryContactName,
+                            pageNumber = index + 1,
+                            onEdit = {
+                                selectedFamily = family
+                                showEditDialog = true
+                                primary = TextFieldValue(family.primaryContactName)
+                                secondary = TextFieldValue(family.secondaryContactName ?: "")
+                                email = TextFieldValue(family.email ?: "")
+                                phone = TextFieldValue(family.phone ?: "")
+                                nationalId = TextFieldValue(family.nationalIdNo ?: "")
+                                address = TextFieldValue(family.address ?: "")
+                                city = TextFieldValue(family.city ?: "")
+                                county = TextFieldValue(family.county ?: "")
+                                status = family.status ?: "Active"
+                            },
+                            onDelete = {
+                                selectedFamily = family
+                                showDeleteDialog = true
+                            },
+                            onDownloadPdf = {
+                                // TODO: Implement PDF Generation
+                            },
+                            headerIcon = Icons.Default.FamilyRestroom
+                        ) {
+                            FormDetailRow(label = "Primary Contact", value = family.primaryContactName)
+                            FormDetailRow(label = "Phone", value = family.phone ?: "N/A")
+                            FormDetailRow(label = "Email", value = family.email ?: "N/A")
+                            FormDetailRow(label = "Location", value = listOfNotNull(family.city, family.county).joinToString(", ").ifBlank { "N/A" })
+                            FormDetailRow(label = "Status", value = family.status ?: "Active", valueColor = if (family.status == "Active") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            
+                            if (!family.secondaryContactName.isNullOrBlank()) {
+                                FormDetailRow(label = "Secondary Contact", value = family.secondaryContactName!!)
                             }
                         }
                     }
@@ -428,5 +427,56 @@ private fun fetchFamiliesFromApi(
         } catch (e: Exception) {
             onLoading(false, "Failed to fetch families: ${e.message}")
         }
+    }
+}
+
+@Composable
+fun DetailSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }

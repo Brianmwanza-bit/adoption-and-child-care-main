@@ -189,7 +189,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 }
 
                 guardians.forEach {
-                    if (isAdmin || it.county == userCounty) {
+                    if (isAdmin) {
                         results.add(SearchResult.Guardian(
                             it.guardianId,
                             "${it.firstName} ${it.lastName}",
@@ -222,11 +222,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
                 homeStudies.forEach { study ->
                     results.add(SearchResult.HomeStudy(
-                        study.studyId,
+                        study.homeStudyId,
                         study.familyId,
                         study.result,
                         study.startedAt,
-                        study.conductedBy?.toString()
+                        study.socialWorkerId?.toString()
                     ))
                 }
 

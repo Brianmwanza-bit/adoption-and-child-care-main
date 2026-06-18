@@ -23,12 +23,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            versionNameSuffix = "-debug"
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:50000/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"https://api.production-adoption.org/\"")
         }
     }
     compileOptions {
@@ -52,9 +57,8 @@ hilt {
 }
 
 ksp {
-    arg("dagger.fastInit", "enabled")
-    arg("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-    arg("dagger.hilt.android.internal.projectType", "APP")
+    arg("hilt.disableAndroidSuperclassValidation", "true")
+    arg("hilt.projectType", "APP")
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -137,4 +141,14 @@ dependencies {
 
     // Security
     implementation(libs.androidx.security.crypto)
+
+    // Google Maps
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
+
+    // CameraX
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
 }

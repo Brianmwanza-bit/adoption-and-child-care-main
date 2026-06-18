@@ -79,10 +79,14 @@ import com.example.adoption_and_childcare.data.db.entities.WorkloadTrackingEntit
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.TypeConverters
+import com.example.adoption_and_childcare.data.db.converters.Converters
 import com.example.adoption_and_childcare.data.db.dao.SOSLocationDao
 import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity
 import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
+import com.example.adoption_and_childcare.data.db.dao.*
+import com.example.adoption_and_childcare.data.db.entities.*
 
 /**
  * The main database for the Adoption and Child Care application.
@@ -129,10 +133,36 @@ import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
         CaseApprovalEntity::class,
         PlacementCompatibilityEntity::class,
         WorkloadTrackingEntity::class,
+        ChildBehaviorAssessmentEntity::class,
+        ChildWelfareIncidentEntity::class,
+        VaccinationRecordEntity::class,
+        SiblingEntity::class,
+        ConsentRecordEntity::class,
+        ChildServicesReferralEntity::class,
+        InvestigationEntity::class,
+        ServicePlanEntity::class,
+        ServicePlanGoalEntity::class,
+        VisitationScheduleEntity::class,
+        ReferralEntity::class,
+        AftercarePlanEntity::class,
+        OrganizationPartnerEntity::class,
+        ServiceProviderEntity::class,
+        DonorFundingEntity::class,
+        BudgetAllocationEntity::class,
+        CountyEntity::class,
+        CountyOfficeEntity::class,
+        PlacementDisruptionEntity::class,
+        FosterFamilyTrainingEntity::class,
+        ReportGeneratedEntity::class,
+        EmergencyEventEntity::class,
+        GlobalDocumentStorageEntity::class,
+        InterCountyTransferEntity::class,
+        WorkerLocationTrackingEntity::class,
     ],
-    version = 10,
+    version = 18,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     /** @return The DAO for interacting with users. */
     abstract fun userDao(): UserDao
@@ -210,6 +240,31 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun placementCompatibilityDao(): PlacementCompatibilityDao
     /** @return The DAO for interacting with workload tracking. */
     abstract fun workloadTrackingDao(): WorkloadTrackingDao
+    abstract fun childBehaviorAssessmentDao(): ChildBehaviorAssessmentDao
+    abstract fun childWelfareIncidentDao(): ChildWelfareIncidentDao
+    abstract fun vaccinationRecordDao(): VaccinationRecordDao
+    abstract fun siblingDao(): SiblingDao
+    abstract fun consentRecordDao(): ConsentRecordDao
+    abstract fun childServicesReferralDao(): ChildServicesReferralDao
+    abstract fun investigationDao(): InvestigationDao
+    abstract fun servicePlanDao(): ServicePlanDao
+    abstract fun servicePlanGoalDao(): ServicePlanGoalDao
+    abstract fun visitationScheduleDao(): VisitationScheduleDao
+    abstract fun referralDao(): ReferralDao
+    abstract fun aftercarePlanDao(): AftercarePlanDao
+    abstract fun organizationPartnerDao(): OrganizationPartnerDao
+    abstract fun serviceProviderDao(): ServiceProviderDao
+    abstract fun donorFundingDao(): DonorFundingDao
+    abstract fun budgetAllocationDao(): BudgetAllocationDao
+    abstract fun countyDao(): CountyDao
+    abstract fun countyOfficeDao(): CountyOfficeDao
+    abstract fun placementDisruptionDao(): PlacementDisruptionDao
+    abstract fun fosterFamilyTrainingDao(): FosterFamilyTrainingDao
+    abstract fun reportGeneratedDao(): ReportGeneratedDao
+    abstract fun emergencyEventDao(): EmergencyEventDao
+    abstract fun globalDocumentStorageDao(): GlobalDocumentStorageDao
+    abstract fun interCountyTransferDao(): InterCountyTransferDao
+    abstract fun workerLocationTrackingDao(): WorkerLocationTrackingDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -565,12 +620,72 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** Migration from v10 to v11: Empty version bump. */
+        val MIGRATION_10_11: Migration = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v11 to v12: Empty version bump. */
+        val MIGRATION_11_12: Migration = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v12 to v13: Empty version bump. */
+        val MIGRATION_12_13: Migration = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v13 to v14: Empty version bump. */
+        val MIGRATION_13_14: Migration = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
         /**
          * Returns the singleton instance of [AppDatabase].
          *
          * @param context Application context.
          * @return The database instance.
          */
+        /** Migration from v14 to v15: Adds 25 new tables for missing UI coverage. */
+        val MIGRATION_14_15: Migration = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `child_behavior_assessments` (`assessment_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `assessment_date` TEXT NOT NULL, `assessment_tool` TEXT, `behavioral_score` INTEGER, `emotional_score` INTEGER, `social_score` INTEGER, `academic_behavior_score` INTEGER, `overall_score` INTEGER, `strengths` TEXT, `challenges` TEXT, `recommendations` TEXT, `assessed_by` INTEGER, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `child_welfare_incidents` (`incident_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `incident_date` TEXT NOT NULL, `incident_type` TEXT, `severity` TEXT, `description` TEXT, `location` TEXT, `reported_by` INTEGER, `actions_taken` TEXT, `police_involved` INTEGER NOT NULL DEFAULT 0, `police_report_no` TEXT, `follow_up_required` INTEGER NOT NULL DEFAULT 0, `resolved_date` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `vaccination_records` (`vaccination_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `vaccine_name` TEXT NOT NULL, `dose_number` INTEGER, `administration_date` TEXT NOT NULL, `next_due_date` TEXT, `administered_by` TEXT, `facility_name` TEXT, `batch_number` TEXT, `reactions` TEXT, `status` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `siblings` (`sibling_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `sibling_child_id` INTEGER NOT NULL, `relationship_type` TEXT, `same_placement` INTEGER NOT NULL DEFAULT 0, `contact_allowed` INTEGER NOT NULL DEFAULT 1, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `consent_records` (`consent_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `consent_type` TEXT NOT NULL, `provided_by` TEXT, `relationship_to_child` TEXT, `consent_date` TEXT NOT NULL, `expiry_date` TEXT, `consent_form_file` TEXT, `witness_name` TEXT, `is_valid` INTEGER NOT NULL DEFAULT 1, `revoked_date` TEXT, `revoked_reason` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `child_services_referrals` (`referral_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `service_type` TEXT NOT NULL, `provider_id` INTEGER, `referral_date` TEXT NOT NULL, `authorization_date` TEXT, `start_date` TEXT, `end_date` TEXT, `frequency` TEXT, `status` TEXT, `authorized_by` INTEGER, `cost_estimate` REAL, `actual_cost` REAL, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `investigations` (`investigation_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `case_number` TEXT, `investigation_type` TEXT, `opened_date` TEXT NOT NULL, `closed_date` TEXT, `status` TEXT, `allegation` TEXT, `findings` TEXT, `recommendations` TEXT, `investigator_id` INTEGER, `supervisor_id` INTEGER, `report_file` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `service_plans` (`plan_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `plan_name` TEXT NOT NULL, `start_date` TEXT NOT NULL, `end_date` TEXT, `status` TEXT, `goals_summary` TEXT, `created_by` INTEGER, `approved_by` INTEGER, `approval_date` TEXT, `review_date` TEXT, `next_review_date` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `service_plan_goals` (`goal_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `plan_id` INTEGER NOT NULL, `goal_description` TEXT NOT NULL, `target_date` TEXT, `status` TEXT, `completion_date` TEXT, `completion_notes` TEXT, `created_by` INTEGER, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `visitation_schedules` (`visitation_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `visitor_name` TEXT NOT NULL, `visitor_relationship` TEXT, `visitation_date` TEXT NOT NULL, `start_time` TEXT, `end_time` TEXT, `location` TEXT, `supervised_by` INTEGER, `status` TEXT, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `referrals` (`referral_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER, `referral_type` TEXT, `referred_to` TEXT, `reason` TEXT, `referral_date` TEXT, `outcome` TEXT, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `aftercare_plans` (`aftercare_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `plan_name` TEXT NOT NULL, `start_date` TEXT NOT NULL, `end_date` TEXT, `support_services` TEXT, `housing_arrangement` TEXT, `education_employment` TEXT, `financial_support` TEXT, `mentorship_assigned` TEXT, `caseworker_id` INTEGER, `status` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `organization_partners` (`partner_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `partner_name` TEXT NOT NULL, `partner_type` TEXT, `contact_person` TEXT, `phone` TEXT, `email` TEXT, `mou_date` TEXT, `mou_expiry` TEXT, `services_provided` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `service_providers` (`provider_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `provider_name` TEXT NOT NULL, `provider_type` TEXT, `contact_person` TEXT, `phone` TEXT, `email` TEXT, `address` TEXT, `county` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `contract_start` TEXT, `contract_end` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `donor_funding` (`donation_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `donor_name` TEXT NOT NULL, `donor_type` TEXT, `amount` REAL NOT NULL, `donation_date` TEXT NOT NULL, `purpose` TEXT, `reference_number` TEXT, `received_by` INTEGER, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `budget_allocations` (`allocation_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `financial_year` TEXT, `category` TEXT, `allocated_amount` REAL, `utilized_amount` REAL DEFAULT 0.0, `remaining_amount` REAL, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `counties` (`county_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `county_name` TEXT NOT NULL, `county_code` TEXT, `region` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `county_offices` (`office_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `office_name` TEXT NOT NULL, `office_code` TEXT, `county` TEXT NOT NULL, `sub_county` TEXT, `address` TEXT, `po_box` TEXT, `phone` TEXT, `alt_phone` TEXT, `email` TEXT, `head_officer_name` TEXT, `head_officer_title` TEXT, `head_officer_user_id` INTEGER, `head_officer_phone` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `latitude` REAL, `longitude` REAL, `notes` TEXT, `created_at` TEXT, `updated_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `placement_disruptions` (`disruption_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `placement_id` INTEGER NOT NULL, `child_id` INTEGER NOT NULL, `disruption_date` TEXT NOT NULL, `disruption_type` TEXT, `reason` TEXT, `child_behavior_factor` TEXT, `family_factor` TEXT, `agency_factor` TEXT, `reunification_attempted` INTEGER NOT NULL DEFAULT 0, `new_placement_id` INTEGER, `caseworker_id` INTEGER, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `foster_family_training` (`training_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `family_id` INTEGER NOT NULL, `training_name` TEXT NOT NULL, `training_date` TEXT NOT NULL, `completion_date` TEXT, `status` TEXT, `trainer_name` TEXT, `certificate_issued` INTEGER NOT NULL DEFAULT 0, `certificate_number` TEXT, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `reports_generated` (`report_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `report_name` TEXT NOT NULL, `report_type` TEXT, `generated_by` INTEGER, `generated_date` TEXT, `file_path` TEXT, `file_size` INTEGER, `download_count` INTEGER DEFAULT 0, `is_deleted` INTEGER NOT NULL DEFAULT 0, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `emergency_events` (`event_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER, `reported_by` INTEGER, `event_type` TEXT, `event_date` TEXT, `description` TEXT, `action_taken` TEXT, `status` TEXT, `resolved_by` INTEGER, `resolved_at` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `global_document_storage` (`document_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `document_name` TEXT NOT NULL, `document_category` TEXT, `document_type` TEXT, `file_path` TEXT, `file_size` INTEGER, `mime_type` TEXT, `uploaded_by` INTEGER, `is_public` INTEGER NOT NULL DEFAULT 0, `description` TEXT, `version` INTEGER DEFAULT 1, `uploaded_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `inter_county_transfers` (`transfer_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `from_county` TEXT, `to_county` TEXT, `transfer_date` TEXT NOT NULL, `reason` TEXT, `authorized_by` INTEGER, `receiving_officer` INTEGER, `documents_transferred` INTEGER NOT NULL DEFAULT 0, `transfer_status` TEXT, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `worker_location_tracking` (`tracking_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `accuracy` REAL, `tracking_time` TEXT NOT NULL, `activity_type` TEXT, `notes` TEXT, `created_at` TEXT)")
+            }
+        }
+
+        /** Migration from v15 to v16: Adds sync metadata to the users table. */
+        val MIGRATION_15_16: Migration = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `users` ADD COLUMN `remote_id` TEXT")
+                db.execSQL("ALTER TABLE `users` ADD COLUMN `sync_status` TEXT NOT NULL DEFAULT 'PENDING'")
+                db.execSQL("ALTER TABLE `users` ADD COLUMN `last_synced_at` INTEGER")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(
                 context.applicationContext,
@@ -584,9 +699,15 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_6_7, 
                     MIGRATION_7_8,
                     MIGRATION_8_9,
-                    MIGRATION_9_10
+                    MIGRATION_9_10,
+                    MIGRATION_10_11,
+                    MIGRATION_11_12,
+                    MIGRATION_12_13,
+                    MIGRATION_13_14,
+                    MIGRATION_14_15,
+                    MIGRATION_15_16
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(true)
                 .build()
                 .also { INSTANCE = it }
         }

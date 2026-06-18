@@ -10,4 +10,5 @@ interface AdoptionApplicationRepository {
     suspend fun insert(application: AdoptionApplicationEntity): Long
     suspend fun update(application: AdoptionApplicationEntity)
     suspend fun deleteById(id: Int)
+    suspend fun fetchFromApi(token: String): Result<List<AdoptionApplicationEntity>>
 }

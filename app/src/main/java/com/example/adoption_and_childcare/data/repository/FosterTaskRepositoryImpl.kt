@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.FosterTaskDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for foster task data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class FosterTaskRepositoryImpl @Inject constructor(
     private val fosterTaskDao: FosterTaskDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,18 @@ class FosterTaskRepositoryImpl @Inject constructor(
     
     suspend fun insert(task: FosterTaskEntity, token: String): Result<Long> {
         return try {
-            val localId = fosterTaskDao.insert(task)
+            // Insert with sync queue support
+            fosterTaskDao.insertWithSync(task, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createFosterTask(authHeader, task)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync foster task with API: ${response.message()}")
-                    }
+                    apiService.createFosterTask(authHeader, task)
                 }
             } catch (e: Exception) {
-                println("API sync failed for foster task insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(task.taskId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +43,16 @@ class FosterTaskRepositoryImpl @Inject constructor(
     
     suspend fun update(task: FosterTaskEntity, token: String): Result<Unit> {
         return try {
-            fosterTaskDao.update(task)
+            // Update with sync queue support
+            fosterTaskDao.updateWithSync(task, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateFosterTask(authHeader, task.taskId, task)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync foster task update with API: ${response.message()}")
-                    }
+                    apiService.updateFosterTask(authHeader, task.taskId, task)
                 }
             } catch (e: Exception) {
-                println("API sync failed for foster task update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +62,16 @@ class FosterTaskRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            fosterTaskDao.deleteById(id)
+            // Delete with sync queue support
+            fosterTaskDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteFosterTask(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for foster task delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

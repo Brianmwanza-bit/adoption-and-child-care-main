@@ -15,7 +15,13 @@ import androidx.room.PrimaryKey
  * @property grantedAt Timestamp when the permission was granted.
  * @property grantedBy User ID of the admin who granted the permission.
  */
-@Entity(tableName = "user_permissions")
+@Entity(
+    tableName = "user_permissions",
+    indices = [
+        androidx.room.Index(value = ["user_id"]),
+        androidx.room.Index(value = ["permission_id"])
+    ]
+)
 data class UserPermissionEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id") val id: Int = 0,

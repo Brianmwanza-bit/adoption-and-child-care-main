@@ -2,7 +2,6 @@ package com.example.adoption_and_childcare.data.session
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.example.adoption_and_childcare.MyFirebaseMessagingService
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 
 /**
@@ -24,10 +23,11 @@ class SessionManager(private val context: Context) {
             .putString(KEY_ROLE, user.role)
             .putString(KEY_EMAIL, user.email)
             .putString(KEY_COUNTY, user.county)
+            .putBoolean(KEY_HAS_LOGGED_IN_BEFORE, true)
             .apply()
 
-        // Sync pending FCM token upon login session save
-        MyFirebaseMessagingService.sendPendingTokenToServer(context)
+        // Sync pending FCM token upon login session save - Disabled for local-only Room mode
+        // MyFirebaseMessagingService.sendPendingTokenToServer(context)
     }
 
     fun saveAuthToken(token: String) {
@@ -41,6 +41,8 @@ class SessionManager(private val context: Context) {
     }
 
     fun isLoggedIn(): Boolean = prefs.contains(KEY_USER_ID)
+
+    fun hasLoggedInBefore(): Boolean = prefs.getBoolean(KEY_HAS_LOGGED_IN_BEFORE, false)
 
     fun getUserId(): Int = prefs.getInt(KEY_USER_ID, -1)
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
@@ -60,5 +62,6 @@ class SessionManager(private val context: Context) {
         private const val KEY_EMAIL = "email"
         private const val KEY_COUNTY = "county"
         private const val KEY_AUTH_TOKEN = "auth_token"
+        private const val KEY_HAS_LOGGED_IN_BEFORE = "has_logged_in_before"
     }
 }

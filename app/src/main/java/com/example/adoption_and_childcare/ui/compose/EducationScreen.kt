@@ -1,6 +1,8 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
 import com.example.adoption_and_childcare.data.repository.EducationRecordRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -24,8 +27,9 @@ import kotlinx.coroutines.launch
 fun EducationScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { EducationRecordRepositoryImpl(db.educationRecordDao(), apiService) }
+    val repository = remember { EducationRecordRepositoryImpl(db.educationRecordDao(), db.syncQueueDao(), apiService, authManager) }
     
     var records by remember { mutableStateOf<List<EducationRecordEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -75,9 +79,17 @@ fun EducationScreen(onBack: () -> Unit = {}) {
             }
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             if (records.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -85,37 +97,46 @@ fun EducationScreen(onBack: () -> Unit = {}) {
                     }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(records) { e ->
-                        ElevatedCard(Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.padding(12.dp).weight(1f)) {
-                                    Text(e.schoolName, style = MaterialTheme.typography.titleMedium)
-                                    Text("Child ID: ${e.childId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    e.grade?.let { Text("Grade: $it", style = MaterialTheme.typography.bodySmall) }
-                                    e.enrollmentDate?.let { Text("Enrollment: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                    e.performance?.let { Text("Performance: $it", style = MaterialTheme.typography.bodySmall) }
-                                }
-                                Row(verticalAlignment = Alignment.Top) {
-                                    IconButton(onClick = {
-                                        selectedRecord = e
-                                        showEditDialog = true
-                                        childId = TextFieldValue(e.childId.toString())
-                                        school = TextFieldValue(e.schoolName)
-                                        grade = TextFieldValue(e.grade ?: "")
-                                        enrollmentDate = TextFieldValue(e.enrollmentDate ?: "")
-                                        performance = TextFieldValue(e.performance ?: "")
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        selectedRecord = e
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            }
+                records.forEachIndexed { index, e ->
+                    FormRecordCard(
+                        title = "EDUCATION RECORD #${e.recordId}",
+                        subtitle = "School: ${e.schoolName}",
+                        pageNumber = index + 1,
+                        onEdit = {
+                            selectedRecord = e
+                            showEditDialog = true
+                            childId = TextFieldValue(e.childId.toString())
+                            school = TextFieldValue(e.schoolName)
+                            grade = TextFieldValue(e.grade ?: "")
+                            enrollmentDate = TextFieldValue(e.enrollmentDate ?: "")
+                            performance = TextFieldValue(e.performance ?: "")
+                        },
+                        onDelete = {
+                            selectedRecord = e
+                            showDeleteDialog = true
+                        },
+                        onDownloadPdf = {
+                            // TODO: Implement PDF Generation
+                        },
+                        headerIcon = Icons.Default.School
+                    ) {
+                        FormDetailRow(label = "Child ID", value = e.childId.toString())
+                        FormDetailRow(label = "Grade", value = e.grade ?: "N/A")
+                        FormDetailRow(label = "Enrollment Date", value = e.enrollmentDate ?: "N/A")
+                        FormDetailRow(label = "Exit Date", value = e.exitDate ?: "Still Enrolled")
+                        
+                        if (!e.performance.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Performance",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = e.performance!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }

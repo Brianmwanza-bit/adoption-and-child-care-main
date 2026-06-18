@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.FamilyDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -13,15 +14,18 @@ import javax.inject.Singleton
  * 
  * This repository manages FamilyEntity objects, providing:
  * - Real-time observation via Flow from local Room database
- * - CRUD operations that sync with the backend API
+ * - CRUD operations that sync with the backend API via a sync queue
  * - Offline-first architecture with automatic synchronization
  * 
  * @property familyDao Local database DAO for family operations.
+ * @property syncQueueDao DAO for managing the local sync queue.
  * @property apiService Retrofit API service for backend communication.
+ * @property authManager Manager for authentication tokens.
  */
 @Singleton
 class FamilyRepositoryImpl @Inject constructor(
     private val familyDao: FamilyDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) : FamilyRepository {
@@ -36,21 +40,20 @@ class FamilyRepositoryImpl @Inject constructor(
 
     override suspend fun insert(entity: FamilyEntity, token: String): Result<Long> {
         return try {
-            // Insert locally first
-            val localId = familyDao.insert(entity)
+            // Insert with sync queue support
+            familyDao.insertWithSync(entity, syncQueueDao)
             
-            // Sync with API in background
+            // Immediate sync attempt
             try {
-                val authHeader = "Bearer $token"
-                val response = apiService.createFamilyProfile(authHeader, entity)
-                if (!response.isSuccessful) {
-                    println("Failed to sync family with API: ${response.message()}")
+                val authHeader = authManager.getAuthHeader()
+                if (authHeader != null) {
+                    apiService.createFamilyProfile(authHeader, entity)
                 }
             } catch (e: Exception) {
-                println("API sync failed for family insert: ${e.message}")
+                // Ignore failure; sync queue will handle it
             }
             
-            Result.success(localId)
+            Result.success(entity.familyId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -58,18 +61,17 @@ class FamilyRepositoryImpl @Inject constructor(
 
     override suspend fun update(entity: FamilyEntity, token: String): Result<Unit> {
         return try {
-            // Update locally first
-            familyDao.update(entity)
+            // Update with sync queue support
+            familyDao.updateWithSync(entity, syncQueueDao)
             
-            // Sync with API in background
+            // Immediate sync attempt
             try {
-                val authHeader = "Bearer $token"
-                val response = apiService.updateFamilyProfile(authHeader, entity.familyId, entity)
-                if (!response.isSuccessful) {
-                    println("Failed to sync family update with API: ${response.message()}")
+                val authHeader = authManager.getAuthHeader()
+                if (authHeader != null) {
+                    apiService.updateFamilyProfile(authHeader, entity.familyId, entity)
                 }
             } catch (e: Exception) {
-                println("API sync failed for family update: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)
@@ -80,18 +82,17 @@ class FamilyRepositoryImpl @Inject constructor(
 
     override suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            // Delete locally first
-            familyDao.deleteById(id)
+            // Delete with sync queue support
+            familyDao.deleteByIdWithSync(id, syncQueueDao)
             
-            // Sync with API in background
+            // Immediate sync attempt
             try {
-                val authHeader = "Bearer $token"
-                val response = apiService.deleteFamilyProfile(authHeader, id)
-                if (!response.isSuccessful) {
-                    println("Failed to sync family deletion with API: ${response.message()}")
+                val authHeader = authManager.getAuthHeader()
+                if (authHeader != null) {
+                    apiService.deleteFamilyProfile(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for family deletion: ${e.message}")
+                // Ignore failure
             }
             
             Result.success(Unit)

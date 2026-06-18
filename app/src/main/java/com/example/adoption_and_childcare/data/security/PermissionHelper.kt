@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.first
  * - Admin: Full access to all data
  * - Case Worker: Full access to all data
  * - Supervisor: Full access to all data  
- * - Foster Parent: Limited to children they are guardians of
+ * - Guardian: Limited to children they are guardians of
  * - Guest: Read-only access to their assigned children
  */
 class PermissionHelper(private val context: Context) {
@@ -31,11 +31,11 @@ class PermissionHelper(private val context: Context) {
     }
     
     /**
-     * Check if current user is a foster parent or guardian with restricted access
+     * Check if current user is a guardian with restricted access
      */
     suspend fun isRestrictedUser(): Boolean {
         val role = sessionManager.getRole()
-        return role in listOf("Foster Parent", "Parent", "Guardian", "Guest")
+        return role in listOf("Guardian", "Parent", "Guardian", "Guest")
     }
     
     /**
@@ -75,7 +75,7 @@ class PermissionHelper(private val context: Context) {
     
     /**
      * Check if user can update a specific child's data
-     * Foster parents/guardians can only update their assigned children
+     * Guardians can only update their assigned children
      */
     suspend fun canUpdateChild(childId: Int): Boolean {
         if (hasFullAccess()) {

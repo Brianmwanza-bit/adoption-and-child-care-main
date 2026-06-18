@@ -18,6 +18,7 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity
 import com.example.adoption_and_childcare.data.repository.CourtCaseRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -31,8 +32,9 @@ import kotlinx.coroutines.launch
 fun CourtCasesScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
+    val authManager = remember { AuthManager(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { CourtCaseRepositoryImpl(db.courtCaseDao(), apiService) }
+    val repository = remember { CourtCaseRepositoryImpl(db.courtCaseDao(), db.syncQueueDao(), apiService, authManager) }
     
     var cases by remember { mutableStateOf<List<CourtCaseEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -59,7 +61,7 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -181,13 +183,14 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
  */
 private fun fetchFromApi(
     repository: CourtCaseRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

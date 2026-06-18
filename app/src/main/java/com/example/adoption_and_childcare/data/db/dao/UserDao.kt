@@ -77,8 +77,18 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
     suspend fun findByEmail(email: String): UserEntity?
 
-    @Query("SELECT * FROM users WHERE user_id = :id LIMIT 1")
-    suspend fun findById(id: Int): UserEntity?
+    @Query("SELECT * FROM users WHERE user_id = :userId LIMIT 1")
+    suspend fun findById(userId: Int): UserEntity?
+
+    @Transaction
+    @Query("SELECT * FROM users WHERE user_id = :userId")
+    suspend fun getUserWithPermissions(userId: Int): com.example.adoption_and_childcare.data.db.entities.UserWithPermissions?
+
+    @Query("UPDATE users SET last_login = :timestamp WHERE user_id = :userId")
+    suspend fun updateLastLogin(userId: Int, timestamp: String)
+
+    @Query("UPDATE users SET password_hash = :newHash WHERE user_id = :userId")
+    suspend fun updatePassword(userId: Int, newHash: String)
 
     @Query("SELECT COUNT(*) FROM users")
     suspend fun count(): Int

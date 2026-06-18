@@ -1,385 +1,914 @@
 package com.example.adoption_and_childcare.network
 
-import com.example.adoption_and_childcare.data.db.entities.NotificationEntity
+import com.example.adoption_and_childcare.data.db.entities.*
+import com.example.adoption_and_childcare.network.ApiConstants.ACTION_ITEMS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.ADOPTION_APPLICATIONS
+import com.example.adoption_and_childcare.network.ApiConstants.ADOPTION_APPLICATIONS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.ADOPTION_APPLICATION_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.ANALYTICS_SUMMARY
+import com.example.adoption_and_childcare.network.ApiConstants.AUDIT_LOGS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.AUTHORIZATION
+import com.example.adoption_and_childcare.network.ApiConstants.BACKGROUND_CHECKS
+import com.example.adoption_and_childcare.network.ApiConstants.BACKGROUND_CHECKS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.BACKGROUND_CHECK_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_ACTIVITIES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_APPROVALS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_DEADLINES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_REPORTS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_URGENCY_FLAGS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CHILDREN
+import com.example.adoption_and_childcare.network.ApiConstants.CHILD_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.COURT_CASES
+import com.example.adoption_and_childcare.network.ApiConstants.COURT_CASES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.COURT_CASE_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.CRITICAL_DATES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.DASHBOARD_METRICS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.DASHBOARD_PREFERENCES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.DOCUMENTS
+import com.example.adoption_and_childcare.network.ApiConstants.DOCUMENT_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.EDUCATION_RECORDS
+import com.example.adoption_and_childcare.network.ApiConstants.EDUCATION_RECORDS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.EDUCATION_RECORD_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.FAMILIES
+import com.example.adoption_and_childcare.network.ApiConstants.FAMILY_PROFILE
+import com.example.adoption_and_childcare.network.ApiConstants.FAMILY_PROFILE_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_MATCHES
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_MATCHES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_MATCH_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_TASKS
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_TASKS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.FOSTER_TASK_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.GUARDIANS
+import com.example.adoption_and_childcare.network.ApiConstants.GUARDIAN_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.HOME_STUDIES
+import com.example.adoption_and_childcare.network.ApiConstants.HOME_STUDIES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.HOME_STUDY_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.ID
+import com.example.adoption_and_childcare.network.ApiConstants.ID_NUMBER
+import com.example.adoption_and_childcare.network.ApiConstants.LOGIN
+import com.example.adoption_and_childcare.network.ApiConstants.MARK_NOTIFICATION_READ
+import com.example.adoption_and_childcare.network.ApiConstants.MEDICAL_RECORDS
+import com.example.adoption_and_childcare.network.ApiConstants.MEDICAL_RECORDS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.MEDICAL_RECORD_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.MONEY_RECORDS
+import com.example.adoption_and_childcare.network.ApiConstants.MONEY_RECORDS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.MONEY_RECORD_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.NATIONAL_ID_NO
+import com.example.adoption_and_childcare.network.ApiConstants.NOTIFICATIONS
+import com.example.adoption_and_childcare.network.ApiConstants.OPERATION
+import com.example.adoption_and_childcare.network.ApiConstants.PAYLOAD
+import com.example.adoption_and_childcare.network.ApiConstants.PERMANENCY_PLANS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.PERMISSIONS
+import com.example.adoption_and_childcare.network.ApiConstants.PERMISSION_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.PLACEMENTS
+import com.example.adoption_and_childcare.network.ApiConstants.PLACEMENT_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.PLACEMENT_COMPATIBILITY_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.PLATFORM_ANDROID
+import com.example.adoption_and_childcare.network.ApiConstants.RECORD_ID
+import com.example.adoption_and_childcare.network.ApiConstants.REGISTER
+import com.example.adoption_and_childcare.network.ApiConstants.RISK_ASSESSMENTS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.SINCE
+import com.example.adoption_and_childcare.network.ApiConstants.SOS_LOCATIONS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.SUB_COUNTY
+import com.example.adoption_and_childcare.network.ApiConstants.SYNC_PULL
+import com.example.adoption_and_childcare.network.ApiConstants.SYNC_PUSH
+import com.example.adoption_and_childcare.network.ApiConstants.SYSTEM_SETTINGS
+import com.example.adoption_and_childcare.network.ApiConstants.SYSTEM_SETTINGS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.SYSTEM_SETTING_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.TABLE_NAME
+import com.example.adoption_and_childcare.network.ApiConstants.UNREAD_NOTIFICATION_COUNT
+import com.example.adoption_and_childcare.network.ApiConstants.UPDATE_FCM_TOKEN
+import com.example.adoption_and_childcare.network.ApiConstants.USERS
+import com.example.adoption_and_childcare.network.ApiConstants.USER_PERMISSIONS
+import com.example.adoption_and_childcare.network.ApiConstants.USER_PERMISSIONS_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.USER_PERMISSION_BY_ID
+import com.example.adoption_and_childcare.network.ApiConstants.WORKER_MESSAGES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.WORKLOAD_TRACKING_JSON
+import com.google.gson.annotations.SerializedName
+
 import retrofit2.Response
 import retrofit2.http.*
 
+/**
+ * Interface defining the API endpoints for the Adoption and Childcare application.
+ */
 interface ApiService {
     // Children Endpoints
-    @GET("children")
-    suspend fun getChildren(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.ChildEntity>>
+    /**
+     * Retrieves a list of all children.
+     * @param token The authorization token.
+     */
+    @GET(CHILDREN)
+    suspend fun getChildren(@Header(AUTHORIZATION) token: String): Response<List<ChildEntity>>
 
-    @GET("children/{id}")
-    suspend fun getChildById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.ChildEntity>
+    /**
+     * Creates a new child record.
+     * @param token The authorization token.
+     * @param child The child entity to create.
+     */
+    @POST(CHILDREN)
+    suspend fun createChild(@Header(AUTHORIZATION) token: String, @Body child: ChildEntity): Response<ChildEntity>
 
-    @POST("children")
-    suspend fun createChild(@Header("Authorization") token: String, @Body child: com.example.adoption_and_childcare.data.db.entities.ChildEntity): Response<com.example.adoption_and_childcare.data.db.entities.ChildEntity>
+    /**
+     * Updates an existing child record.
+     * @param token The authorization token.
+     * @param id The ID of the child to update.
+     * @param child The updated child entity.
+     */
+    @PUT(CHILD_BY_ID)
+    suspend fun updateChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body child: ChildEntity): Response<ChildEntity>
 
-    @PUT("children/{id}")
-    suspend fun updateChild(@Header("Authorization") token: String, @Path("id") id: Int, @Body child: com.example.adoption_and_childcare.data.db.entities.ChildEntity): Response<com.example.adoption_and_childcare.data.db.entities.ChildEntity>
-
-    @DELETE("children/{id}")
-    suspend fun deleteChild(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a child record.
+     * @param token The authorization token.
+     * @param id The ID of the child to delete.
+     */
+    @DELETE(CHILD_BY_ID)
+    suspend fun deleteChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Families Endpoints
-    @GET("families")
-    suspend fun getFamilies(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.FamilyEntity>>
+    /**
+     * Retrieves a list of all families.
+     * @param token The authorization token.
+     */
+    @GET(FAMILIES)
+    suspend fun getFamilies(@Header(AUTHORIZATION) token: String): Response<List<FamilyEntity>>
 
-    @GET("family_profile")
-    suspend fun getFamilyProfiles(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.FamilyEntity>>
+    /**
+     * Creates a new family profile.
+     * @param token The authorization token.
+     * @param family The family entity to create.
+     */
+    @POST(FAMILY_PROFILE)
+    suspend fun createFamilyProfile(@Header(AUTHORIZATION) token: String, @Body family: FamilyEntity): Response<FamilyEntity>
 
-    @POST("family_profile")
-    suspend fun createFamilyProfile(@Header("Authorization") token: String, @Body family: com.example.adoption_and_childcare.data.db.entities.FamilyEntity): Response<com.example.adoption_and_childcare.data.db.entities.FamilyEntity>
+    /**
+     * Updates an existing family profile.
+     * @param token The authorization token.
+     * @param id The ID of the family profile to update.
+     * @param family The updated family entity.
+     */
+    @PUT(FAMILY_PROFILE_BY_ID)
+    suspend fun updateFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body family: FamilyEntity): Response<FamilyEntity>
 
-    @PUT("family_profile/{id}")
-    suspend fun updateFamilyProfile(@Header("Authorization") token: String, @Path("id") id: Int, @Body family: com.example.adoption_and_childcare.data.db.entities.FamilyEntity): Response<com.example.adoption_and_childcare.data.db.entities.FamilyEntity>
+    /**
+     * Deletes a family profile.
+     * @param token The authorization token.
+     * @param id The ID of the family profile to delete.
+     */
+    @DELETE(FAMILY_PROFILE_BY_ID)
+    suspend fun deleteFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
-    @DELETE("family_profile/{id}")
-    suspend fun deleteFamilyProfile(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    // Adoption Applications Endpoints
+    /**
+     * Retrieves a list of all adoption applications.
+     * @param token The authorization token.
+     */
+    @GET(ADOPTION_APPLICATIONS)
+    suspend fun getAdoptionApplications(@Header(AUTHORIZATION) token: String): Response<List<AdoptionApplicationEntity>>
+
+    /**
+     * Creates a new adoption application.
+     * @param token The authorization token.
+     * @param application The application entity to create.
+     */
+    @POST(ADOPTION_APPLICATIONS)
+    suspend fun createAdoptionApplication(@Header(AUTHORIZATION) token: String, @Body application: AdoptionApplicationEntity): Response<AdoptionApplicationEntity>
+
+    /**
+     * Updates an existing adoption application.
+     * @param token The authorization token.
+     * @param id The ID of the application to update.
+     * @param application The updated application entity.
+     */
+    @PUT(ADOPTION_APPLICATION_BY_ID)
+    suspend fun updateAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body application: AdoptionApplicationEntity): Response<AdoptionApplicationEntity>
+
+    /**
+     * Deletes an adoption application.
+     * @param token The authorization token.
+     * @param id The ID of the application to delete.
+     */
+    @DELETE(ADOPTION_APPLICATION_BY_ID)
+    suspend fun deleteAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Users Endpoints
-    @GET("users")
-    suspend fun getUsers(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.UserEntity>>
-
-    @GET("users/{id}")
-    suspend fun getUserById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.UserEntity>
-
-    @PUT("users/{id}")
-    suspend fun updateUser(@Header("Authorization") token: String, @Path("id") id: Int, @Body user: com.example.adoption_and_childcare.data.db.entities.UserEntity): Response<com.example.adoption_and_childcare.data.db.entities.UserEntity>
-
-    @DELETE("users/{id}")
-    suspend fun deleteUser(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Retrieves a list of all users.
+     * @param token The authorization token.
+     */
+    @GET(USERS)
+    suspend fun getUsers(@Header(AUTHORIZATION) token: String): Response<List<UserEntity>>
 
     // Placements Endpoints
-    @GET("placements")
-    suspend fun getPlacements(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.PlacementEntity>>
+    /**
+     * Retrieves a list of all placements.
+     * @param token The authorization token.
+     */
+    @GET(PLACEMENTS)
+    suspend fun getPlacements(@Header(AUTHORIZATION) token: String): Response<List<PlacementEntity>>
 
-    @POST("placements")
-    suspend fun createPlacement(@Header("Authorization") token: String, @Body placement: com.example.adoption_and_childcare.data.db.entities.PlacementEntity): Response<com.example.adoption_and_childcare.data.db.entities.PlacementEntity>
+    /**
+     * Creates a new placement.
+     * @param token The authorization token.
+     * @param placement The placement entity to create.
+     */
+    @POST(PLACEMENTS)
+    suspend fun createPlacement(@Header(AUTHORIZATION) token: String, @Body placement: PlacementEntity): Response<PlacementEntity>
 
-    @PUT("placements/{id}")
-    suspend fun updatePlacement(@Header("Authorization") token: String, @Path("id") id: Int, @Body placement: com.example.adoption_and_childcare.data.db.entities.PlacementEntity): Response<com.example.adoption_and_childcare.data.db.entities.PlacementEntity>
+    /**
+     * Updates an existing placement.
+     * @param token The authorization token.
+     * @param id The ID of the placement to update.
+     * @param placement The updated placement entity.
+     */
+    @PUT(PLACEMENT_BY_ID)
+    suspend fun updatePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body placement: PlacementEntity): Response<PlacementEntity>
 
-    @DELETE("placements/{id}")
-    suspend fun deletePlacement(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a placement.
+     * @param token The authorization token.
+     * @param id The ID of the placement to delete.
+     */
+    @DELETE(PLACEMENT_BY_ID)
+    suspend fun deletePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Guardians Endpoints
-    @GET("guardians")
-    suspend fun getGuardians(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.GuardianEntity>>
+    /**
+     * Retrieves a list of all guardians.
+     * @param token The authorization token.
+     */
+    @GET(GUARDIANS)
+    suspend fun getGuardians(@Header(AUTHORIZATION) token: String): Response<List<GuardianEntity>>
 
-    @GET("guardians/{id}")
-    suspend fun getGuardianById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.GuardianEntity>
+    /**
+     * Creates a new guardian.
+     * @param token The authorization token.
+     * @param guardian The guardian entity to create.
+     */
+    @POST(GUARDIANS)
+    suspend fun createGuardian(@Header(AUTHORIZATION) token: String, @Body guardian: GuardianEntity): Response<GuardianEntity>
 
-    @POST("guardians")
-    suspend fun createGuardian(@Header("Authorization") token: String, @Body guardian: com.example.adoption_and_childcare.data.db.entities.GuardianEntity): Response<com.example.adoption_and_childcare.data.db.entities.GuardianEntity>
+    /**
+     * Updates an existing guardian.
+     * @param token The authorization token.
+     * @param id The ID of the guardian to update.
+     * @param guardian The updated guardian entity.
+     */
+    @PUT(GUARDIAN_BY_ID)
+    suspend fun updateGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body guardian: GuardianEntity): Response<GuardianEntity>
 
-    @PUT("guardians/{id}")
-    suspend fun updateGuardian(@Header("Authorization") token: String, @Path("id") id: Int, @Body guardian: com.example.adoption_and_childcare.data.db.entities.GuardianEntity): Response<com.example.adoption_and_childcare.data.db.entities.GuardianEntity>
-
-    @DELETE("guardians/{id}")
-    suspend fun deleteGuardian(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a guardian.
+     * @param token The authorization token.
+     * @param id The ID of the guardian to delete.
+     */
+    @DELETE(GUARDIAN_BY_ID)
+    suspend fun deleteGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Court Cases Endpoints
-    @GET("court-cases")
-    suspend fun getCourtCases(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity>>
+    /**
+     * Creates a new court case.
+     * @param token The authorization token.
+     * @param courtCase The court case entity to create.
+     */
+    @POST(COURT_CASES)
+    suspend fun createCourtCase(@Header(AUTHORIZATION) token: String, @Body courtCase: CourtCaseEntity): Response<CourtCaseEntity>
 
-    @GET("court-cases/{id}")
-    suspend fun getCourtCaseById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity>
+    /**
+     * Updates an existing court case.
+     * @param token The authorization token.
+     * @param id The ID of the court case to update.
+     * @param courtCase The updated court case entity.
+     */
+    @PUT(COURT_CASE_BY_ID)
+    suspend fun updateCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body courtCase: CourtCaseEntity): Response<CourtCaseEntity>
 
-    @POST("court-cases")
-    suspend fun createCourtCase(@Header("Authorization") token: String, @Body courtCase: com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity): Response<com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity>
-
-    @PUT("court-cases/{id}")
-    suspend fun updateCourtCase(@Header("Authorization") token: String, @Path("id") id: Int, @Body courtCase: com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity): Response<com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity>
-
-    @DELETE("court-cases/{id}")
-    suspend fun deleteCourtCase(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a court case.
+     * @param token The authorization token.
+     * @param id The ID of the court case to delete.
+     */
+    @DELETE(COURT_CASE_BY_ID)
+    suspend fun deleteCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Background Checks Endpoints
-    @GET("background-checks")
-    suspend fun getBackgroundChecks(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>>
+    /**
+     * Creates a new background check.
+     * @param token The authorization token.
+     * @param backgroundCheck The background check entity to create.
+     */
+    @POST(BACKGROUND_CHECKS)
+    suspend fun createBackgroundCheck(@Header(AUTHORIZATION) token: String, @Body backgroundCheck: BackgroundCheckEntity): Response<BackgroundCheckEntity>
 
-    @GET("background-checks/{id}")
-    suspend fun getBackgroundCheckById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>
+    /**
+     * Updates an existing background check.
+     * @param token The authorization token.
+     * @param id The ID of the background check to update.
+     * @param backgroundCheck The updated background check entity.
+     */
+    @PUT(BACKGROUND_CHECK_BY_ID)
+    suspend fun updateBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body backgroundCheck: BackgroundCheckEntity): Response<BackgroundCheckEntity>
 
-    @POST("background-checks")
-    suspend fun createBackgroundCheck(@Header("Authorization") token: String, @Body backgroundCheck: com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity): Response<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>
-
-    @PUT("background-checks/{id}")
-    suspend fun updateBackgroundCheck(@Header("Authorization") token: String, @Path("id") id: Int, @Body backgroundCheck: com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity): Response<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>
-
-    @DELETE("background-checks/{id}")
-    suspend fun deleteBackgroundCheck(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a background check.
+     * @param token The authorization token.
+     * @param id The ID of the background check to delete.
+     */
+    @DELETE(BACKGROUND_CHECK_BY_ID)
+    suspend fun deleteBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Foster Tasks Endpoints
-    @GET("foster-tasks")
-    suspend fun getFosterTasks(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>>
+    /**
+     * Retrieves a list of all foster tasks.
+     * @param token The authorization token.
+     */
+    @GET(FOSTER_TASKS)
+    suspend fun getFosterTasks(@Header(AUTHORIZATION) token: String): Response<List<FosterTaskEntity>>
 
-    @GET("foster-tasks/{id}")
-    suspend fun getFosterTaskById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>
+    /**
+     * Creates a new foster task.
+     * @param token The authorization token.
+     * @param fosterTask The foster task entity to create.
+     */
+    @POST(FOSTER_TASKS)
+    suspend fun createFosterTask(@Header(AUTHORIZATION) token: String, @Body fosterTask: FosterTaskEntity): Response<FosterTaskEntity>
 
-    @POST("foster-tasks")
-    suspend fun createFosterTask(@Header("Authorization") token: String, @Body fosterTask: com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity): Response<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>
+    /**
+     * Updates an existing foster task.
+     * @param token The authorization token.
+     * @param id The ID of the foster task to update.
+     * @param fosterTask The updated foster task entity.
+     */
+    @PUT(FOSTER_TASK_BY_ID)
+    suspend fun updateFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterTask: FosterTaskEntity): Response<FosterTaskEntity>
 
-    @PUT("foster-tasks/{id}")
-    suspend fun updateFosterTask(@Header("Authorization") token: String, @Path("id") id: Int, @Body fosterTask: com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity): Response<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>
-
-    @DELETE("foster-tasks/{id}")
-    suspend fun deleteFosterTask(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a foster task.
+     * @param token The authorization token.
+     * @param id The ID of the foster task to delete.
+     */
+    @DELETE(FOSTER_TASK_BY_ID)
+    suspend fun deleteFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Foster Matches Endpoints
-    @GET("foster-matches")
-    suspend fun getFosterMatches(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>>
+    /**
+     * Retrieves a list of all foster matches.
+     * @param token The authorization token.
+     */
+    @GET(FOSTER_MATCHES)
+    suspend fun getFosterMatches(@Header(AUTHORIZATION) token: String): Response<List<FosterMatchEntity>>
 
-    @GET("foster-matches/{id}")
-    suspend fun getFosterMatchById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>
+    /**
+     * Creates a new foster match.
+     * @param token The authorization token.
+     * @param fosterMatch The foster match entity to create.
+     */
+    @POST(FOSTER_MATCHES)
+    suspend fun createFosterMatch(@Header(AUTHORIZATION) token: String, @Body fosterMatch: FosterMatchEntity): Response<FosterMatchEntity>
 
-    @POST("foster-matches")
-    suspend fun createFosterMatch(@Header("Authorization") token: String, @Body fosterMatch: com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity): Response<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>
+    /**
+     * Updates an existing foster match.
+     * @param token The authorization token.
+     * @param id The ID of the foster match to update.
+     * @param fosterMatch The updated foster match entity.
+     */
+    @PUT(FOSTER_MATCH_BY_ID)
+    suspend fun updateFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterMatch: FosterMatchEntity): Response<FosterMatchEntity>
 
-    @PUT("foster-matches/{id}")
-    suspend fun updateFosterMatch(@Header("Authorization") token: String, @Path("id") id: Int, @Body fosterMatch: com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity): Response<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>
-
-    @DELETE("foster-matches/{id}")
-    suspend fun deleteFosterMatch(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a foster match.
+     * @param token The authorization token.
+     * @param id The ID of the foster match to delete.
+     */
+    @DELETE(FOSTER_MATCH_BY_ID)
+    suspend fun deleteFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Permissions Endpoints
-    @GET("permissions")
-    suspend fun getPermissions(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>>
+    /**
+     * Retrieves a list of all permissions.
+     * @param token The authorization token.
+     */
+    @GET(PERMISSIONS)
+    suspend fun getPermissions(@Header(AUTHORIZATION) token: String): Response<List<PermissionEntity>>
 
-    @GET("permissions/{id}")
-    suspend fun getPermissionById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>
+    /**
+     * Creates a new permission.
+     * @param token The authorization token.
+     * @param permission The permission entity to create.
+     */
+    @POST(PERMISSIONS)
+    suspend fun createPermission(@Header(AUTHORIZATION) token: String, @Body permission: PermissionEntity): Response<PermissionEntity>
 
-    @POST("permissions")
-    suspend fun createPermission(@Header("Authorization") token: String, @Body permission: com.example.adoption_and_childcare.data.db.entities.PermissionEntity): Response<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>
+    /**
+     * Updates an existing permission.
+     * @param token The authorization token.
+     * @param id The ID of the permission to update.
+     * @param permission The updated permission entity.
+     */
+    @PUT(PERMISSION_BY_ID)
+    suspend fun updatePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body permission: PermissionEntity): Response<PermissionEntity>
 
-    @PUT("permissions/{id}")
-    suspend fun updatePermission(@Header("Authorization") token: String, @Path("id") id: Int, @Body permission: com.example.adoption_and_childcare.data.db.entities.PermissionEntity): Response<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>
-
-    @DELETE("permissions/{id}")
-    suspend fun deletePermission(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a permission.
+     * @param token The authorization token.
+     * @param id The ID of the permission to delete.
+     */
+    @DELETE(PERMISSION_BY_ID)
+    suspend fun deletePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // User Permissions Endpoints
-    @GET("user-permissions")
-    suspend fun getUserPermissions(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>>
+    /**
+     * Retrieves a list of all user permissions.
+     * @param token The authorization token.
+     */
+    @GET(USER_PERMISSIONS)
+    suspend fun getUserPermissions(@Header(AUTHORIZATION) token: String): Response<List<UserPermissionEntity>>
 
-    @GET("user-permissions/{id}")
-    suspend fun getUserPermissionById(@Header("Authorization") token: String, @Path("id") id: Int): Response<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>
+    /**
+     * Creates a new user permission mapping.
+     * @param token The authorization token.
+     * @param userPermission The user permission entity to create.
+     */
+    @POST(USER_PERMISSIONS)
+    suspend fun createUserPermission(@Header(AUTHORIZATION) token: String, @Body userPermission: UserPermissionEntity): Response<UserPermissionEntity>
 
-    @POST("user-permissions")
-    suspend fun createUserPermission(@Header("Authorization") token: String, @Body userPermission: com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity): Response<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>
-
-    @DELETE("user-permissions/{id}")
-    suspend fun deleteUserPermission(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a user permission mapping.
+     * @param token The authorization token.
+     * @param id The ID of the user permission mapping to delete.
+     */
+    @DELETE(USER_PERMISSION_BY_ID)
+    suspend fun deleteUserPermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // System Settings Endpoints
-    @GET("system-settings")
-    suspend fun getSystemSettings(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>>
+    /**
+     * Retrieves all system settings.
+     * @param token The authorization token.
+     */
+    @GET(SYSTEM_SETTINGS)
+    suspend fun getSystemSettings(@Header(AUTHORIZATION) token: String): Response<List<SystemSettingEntity>>
 
-    @GET("system-settings/{key}")
-    suspend fun getSystemSettingByKey(@Header("Authorization") token: String, @Path("key") key: String): Response<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>
+    /**
+     * Creates a new system setting.
+     * @param token The authorization token.
+     * @param setting The system setting entity to create.
+     */
+    @POST(SYSTEM_SETTINGS)
+    suspend fun createSystemSetting(@Header(AUTHORIZATION) token: String, @Body setting: SystemSettingEntity): Response<SystemSettingEntity>
 
-    @POST("system-settings")
-    suspend fun createSystemSetting(@Header("Authorization") token: String, @Body setting: com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity): Response<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>
+    /**
+     * Updates an existing system setting.
+     * @param token The authorization token.
+     * @param id The ID of the system setting to update.
+     * @param setting The updated system setting entity.
+     */
+    @PUT(SYSTEM_SETTING_BY_ID)
+    suspend fun updateSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body setting: SystemSettingEntity): Response<SystemSettingEntity>
 
-    @PUT("system-settings/{id}")
-    suspend fun updateSystemSetting(@Header("Authorization") token: String, @Path("id") id: Int, @Body setting: com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity): Response<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>
-
-    @DELETE("system-settings/{id}")
-    suspend fun deleteSystemSetting(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a system setting.
+     * @param token The authorization token.
+     * @param id The ID of the system setting to delete.
+     */
+    @DELETE(SYSTEM_SETTING_BY_ID)
+    suspend fun deleteSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Documents Endpoints
-    @GET("documents")
-    suspend fun getAllDocuments(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>>
+    /**
+     * Retrieves all documents.
+     * @param token The authorization token.
+     */
+    @GET(DOCUMENTS)
+    suspend fun getAllDocuments(@Header(AUTHORIZATION) token: String): Response<List<DocumentEntity>>
 
-    @POST("documents")
-    suspend fun createDocument(@Header("Authorization") token: String, @Body document: com.example.adoption_and_childcare.data.db.entities.DocumentEntity): Response<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>
+    /**
+     * Creates a new document record.
+     * @param token The authorization token.
+     * @param document The document entity to create.
+     */
+    @POST(DOCUMENTS)
+    suspend fun createDocument(@Header(AUTHORIZATION) token: String, @Body document: DocumentEntity): Response<DocumentEntity>
 
-    @PUT("documents/{id}")
-    suspend fun updateDocument(@Header("Authorization") token: String, @Path("id") id: Int, @Body document: com.example.adoption_and_childcare.data.db.entities.DocumentEntity): Response<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>
+    /**
+     * Updates an existing document record.
+     * @param token The authorization token.
+     * @param id The ID of the document to update.
+     * @param document The updated document entity.
+     */
+    @PUT(DOCUMENT_BY_ID)
+    suspend fun updateDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body document: DocumentEntity): Response<DocumentEntity>
 
-    @DELETE("documents/{id}")
-    suspend fun deleteDocument(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a document record.
+     * @param token The authorization token.
+     * @param id The ID of the document to delete.
+     */
+    @DELETE(DOCUMENT_BY_ID)
+    suspend fun deleteDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Education Records Endpoints
-    @GET("education-records")
-    suspend fun getAllEducationRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>>
+    /**
+     * Retrieves all education records.
+     * @param token The authorization token.
+     */
+    @GET(EDUCATION_RECORDS)
+    suspend fun getAllEducationRecords(@Header(AUTHORIZATION) token: String): Response<List<EducationRecordEntity>>
 
-    @POST("education-records")
-    suspend fun createEducationRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>
+    /**
+     * Creates a new education record.
+     * @param token The authorization token.
+     * @param record The education record entity to create.
+     */
+    @POST(EDUCATION_RECORDS)
+    suspend fun createEducationRecord(@Header(AUTHORIZATION) token: String, @Body record: EducationRecordEntity): Response<EducationRecordEntity>
 
-    @PUT("education-records/{id}")
-    suspend fun updateEducationRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>
+    /**
+     * Updates an existing education record.
+     * @param token The authorization token.
+     * @param id The ID of the education record to update.
+     * @param record The updated education record entity.
+     */
+    @PUT(EDUCATION_RECORD_BY_ID)
+    suspend fun updateEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: EducationRecordEntity): Response<EducationRecordEntity>
 
-    @DELETE("education-records/{id}")
-    suspend fun deleteEducationRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes an education record.
+     * @param token The authorization token.
+     * @param id The ID of the education record to delete.
+     */
+    @DELETE(EDUCATION_RECORD_BY_ID)
+    suspend fun deleteEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Medical Records Endpoints
-    @GET("medical-records")
-    suspend fun getAllMedicalRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>>
+    /**
+     * Retrieves all medical records.
+     * @param token The authorization token.
+     */
+    @GET(MEDICAL_RECORDS)
+    suspend fun getAllMedicalRecords(@Header(AUTHORIZATION) token: String): Response<List<MedicalRecordEntity>>
 
-    @POST("medical-records")
-    suspend fun createMedicalRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>
+    /**
+     * Creates a new medical record.
+     * @param token The authorization token.
+     * @param record The medical record entity to create.
+     */
+    @POST(MEDICAL_RECORDS)
+    suspend fun createMedicalRecord(@Header(AUTHORIZATION) token: String, @Body record: MedicalRecordEntity): Response<MedicalRecordEntity>
 
-    @PUT("medical-records/{id}")
-    suspend fun updateMedicalRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>
+    /**
+     * Updates an existing medical record.
+     * @param token The authorization token.
+     * @param id The ID of the medical record to update.
+     * @param record The updated medical record entity.
+     */
+    @PUT(MEDICAL_RECORD_BY_ID)
+    suspend fun updateMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MedicalRecordEntity): Response<MedicalRecordEntity>
 
-    @DELETE("medical-records/{id}")
-    suspend fun deleteMedicalRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a medical record.
+     * @param token The authorization token.
+     * @param id The ID of the medical record to delete.
+     */
+    @DELETE(MEDICAL_RECORD_BY_ID)
+    suspend fun deleteMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Money Records Endpoints
-    @GET("money-records")
-    suspend fun getAllMoneyRecords(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>>
+    /**
+     * Retrieves all money records.
+     * @param token The authorization token.
+     */
+    @GET(MONEY_RECORDS)
+    suspend fun getAllMoneyRecords(@Header(AUTHORIZATION) token: String): Response<List<MoneyRecordEntity>>
 
-    @POST("money-records")
-    suspend fun createMoneyRecord(@Header("Authorization") token: String, @Body record: com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>
+    /**
+     * Creates a new money record.
+     * @param token The authorization token.
+     * @param record The money record entity to create.
+     */
+    @POST(MONEY_RECORDS)
+    suspend fun createMoneyRecord(@Header(AUTHORIZATION) token: String, @Body record: MoneyRecordEntity): Response<MoneyRecordEntity>
 
-    @PUT("money-records/{id}")
-    suspend fun updateMoneyRecord(@Header("Authorization") token: String, @Path("id") id: Int, @Body record: com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity): Response<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>
+    /**
+     * Updates an existing money record.
+     * @param token The authorization token.
+     * @param id The ID of the money record to update.
+     * @param record The updated money record entity.
+     */
+    @PUT(MONEY_RECORD_BY_ID)
+    suspend fun updateMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MoneyRecordEntity): Response<MoneyRecordEntity>
 
-    @DELETE("money-records/{id}")
-    suspend fun deleteMoneyRecord(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a money record.
+     * @param token The authorization token.
+     * @param id The ID of the money record to delete.
+     */
+    @DELETE(MONEY_RECORD_BY_ID)
+    suspend fun deleteMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Home Studies Endpoints
-    @GET("home-studies")
-    suspend fun getAllHomeStudies(@Header("Authorization") token: String): Response<List<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>>
+    /**
+     * Retrieves all home studies.
+     * @param token The authorization token.
+     */
+    @GET(HOME_STUDIES)
+    suspend fun getAllHomeStudies(@Header(AUTHORIZATION) token: String): Response<List<HomeStudyEntity>>
 
-    @POST("home-studies")
-    suspend fun createHomeStudy(@Header("Authorization") token: String, @Body study: com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity): Response<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>
+    /**
+     * Creates a new home study.
+     * @param token The authorization token.
+     * @param study The home study entity to create.
+     */
+    @POST(HOME_STUDIES)
+    suspend fun createHomeStudy(@Header(AUTHORIZATION) token: String, @Body study: HomeStudyEntity): Response<HomeStudyEntity>
 
-    @PUT("home-studies/{id}")
-    suspend fun updateHomeStudy(@Header("Authorization") token: String, @Path("id") id: Int, @Body study: com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity): Response<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>
+    /**
+     * Updates an existing home study.
+     * @param token The authorization token.
+     * @param id The ID of the home study to update.
+     * @param study The updated home study entity.
+     */
+    @PUT(HOME_STUDY_BY_ID)
+    suspend fun updateHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body study: HomeStudyEntity): Response<HomeStudyEntity>
 
-    @DELETE("home-studies/{id}")
-    suspend fun deleteHomeStudy(@Header("Authorization") token: String, @Path("id") id: Int): Response<Unit>
+    /**
+     * Deletes a home study.
+     * @param token The authorization token.
+     * @param id The ID of the home study to delete.
+     */
+    @DELETE(HOME_STUDY_BY_ID)
+    suspend fun deleteHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
 
     // Analytics Endpoints
-    @GET("analytics/summary")
-    suspend fun getAnalyticsSummary(@Header("Authorization") token: String): Response<AnalyticsSummary>
+    /**
+     * Retrieves the analytics summary.
+     * @param token The authorization token.
+     */
+    @GET(ANALYTICS_SUMMARY)
+    suspend fun getAnalyticsSummary(@Header(AUTHORIZATION) token: String): Response<AnalyticsSummary>
 
-    @GET("analytics/recent-activity")
-    suspend fun getRecentActivity(@Header("Authorization") token: String): Response<List<ActivityItem>>
-
-    @POST("login")
+    /**
+     * Authenticates a user.
+     * @param request The login request.
+     */
+    @POST(LOGIN)
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
-    @POST("register")
+    /**
+     * Registers a new user.
+     * @param request The registration request.
+     */
+    @POST(REGISTER)
     suspend fun register(@Body request: RegisterRequest): Response<AuthResponse>
 
-    @GET("notifications")
-    suspend fun getNotifications(@Header("Authorization") token: String): Response<List<NotificationEntity>>
+    /**
+     * Retrieves all notifications for the user.
+     * @param token The authorization token.
+     */
+    @GET(NOTIFICATIONS)
+    suspend fun getNotifications(@Header(AUTHORIZATION) token: String): Response<List<NotificationEntity>>
     
-    @GET("notifications/unread-count")
-    suspend fun getUnreadNotificationCount(@Header("Authorization") token: String): Response<UnreadCountResponse>
+    /**
+     * Retrieves the count of unread notifications.
+     * @param token The authorization token.
+     */
+    @GET(UNREAD_NOTIFICATION_COUNT)
+    suspend fun getUnreadNotificationCount(@Header(AUTHORIZATION) token: String): Response<UnreadCountResponse>
     
-    @POST("notifications/{id}/read")
-    suspend fun markNotificationAsRead(@Header("Authorization") token: String, @Path("id") notificationId: Int): Response<Unit>
+    /**
+     * Marks a notification as read.
+     * @param token The authorization token.
+     * @param notificationId The ID of the notification.
+     */
+    @POST(MARK_NOTIFICATION_READ)
+    suspend fun markNotificationAsRead(@Header(AUTHORIZATION) token: String, @Path(ID) notificationId: Int): Response<Unit>
 
-    @POST("auth/fcm-token")
+    /**
+     * Updates the FCM token for push notifications.
+     * @param authToken The authorization token.
+     * @param request The FCM token request.
+     */
+    @POST(UPDATE_FCM_TOKEN)
     suspend fun updateFcmToken(
-        @Header("Authorization") authToken: String,
+        @Header(AUTHORIZATION) authToken: String,
         @Body request: FcmTokenRequest
     ): Response<Unit>
 
     // Sync Endpoints
-    @POST("api/v2/sync/push")
+    /**
+     * Pushes local changes to the server for synchronization.
+     * @param token The authorization token.
+     * @param syncItems The list of items to push.
+     */
+    @POST(SYNC_PUSH)
     suspend fun pushSync(
-        @Header("Authorization") token: String,
+        @Header(AUTHORIZATION) token: String,
         @Body syncItems: List<SyncPushRequestItem>
     ): Response<SyncPushResponse>
 
-    @GET("api/v2/sync/pull")
+    /**
+     * Pulls changes from the server for synchronization.
+     * @param token The authorization token.
+     * @param since The timestamp from which to pull changes.
+     */
+    @GET(SYNC_PULL)
     suspend fun pullSync(
-        @Header("Authorization") token: String,
-        @Query("since") since: Long
+        @Header(AUTHORIZATION) token: String,
+        @Query(SINCE) since: Long
     ): Response<SyncPullResponse>
 }
 
+/**
+ * Request item for pushing sync data.
+ * @property tableName The name of the table being synced.
+ * @property operation The operation being performed.
+ * @property recordId The ID of the record being synced.
+ * @property payload The JSON payload of the record.
+ */
 data class SyncPushRequestItem(
-    val table_name: String,
-    val operation: String,
-    val record_id: String,
-    val payload: String
+    @SerializedName(TABLE_NAME) val tableName: String,
+    @SerializedName(OPERATION) val operation: String,
+    @SerializedName(RECORD_ID) val recordId: String,
+    @SerializedName(PAYLOAD) val payload: String
 )
 
-data class SyncPushResponse(val success: Boolean, val applied: Int, val errors: List<String>)
+/**
+ * Response from a sync push operation.
+ * @property success Whether the operation was successful.
+ * @property applied The number of items applied on the server.
+ * @property errors A list of error messages, if any.
+ */
+data class SyncPushResponse(
+    val success: Boolean,
+    val applied: Int,
+    val errors: List<String>
+)
 
+/**
+ * Response from a sync pull operation containing all updated entities.
+ * @property children List of child entities.
+ * @property families List of family entities.
+ * @property placements List of placement entities.
+ * @property medicalRecords List of medical record entities.
+ * @property educationRecords List of education record entities.
+ * @property moneyRecords List of money record entities.
+ * @property documents List of document entities.
+ * @property caseReports List of case report entities.
+ * @property courtCases List of court case entities.
+ * @property guardians List of guardian entities.
+ * @property adoptionApplications List of adoption application entities.
+ * @property homeStudies List of home study entities.
+ * @property auditLogs List of audit log entities.
+ * @property notifications List of notification entities.
+ * @property backgroundChecks List of background check entities.
+ * @property fosterTasks List of foster task entities.
+ * @property fosterMatches List of foster match entities.
+ * @property permissions List of permission entities.
+ * @property userPermissions List of user permission entities.
+ * @property systemSettings List of system setting entities.
+ * @property users List of user entities.
+ * @property sosLocations List of SOS location entities.
+ * @property tasks List of task entities.
+ * @property actionItems List of action item entities.
+ * @property dashboardMetrics List of dashboard metric entities.
+ * @property dashboardPreferences List of dashboard preference entities.
+ * @property criticalDates List of critical date entities.
+ * @property workerMessages List of worker message entities.
+ * @property riskAssessments List of risk assessment entities.
+ * @property permanencyPlans List of permanency plan entities.
+ * @property caseload List of caseload entities.
+ * @property caseUrgencyFlags List of case urgency flag entities.
+ * @property caseActivities List of case activity entities.
+ * @property caseDeadlines List of case deadline entities.
+ * @property caseApprovals List of case approval entities.
+ * @property placementCompatibility List of placement compatibility entities.
+ * @property workloadTracking List of workload tracking entities.
+ */
 data class SyncPullResponse(
-    val children: List<com.example.adoption_and_childcare.data.db.entities.ChildEntity>,
-    val families: List<com.example.adoption_and_childcare.data.db.entities.FamilyEntity>,
-    val placements: List<com.example.adoption_and_childcare.data.db.entities.PlacementEntity>,
-    val medical_records: List<com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity>,
-    val education_records: List<com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity>,
-    val money_records: List<com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity>,
-    val documents: List<com.example.adoption_and_childcare.data.db.entities.DocumentEntity>,
-    val case_reports: List<com.example.adoption_and_childcare.data.db.entities.CaseReportEntity>,
-    val court_cases: List<com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity>,
-    val guardians: List<com.example.adoption_and_childcare.data.db.entities.GuardianEntity>,
-    val adoption_applications: List<com.example.adoption_and_childcare.data.db.entities.AdoptionApplicationEntity>,
-    val home_studies: List<com.example.adoption_and_childcare.data.db.entities.HomeStudyEntity>,
-    val audit_logs: List<com.example.adoption_and_childcare.data.db.entities.AuditLogEntity>,
+    val children: List<ChildEntity>,
+    val families: List<FamilyEntity>,
+    val placements: List<PlacementEntity>,
+    @SerializedName(MEDICAL_RECORDS_JSON) val medicalRecords: List<MedicalRecordEntity>,
+    @SerializedName(EDUCATION_RECORDS_JSON) val educationRecords: List<EducationRecordEntity>,
+    @SerializedName(MONEY_RECORDS_JSON) val moneyRecords: List<MoneyRecordEntity>,
+    val documents: List<DocumentEntity>,
+    @SerializedName(CASE_REPORTS_JSON) val caseReports: List<CaseReportEntity>,
+    @SerializedName(COURT_CASES_JSON) val courtCases: List<CourtCaseEntity>,
+    val guardians: List<GuardianEntity>,
+    @SerializedName(ADOPTION_APPLICATIONS_JSON) val adoptionApplications: List<AdoptionApplicationEntity>,
+    @SerializedName(HOME_STUDIES_JSON) val homeStudies: List<HomeStudyEntity>,
+    @SerializedName(AUDIT_LOGS_JSON) val auditLogs: List<AuditLogEntity>,
     val notifications: List<NotificationEntity>,
-    val background_checks: List<com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity>,
-    val foster_tasks: List<com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity>,
-    val foster_matches: List<com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity>,
-    val permissions: List<com.example.adoption_and_childcare.data.db.entities.PermissionEntity>,
-    val user_permissions: List<com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity>,
-    val system_settings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>,
-    val users: List<com.example.adoption_and_childcare.data.db.entities.UserEntity>,
-    val sos_locations: List<com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity>,
-    val tasks: List<com.example.adoption_and_childcare.data.db.entities.TaskEntity>,
-    val action_items: List<com.example.adoption_and_childcare.data.db.entities.ActionItemEntity>,
-    val dashboard_metrics: List<com.example.adoption_and_childcare.data.db.entities.DashboardMetricEntity>,
-    val dashboard_preferences: List<com.example.adoption_and_childcare.data.db.entities.DashboardPreferenceEntity>,
-    val critical_dates: List<com.example.adoption_and_childcare.data.db.entities.CriticalDateEntity>,
-    val worker_messages: List<com.example.adoption_and_childcare.data.db.entities.WorkerMessageEntity>,
-    val risk_assessments: List<com.example.adoption_and_childcare.data.db.entities.RiskAssessmentEntity>,
-    val permanency_plans: List<com.example.adoption_and_childcare.data.db.entities.PermanencyPlanEntity>,
-    val caseload: List<com.example.adoption_and_childcare.data.db.entities.CaseloadEntity>,
-    val case_urgency_flags: List<com.example.adoption_and_childcare.data.db.entities.CaseUrgencyFlagEntity>,
-    val case_activities: List<com.example.adoption_and_childcare.data.db.entities.CaseActivityEntity>,
-    val case_deadlines: List<com.example.adoption_and_childcare.data.db.entities.CaseDeadlineEntity>,
-    val case_approvals: List<com.example.adoption_and_childcare.data.db.entities.CaseApprovalEntity>,
-    val placement_compatibility: List<com.example.adoption_and_childcare.data.db.entities.PlacementCompatibilityEntity>,
-    val workload_tracking: List<com.example.adoption_and_childcare.data.db.entities.WorkloadTrackingEntity>
+    @SerializedName(BACKGROUND_CHECKS_JSON) val backgroundChecks: List<BackgroundCheckEntity>,
+    @SerializedName(FOSTER_TASKS_JSON) val fosterTasks: List<FosterTaskEntity>,
+    @SerializedName(FOSTER_MATCHES_JSON) val fosterMatches: List<FosterMatchEntity>,
+    val permissions: List<PermissionEntity>,
+    @SerializedName(USER_PERMISSIONS_JSON) val userPermissions: List<UserPermissionEntity>,
+    @SerializedName(SYSTEM_SETTINGS_JSON) val systemSettings: List<SystemSettingEntity>,
+    val users: List<UserEntity>,
+    @SerializedName(SOS_LOCATIONS_JSON) val sosLocations: List<SOSLocationEntity>,
+    val tasks: List<TaskEntity>,
+    @SerializedName(ACTION_ITEMS_JSON) val actionItems: List<ActionItemEntity>,
+    @SerializedName(DASHBOARD_METRICS_JSON) val dashboardMetrics: List<DashboardMetricEntity>,
+    @SerializedName(DASHBOARD_PREFERENCES_JSON) val dashboardPreferences: List<DashboardPreferenceEntity>,
+    @SerializedName(CRITICAL_DATES_JSON) val criticalDates: List<CriticalDateEntity>,
+    @SerializedName(WORKER_MESSAGES_JSON) val workerMessages: List<WorkerMessageEntity>,
+    @SerializedName(RISK_ASSESSMENTS_JSON) val riskAssessments: List<RiskAssessmentEntity>,
+    @SerializedName(PERMANENCY_PLANS_JSON) val permanencyPlans: List<PermanencyPlanEntity>,
+    val caseload: List<CaseloadEntity>,
+    @SerializedName(CASE_URGENCY_FLAGS_JSON) val caseUrgencyFlags: List<CaseUrgencyFlagEntity>,
+    @SerializedName(CASE_ACTIVITIES_JSON) val caseActivities: List<CaseActivityEntity>,
+    @SerializedName(CASE_DEADLINES_JSON) val caseDeadlines: List<CaseDeadlineEntity>,
+    @SerializedName(CASE_APPROVALS_JSON) val caseApprovals: List<CaseApprovalEntity>,
+    @SerializedName(PLACEMENT_COMPATIBILITY_JSON) val placementCompatibility: List<PlacementCompatibilityEntity>,
+    @SerializedName(WORKLOAD_TRACKING_JSON) val workloadTracking: List<WorkloadTrackingEntity>
 )
 
+/**
+ * Response for the unread notification count.
+ * @property unread The number of unread notifications.
+ */
 data class UnreadCountResponse(val unread: Int)
 
+/**
+ * Request to update the FCM token.
+ * @property fcmToken The new FCM token.
+ * @property deviceId The unique ID of the device.
+ * @property platform The platform of the device (default is "android").
+ */
 data class FcmTokenRequest(
     val fcmToken: String,
     val deviceId: String,
-    val platform: String = "android"
+    val platform: String = PLATFORM_ANDROID
 )
 
+/**
+ * Request for user login.
+ * @property email The user's email address.
+ * @property password The user's password.
+ */
 data class LoginRequest(
-    val username: String,
+    val email: String,
     val password: String
 )
 
+/**
+ * Request for user registration.
+ * @property username The desired username.
+ * @property email The user's email address.
+ * @property password The user's password.
+ * @property phone The user's phone number.
+ * @property idNumber The user's ID number.
+ * @property nationalIdNo The user's national ID number (optional).
+ * @property role The user's role in the system.
+ * @property county The user's county (optional).
+ * @property subCounty The user's sub-county (optional).
+ */
 data class RegisterRequest(
     val username: String,
     val email: String,
     val password: String,
     val phone: String,
-    val id_number: String,
+    @SerializedName(ID_NUMBER) val idNumber: String,
+    @SerializedName(NATIONAL_ID_NO) val nationalIdNo: String? = null,
     val role: String,
     val county: String? = null,
-    val sub_county: String? = null
+    @SerializedName(SUB_COUNTY) val subCounty: String? = null
 )
 
+/**
+ * Response for authentication requests.
+ * @property success Whether the authentication was successful.
+ * @property token The JWT token, if successful.
+ * @property user The user entity, if successful.
+ * @property error Error details, if unsuccessful.
+ */
 data class AuthResponse(
     val success: Boolean,
     val token: String?,
-    val user: com.example.adoption_and_childcare.data.db.entities.UserEntity?,
+    val user: UserEntity?,
     val error: ErrorDetail?
 )
 
+/**
+ * Error detail information.
+ * @property code The error code.
+ * @property message The error message.
+ */
 data class ErrorDetail(
     val code: String,
     val message: String
 )
 
+/**
+ * Summary of analytics data.
+ * @property totalChildren Total number of children in the system.
+ * @property totalFamilies Total number of families in the system.
+ * @property totalUsers Total number of users in the system.
+ * @property activePlacements Number of active placements.
+ * @property pendingApplications Number of pending adoption applications.
+ * @property pendingBackgroundChecks Number of pending background checks.
+ */
 data class AnalyticsSummary(
     val totalChildren: Int,
     val totalFamilies: Int,
@@ -387,13 +916,4 @@ data class AnalyticsSummary(
     val activePlacements: Int,
     val pendingApplications: Int,
     val pendingBackgroundChecks: Int
-)
-
-data class ActivityItem(
-    val id: Int,
-    val action: String,
-    val tableName: String,
-    val recordId: Int,
-    val changedAt: String,
-    val changedBy: String?
 )

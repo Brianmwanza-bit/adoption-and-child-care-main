@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.MoneyRecordDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for money/finance record data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class MoneyRecordRepositoryImpl @Inject constructor(
     private val moneyRecordDao: MoneyRecordDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,19 @@ class MoneyRecordRepositoryImpl @Inject constructor(
     
     suspend fun insert(record: MoneyRecordEntity, token: String): Result<Long> {
         return try {
-            val localId = moneyRecordDao.insert(record)
+            // Insert with sync queue support
+            moneyRecordDao.insertWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createMoneyRecord(authHeader, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync money record with API: ${response.message()}")
-                    }
+                    apiService.createMoneyRecord(authHeader, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for money record insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(record.moneyId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +44,17 @@ class MoneyRecordRepositoryImpl @Inject constructor(
     
     suspend fun update(record: MoneyRecordEntity, token: String): Result<Unit> {
         return try {
-            moneyRecordDao.update(record)
+            // Update with sync queue support
+            moneyRecordDao.updateWithSync(record, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateMoneyRecord(authHeader, record.moneyId, record)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync money record update with API: ${response.message()}")
-                    }
+                    apiService.updateMoneyRecord(authHeader, record.moneyId, record)
                 }
             } catch (e: Exception) {
-                println("API sync failed for money record update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +64,17 @@ class MoneyRecordRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            moneyRecordDao.deleteById(id)
+            // Delete with sync queue support
+            moneyRecordDao.deleteByIdWithSync(id, syncQueueDao)
+            
+            // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteMoneyRecord(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for money record delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

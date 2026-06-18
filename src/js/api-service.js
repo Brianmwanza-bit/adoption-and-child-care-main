@@ -1,5 +1,6 @@
 // API Service for Adoption & Child Care System
-const API_BASE_URL = 'http://192.168.43.197:50000';
+// Auto-detect base URL from current page origin
+const API_BASE_URL = window.location.origin;
 
 class ApiService {
     constructor() {
@@ -83,26 +84,49 @@ class ApiService {
 
     // Authentication
     async login(email, password) {
-        const response = await this.request('/login', {
+        const response = await this.request('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password })
         });
         
         if (response.token) {
             this.setToken(response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
         }
         
         return response;
     }
 
     async register(userData) {
-        return this.request('/register', {
+        const response = await this.request('/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(userData)
         });
+        
+        if (response.token) {
+            this.setToken(response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+        }
+        
+        return response;
+    }
+
+    logout() {
+        this.clearToken();
+        localStorage.removeItem('user');
+        window.location.href = '/login.html';
+    }
+
+    isAuthenticated() {
+        return !!this.token;
+    }
+
+    getCurrentUser() {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
     }
 
     // Specific endpoints for main entities

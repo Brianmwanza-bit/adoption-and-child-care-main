@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.UserPermissionDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for user permission data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class UserPermissionRepositoryImpl @Inject constructor(
     private val userPermissionDao: UserPermissionDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,18 @@ class UserPermissionRepositoryImpl @Inject constructor(
     
     suspend fun insert(userPermission: UserPermissionEntity, token: String): Result<Long> {
         return try {
-            val localId = userPermissionDao.insert(userPermission)
+            // Insert with sync queue support
+            userPermissionDao.insertWithSync(userPermission, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createUserPermission(authHeader, userPermission)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync user permission with API: ${response.message()}")
-                    }
+                    apiService.createUserPermission(authHeader, userPermission)
                 }
             } catch (e: Exception) {
-                println("API sync failed for user permission insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(userPermission.id.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,14 +43,16 @@ class UserPermissionRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            userPermissionDao.deleteById(id)
+            // Delete with sync queue support
+            userPermissionDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteUserPermission(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for user permission delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

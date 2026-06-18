@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,7 @@ import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -344,6 +346,17 @@ fun EmergencyActiveBanner() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncIconWithState(state: SyncState, pendingCount: Int, tint: Color = Color.Unspecified) {
+    val infiniteTransition = rememberInfiniteTransition(label = "syncRotation")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotation"
+    )
+
     Box(contentAlignment = Alignment.Center) {
         BadgedBox(
             badge = {
@@ -354,7 +367,12 @@ fun SyncIconWithState(state: SyncState, pendingCount: Int, tint: Color = Color.U
                 }
             }
         ) {
-            Icon(Icons.Outlined.CloudUpload, contentDescription = "Sync", tint = tint)
+            Icon(
+                imageVector = Icons.Outlined.CloudUpload,
+                contentDescription = "Sync",
+                tint = tint,
+                modifier = if (state == SyncState.SYNCING) Modifier.rotate(rotation) else Modifier
+            )
         }
         
         Canvas(modifier = Modifier.size(24.dp).align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp)) {

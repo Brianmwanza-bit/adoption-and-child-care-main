@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.GuardianDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.GuardianEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for guardian data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class GuardianRepositoryImpl @Inject constructor(
     private val guardianDao: GuardianDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,18 @@ class GuardianRepositoryImpl @Inject constructor(
     
     suspend fun insert(guardian: GuardianEntity, token: String): Result<Long> {
         return try {
-            val localId = guardianDao.insert(guardian)
+            // Insert with sync queue support
+            guardianDao.insertWithSync(guardian, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createGuardian(authHeader, guardian)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync guardian with API: ${response.message()}")
-                    }
+                    apiService.createGuardian(authHeader, guardian)
                 }
             } catch (e: Exception) {
-                println("API sync failed for guardian insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(guardian.guardianId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +43,16 @@ class GuardianRepositoryImpl @Inject constructor(
     
     suspend fun update(guardian: GuardianEntity, token: String): Result<Unit> {
         return try {
-            guardianDao.update(guardian)
+            // Update with sync queue support
+            guardianDao.updateWithSync(guardian, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateGuardian(authHeader, guardian.guardianId, guardian)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync guardian update with API: ${response.message()}")
-                    }
+                    apiService.updateGuardian(authHeader, guardian.guardianId, guardian)
                 }
             } catch (e: Exception) {
-                println("API sync failed for guardian update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +62,16 @@ class GuardianRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            guardianDao.deleteById(id)
+            // Delete with sync queue support
+            guardianDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteGuardian(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for guardian delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

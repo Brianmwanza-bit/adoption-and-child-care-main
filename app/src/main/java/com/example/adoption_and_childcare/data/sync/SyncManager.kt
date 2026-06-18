@@ -100,40 +100,74 @@ class SyncManager(
                         for (item in data.children) db.childDao().insert(item)
                         for (item in data.families) db.familyDao().insert(item)
                         for (item in data.placements) db.placementDao().insert(item)
-                        for (item in data.medical_records) db.medicalRecordDao().insert(item)
-                        for (item in data.education_records) db.educationRecordDao().insert(item)
-                        for (item in data.money_records) db.moneyRecordDao().insert(item)
+                        for (item in data.medicalRecords) db.medicalRecordDao().insert(item)
+                        for (item in data.educationRecords) db.educationRecordDao().insert(item)
+                        for (item in data.moneyRecords) db.moneyRecordDao().insert(item)
                         for (item in data.documents) db.documentDao().insert(item)
-                        for (item in data.case_reports) db.caseReportDao().insert(item)
-                        for (item in data.court_cases) db.courtCaseDao().insert(item)
+                        for (item in data.caseReports) db.caseReportDao().insert(item)
+                        for (item in data.courtCases) db.courtCaseDao().insert(item)
                         for (item in data.guardians) db.guardianDao().insert(item)
-                        for (item in data.adoption_applications) db.adoptionApplicationDao().insert(item)
-                        for (item in data.home_studies) db.homeStudyDao().insert(item)
-                        for (item in data.audit_logs) db.auditLogDao().insert(item)
+                        for (item in data.adoptionApplications) db.adoptionApplicationDao().insert(item)
+                        for (item in data.homeStudies) db.homeStudyDao().insert(item)
+                        for (item in data.auditLogs) db.auditLogDao().insert(item)
                         for (item in data.notifications) db.notificationDao().insertNotification(item)
                         
                         // Additional tables for full system sync
-                        for (item in data.background_checks) db.backgroundCheckDao().insert(item)
-                        for (item in data.foster_tasks) db.fosterTaskDao().insert(item)
-                        for (item in data.foster_matches) db.fosterMatchDao().insert(item)
+                        for (item in data.backgroundChecks) db.backgroundCheckDao().insert(item)
+                        for (item in data.fosterTasks) db.fosterTaskDao().insert(item)
+                        for (item in data.fosterMatches) db.fosterMatchDao().insert(item)
+                        for (item in data.systemSettings) db.systemSettingDao().insert(item)
+                        for (item in data.sosLocations) db.sosLocationDao().insert(item)
                         for (item in data.permissions) db.permissionDao().insert(item)
-                        for (item in data.user_permissions) db.userPermissionDao().insert(item)
-                        for (item in data.system_settings) db.systemSettingDao().insert(item)
+                        for (item in data.userPermissions) db.userPermissionDao().insert(item)
                         for (item in data.users) db.userDao().insert(item)
-                        for (item in data.sos_locations) db.sosLocationDao().insert(item)
+                        
+                        // Dashboard and Case Management tables
+                        for (item in data.tasks) db.taskDao().insert(item)
+                        for (item in data.actionItems) db.actionItemDao().insert(item)
+                        for (item in data.dashboardMetrics) db.dashboardMetricDao().insert(item)
+                        for (item in data.dashboardPreferences) db.dashboardPreferenceDao().insert(item)
+                        for (item in data.criticalDates) db.criticalDateDao().insert(item)
+                        for (item in data.workerMessages) db.workerMessageDao().insert(item)
+                        for (item in data.riskAssessments) db.riskAssessmentDao().insert(item)
+                        for (item in data.permanencyPlans) db.permanencyPlanDao().insert(item)
+                        for (item in data.caseload) db.caseloadDao().insert(item)
+                        for (item in data.caseUrgencyFlags) db.caseUrgencyFlagDao().insert(item)
+                        for (item in data.caseActivities) db.caseActivityDao().insert(item)
+                        for (item in data.caseDeadlines) db.caseDeadlineDao().insert(item)
+                        for (item in data.caseApprovals) db.caseApprovalDao().insert(item)
+                        for (item in data.placementCompatibility) db.placementCompatibilityDao().insert(item)
+                        for (item in data.workloadTracking) db.workloadTrackingDao().insert(item)
                     }
                     
                     pulledCount = data.children.size + data.families.size + data.placements.size + 
-                                  data.medical_records.size + data.education_records.size + 
-                                  data.money_records.size + data.documents.size + 
-                                  data.case_reports.size + data.court_cases.size + 
-                                  data.guardians.size + data.adoption_applications.size +
-                                  data.home_studies.size + data.audit_logs.size +
-                                  data.notifications.size + data.background_checks.size +
-                                  data.foster_tasks.size + data.foster_matches.size +
-                                  data.permissions.size + data.user_permissions.size +
-                                  data.system_settings.size + data.users.size +
-                                  data.sos_locations.size
+                                  data.medicalRecords.size + data.educationRecords.size + 
+                                  data.moneyRecords.size + data.documents.size + 
+                                  data.caseReports.size + data.courtCases.size + 
+                                  data.guardians.size + data.adoptionApplications.size +
+                                  data.homeStudies.size + data.auditLogs.size +
+                                  data.notifications.size + data.backgroundChecks.size +
+                                  data.fosterTasks.size + data.fosterMatches.size +
+                                  data.systemSettings.size +
+                                  data.sosLocations.size +
+                                  data.permissions.size +
+                                  data.userPermissions.size +
+                                  data.users.size +
+                                  data.tasks.size +
+                                  data.actionItems.size +
+                                  data.dashboardMetrics.size +
+                                  data.dashboardPreferences.size +
+                                  data.criticalDates.size +
+                                  data.workerMessages.size +
+                                  data.riskAssessments.size +
+                                  data.permanencyPlans.size +
+                                  data.caseload.size +
+                                  data.caseUrgencyFlags.size +
+                                  data.caseActivities.size +
+                                  data.caseDeadlines.size +
+                                  data.caseApprovals.size +
+                                  data.placementCompatibility.size +
+                                  data.workloadTracking.size
                 }
             } else {
                 return@withContext SyncResult.Error(

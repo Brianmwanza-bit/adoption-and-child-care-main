@@ -74,7 +74,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Send token to server using coroutine
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val response = RetrofitClient.apiService.updateFcmToken(
+                val apiService = RetrofitClient.getDynamicApiService(this@MyFirebaseMessagingService)
+                val response = apiService.updateFcmToken(
                     authToken = "Bearer $authToken",
                     request = request
                 )
@@ -129,7 +130,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
                     CoroutineScope(Dispatchers.IO).launch {
                         try {
-                            val response = RetrofitClient.apiService.updateFcmToken(
+                            val apiService = RetrofitClient.getDynamicApiService(appContext)
+                            val response = apiService.updateFcmToken(
                                 authToken = "Bearer $authToken",
                                 request = request
                             )

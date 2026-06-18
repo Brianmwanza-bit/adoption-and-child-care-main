@@ -1,11 +1,12 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,8 +16,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.AdoptionApplicationEntity
+import com.example.adoption_and_childcare.data.repository.AdoptionApplicationRepository
 import com.example.adoption_and_childcare.data.repository.AdoptionApplicationRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
+import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -26,7 +29,8 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
     val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { AdoptionApplicationRepositoryImpl(db.adoptionApplicationDao(), apiService) }
+    val authManager = remember { AuthManager(context) }
+    val repository = remember { AdoptionApplicationRepositoryImpl(context, db.adoptionApplicationDao(), db.syncQueueDao(), apiService, authManager) }
     
     var apps by remember { mutableStateOf<List<AdoptionApplicationEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
@@ -50,7 +54,7 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -62,7 +66,7 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
                 title = { Text("Adoption Applications") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -73,20 +77,53 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
+        val scrollState = rememberScrollState()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             if (apps.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                     Text("No applications yet")
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(apps) { a ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(12.dp)) {
-                                Text("Application #${a.applicationId}")
-                                Text("Family ID: ${a.familyId}")
-                                a.status?.let { Text("Status: $it", style = MaterialTheme.typography.bodySmall) }
-                            }
+                apps.forEachIndexed { index, a ->
+                    FormRecordCard(
+                        title = "ADOPTION APPLICATION #${a.applicationId}",
+                        subtitle = "Application No: ${a.applicationNumber ?: "N/A"}",
+                        pageNumber = index + 1,
+                        onEdit = {
+                            // TODO: Implement Edit
+                        },
+                        onDelete = {
+                            // TODO: Implement Delete
+                        },
+                        onDownloadPdf = {
+                            // TODO: Implement PDF Generation
+                        },
+                        headerIcon = Icons.Default.AssignmentTurnedIn
+                    ) {
+                        FormDetailRow(label = "Family ID", value = a.familyId.toString())
+                        FormDetailRow(label = "Child ID", value = a.childId?.toString() ?: "N/A")
+                        FormDetailRow(label = "Status", value = a.status ?: "Pending")
+                        FormDetailRow(label = "Submitted Date", value = a.submittedAt ?: "N/A")
+
+                        if (!a.notes.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Notes",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = a.notes!!,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                         }
                     }
                 }
@@ -140,14 +177,15 @@ fun AdoptionApplicationsScreen(onBack: () -> Unit = {}) {
  * Helper function to fetch adoption applications from API.
  */
 private fun fetchFromApi(
-    repository: AdoptionApplicationRepositoryImpl,
+    repository: AdoptionApplicationRepository,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

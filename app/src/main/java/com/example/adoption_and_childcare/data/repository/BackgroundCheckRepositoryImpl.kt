@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.dao.BackgroundCheckDao
+import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.BackgroundCheckEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
@@ -10,11 +11,12 @@ import javax.inject.Singleton
 
 /**
  * Repository for background check data with API integration.
- * Provides offline-first architecture with background sync to MySQL backend.
+ * Provides offline-first architecture with background sync via sync queue.
  */
 @Singleton
 class BackgroundCheckRepositoryImpl @Inject constructor(
     private val backgroundCheckDao: BackgroundCheckDao,
+    private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
@@ -22,19 +24,18 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
     
     suspend fun insert(check: BackgroundCheckEntity, token: String): Result<Long> {
         return try {
-            val localId = backgroundCheckDao.insert(check)
+            // Insert with sync queue support
+            backgroundCheckDao.insertWithSync(check, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.createBackgroundCheck(authHeader, check)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync background check with API: ${response.message()}")
-                    }
+                    apiService.createBackgroundCheck(authHeader, check)
                 }
             } catch (e: Exception) {
-                println("API sync failed for background check insert: ${e.message}")
+                // Ignore
             }
-            Result.success(localId)
+            Result.success(check.checkId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -42,17 +43,16 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
     
     suspend fun update(check: BackgroundCheckEntity, token: String): Result<Unit> {
         return try {
-            backgroundCheckDao.update(check)
+            // Update with sync queue support
+            backgroundCheckDao.updateWithSync(check, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    val response = apiService.updateBackgroundCheck(authHeader, check.checkId, check)
-                    if (!response.isSuccessful) {
-                        println("Failed to sync background check update with API: ${response.message()}")
-                    }
+                    apiService.updateBackgroundCheck(authHeader, check.checkId, check)
                 }
             } catch (e: Exception) {
-                println("API sync failed for background check update: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,14 +62,16 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
     
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
-            backgroundCheckDao.deleteById(id)
+            // Delete with sync queue support
+            backgroundCheckDao.deleteByIdWithSync(id, syncQueueDao)
+            
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
                     apiService.deleteBackgroundCheck(authHeader, id)
                 }
             } catch (e: Exception) {
-                println("API sync failed for background check delete: ${e.message}")
+                // Ignore
             }
             Result.success(Unit)
         } catch (e: Exception) {

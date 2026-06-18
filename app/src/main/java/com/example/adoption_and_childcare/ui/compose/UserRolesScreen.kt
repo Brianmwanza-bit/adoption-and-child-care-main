@@ -8,13 +8,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.PermissionEntity
 import com.example.adoption_and_childcare.data.db.entities.UserPermissionEntity
@@ -45,7 +45,6 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
     
     // UI State
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
     
     var showCreatePermission by remember { mutableStateOf(false) }
     var showEditPermission by remember { mutableStateOf(false) }
@@ -67,26 +66,25 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchPermissionsFromApi(permissionRepository, userPermissionRepository, scope) { loading, error ->
+        fetchPermissionsFromApi(permissionRepository, userPermissionRepository, authManager, scope) { loading, _ ->
             isLoading = loading
-            errorMessage = error
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("User Roles & Permissions") },
+                title = { Text(stringResource(R.string.dashboard_label_user_roles)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.search_back_desc))
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreatePermission = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Permission")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.user_management_add_user))
             }
         }
     ) { padding ->
@@ -96,15 +94,15 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Text("System Permissions", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.title_permissions), style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(16.dp))
             
             if (permissions.isEmpty()) {
                 Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    Text("No permissions defined yet", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.risk_assessment_empty), style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
                     items(permissions) { permission ->
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                             Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -123,13 +121,13 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                                         permDescription = TextFieldValue(permission.description ?: "")
                                         permCategory = TextFieldValue(permission.category ?: "")
                                     }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.user_management_edit), tint = MaterialTheme.colorScheme.primary)
                                     }
                                     IconButton(onClick = {
                                         selectedPermission = permission
                                         showDeletePermission = true
                                     }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.user_management_delete), tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }
@@ -147,11 +145,11 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                     Text("No permission assignments yet", style = MaterialTheme.typography.bodyLarge)
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
                     items(userPermissions) { up ->
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp)) {
-                                Text("User ID: ${up.userId}", style = MaterialTheme.typography.bodyMedium)
+                                Text(stringResource(R.string.bg_checks_user_id_label, up.userId), style = MaterialTheme.typography.bodyMedium)
                                 val perm = permissions.find { it.permissionId == up.permissionId }
                                 perm?.let {
                                     Text("Permission: ${it.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -218,8 +216,9 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                 TextButton(onClick = {
                     if (permName.text.isNotBlank()) {
                         scope.launch {
+                            val current = selectedPermission ?: return@launch
                             db.permissionDao().update(
-                                selectedPermission!!.copy(
+                                current.copy(
                                     name = permName.text,
                                     description = permDescription.text.ifBlank { null },
                                     category = permCategory.text.ifBlank { null }
@@ -229,7 +228,7 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                             selectedPermission = null
                         }
                     }
-                }) { Text("Update") }
+                }) { Text(stringResource(R.string.user_management_update)) }
             },
             dismissButton = {
                 TextButton(onClick = { showEditPermission = false; selectedPermission = null }) { Text("Cancel") }
@@ -239,6 +238,7 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
 
     // Delete Permission Dialog
     if (showDeletePermission && selectedPermission != null) {
+        val current = selectedPermission ?: return
         AlertDialog(
             onDismissRequest = { showDeletePermission = false; selectedPermission = null },
             title = { Text("Delete Permission") },
@@ -246,11 +246,11 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
-                        db.permissionDao().deleteById(selectedPermission!!.permissionId)
+                        db.permissionDao().deleteById(current.permissionId)
                         showDeletePermission = false
                         selectedPermission = null
                     }
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.user_management_delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 TextButton(onClick = { showDeletePermission = false; selectedPermission = null }) { Text("Cancel") }
@@ -265,13 +265,14 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
 private fun fetchPermissionsFromApi(
     permissionRepository: PermissionRepositoryImpl,
     userPermissionRepository: UserPermissionRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 // Fetch permissions
                 val permResult = permissionRepository.fetchFromApi(token)

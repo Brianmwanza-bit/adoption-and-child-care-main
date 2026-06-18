@@ -13,16 +13,6 @@ import javax.inject.Inject
 
 /**
  * ViewModel for the Dashboard screen, providing real-time data from multiple DAOs and backend API.
- * 
- * @property childDao DAO for children data.
- * @property familyDao DAO for families data.
- * @property adoptionApplicationDao DAO for adoption applications.
- * @property homeStudyDao DAO for home study records.
- * @property placementDao DAO for placement records.
- * @property auditLogDao DAO for system audit logs.
- * @property notificationDao DAO for user notifications.
- * @property courtCaseDao DAO for legal court cases.
- * @property apiService Retrofit API service for backend communication.
  */
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -34,60 +24,58 @@ class DashboardViewModel @Inject constructor(
     private val auditLogDao: AuditLogDao,
     private val notificationDao: NotificationDao,
     private val courtCaseDao: CourtCaseDao,
+    private val fosterTaskDao: FosterTaskDao,
+    private val dashboardMetricDao: DashboardMetricDao,
+    private val systemSettingDao: SystemSettingDao,
     private val apiService: ApiService
 ) : ViewModel() {
 
-    /** Current count of children in the database. */
     private val _childCount = MutableStateFlow(0)
     val childCount: StateFlow<Int> = _childCount.asStateFlow()
 
-    /** Current count of active placements. */
+    private val _familyCount = MutableStateFlow(0)
+    val familyCount: StateFlow<Int> = _familyCount.asStateFlow()
+
     private val _placementCount = MutableStateFlow(0)
     val placementCount: StateFlow<Int> = _placementCount.asStateFlow()
 
-    /** Current count of pending adoption applications. */
     private val _applicationCount = MutableStateFlow(0)
     val applicationCount: StateFlow<Int> = _applicationCount.asStateFlow()
 
-    /** Current count of home study records. */
-    private val _homeStudyCount = MutableStateFlow(0)
-    val homeStudyCount: StateFlow<Int> = _homeStudyCount.asStateFlow()
+    private val _overdueTasksCount = MutableStateFlow(0)
+    val overdueTasksCount: StateFlow<Int> = _overdueTasksCount.asStateFlow()
 
-    /** Backend analytics summary */
-    private val _analyticsSummary = MutableStateFlow<AnalyticsSummary?>(null)
-    val analyticsSummary: StateFlow<AnalyticsSummary?> = _analyticsSummary.asStateFlow()
-
-    /** Loading state for API calls */
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    /** Error state for API calls */
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _analyticsSummary = MutableStateFlow<AnalyticsSummary?>(null)
+    val analyticsSummary: StateFlow<AnalyticsSummary?> = _analyticsSummary.asStateFlow()
+
+    /** Flow of dashboard metrics for UI display. */
+    val metrics: StateFlow<List<DashboardMetricEntity>> = dashboardMetricDao.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Flow of system settings (e.g., Features, Testimonials). */
+    val settings: StateFlow<List<SystemSettingEntity>> = systemSettingDao.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Flow of recent system activities from the audit logs. */
     val recentActivities: StateFlow<List<AuditLogEntity>> = auditLogDao.observeAll()
         .map { list -> list.take(10) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** Flow of pending tasks. */
+    val pendingTasks: StateFlow<List<FosterTaskEntity>> = fosterTaskDao.observeAll()
+        .map { list -> list.filter { it.status?.uppercase() != "COMPLETED" }.take(5) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     /** Flow of priority alerts from system-wide notifications. */
     val priorityAlerts: StateFlow<List<NotificationEntity>> = notificationDao.observeAll()
         .map { list -> list.take(5) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    /** Flow of combined upcoming events from court cases and home studies. */
-    val upcomingEvents: StateFlow<List<Any>> = combine(
-        courtCaseDao.observeUpcoming(),
-        homeStudyDao.observeUpcoming()
-    ) { courtCases, homeStudies ->
-        (courtCases + homeStudies).sortedBy { 
-            when (it) {
-                is CourtCaseEntity -> it.hearingDate
-                is HomeStudyEntity -> it.startedAt
-                else -> ""
-            }
-        }.take(10)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         refreshData()
@@ -99,9 +87,15 @@ class DashboardViewModel @Inject constructor(
     fun refreshData() {
         viewModelScope.launch {
             _childCount.value = childDao.count()
+            _familyCount.value = familyDao.count()
             _placementCount.value = placementDao.count()
             _applicationCount.value = adoptionApplicationDao.count()
-            _homeStudyCount.value = homeStudyDao.count()
+            
+            val allTasks = fosterTaskDao.getAll()
+            val now = System.currentTimeMillis().toString()
+            _overdueTasksCount.value = allTasks.count { 
+                it.status?.uppercase() == "PENDING" && it.dueDate != null && it.dueDate < now
+            }
         }
     }
 
@@ -122,7 +116,6 @@ class DashboardViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _error.value = "Network error: ${e.message}"
-                // Fall back to local data
                 refreshData()
             } finally {
                 _isLoading.value = false

@@ -96,8 +96,9 @@ class EducationRecordRepositoryImpl @Inject constructor(
             }
             
             val response = apiService.getAllEducationRecords(authHeader)
-            if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                Result.success(body)
             } else {
                 Result.failure(Exception("Failed to fetch education records: ${response.message()}"))
             }

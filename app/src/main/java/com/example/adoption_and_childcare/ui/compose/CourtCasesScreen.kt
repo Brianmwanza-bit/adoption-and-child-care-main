@@ -5,67 +5,47 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.CourtCaseEntity
 import com.example.adoption_and_childcare.data.repository.CourtCaseRepositoryImpl
 import com.example.adoption_and_childcare.network.RetrofitClient
 import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
+import com.example.adoption_and_childcare.viewmodel.CourtCasesViewModel
 import kotlinx.coroutines.launch
 
-/**
- * Screen for managing court cases related to children.
- *
- * @param onBack Callback invoked when the user navigates back.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourtCasesScreen(onBack: () -> Unit = {}) {
+fun CourtCasesScreen(
+    onBack: () -> Unit = {},
+    viewModel: CourtCasesViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { CourtCaseRepositoryImpl(db.courtCaseDao(), db.syncQueueDao(), apiService, authManager) }
-    
-    var cases by remember { mutableStateOf<List<CourtCaseEntity>>(emptyList()) }
+    val cases by viewModel.courtCases.collectAsState(initial = emptyList())
+    val children by viewModel.children.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     
     var showCreate by remember { mutableStateOf(false) }
 
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var caseNumber by remember { mutableStateOf(TextFieldValue("")) }
     var courtName by remember { mutableStateOf(TextFieldValue("")) }
     var status by remember { mutableStateOf("Pending") }
     val statuses = listOf("Pending", "Ongoing", "Closed", "Appealed")
     var showStatusDropdown by remember { mutableStateOf(false) }
-
-    // Load from local DB
-    LaunchedEffect(Unit) {
-        db.courtCaseDao().observeAll().collectLatest { list ->
-            cases = list
-        }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchFromApi(repository, authManager, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -74,6 +54,11 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refreshFromApi() }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
             )
@@ -90,33 +75,45 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            if (cases.isEmpty()) {
+            // Case Summary (Building on what's available)
+            if (cases.isNotEmpty()) {
+                CourtCaseSummaryCard(cases)
+                Spacer(Modifier.height(16.dp))
+            }
+
+            if (cases.isEmpty() && !isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No court cases found", style = MaterialTheme.typography.bodyLarge)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Gavel, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("No court cases found", style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(cases) { courtCase ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("Case: ${courtCase.caseNumber}", style = MaterialTheme.typography.titleMedium)
-                                    Text("Status: ${courtCase.status}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    Text("Court: ${courtCase.courtName}", style = MaterialTheme.typography.bodySmall)
-                                    Text("Child ID: ${courtCase.childId}", style = MaterialTheme.typography.bodySmall)
-                                }
-                                IconButton(onClick = {
-                                    scope.launch {
-                                        db.courtCaseDao().deleteById(courtCase.caseId)
-                                    }
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                }
+                        FormRecordCard(
+                            title = "CASE #${courtCase.caseNumber}",
+                            subtitle = "Court: ${courtCase.courtName}",
+                            pageNumber = 1,
+                            onEdit = {
+                                // Implement detailed edit if needed
+                            },
+                            onDelete = {
+                                viewModel.deleteCase(courtCase.caseId)
+                            },
+                            onDownloadPdf = {
+                                println("Generating Legal PDF for Case ${courtCase.caseNumber}")
+                            },
+                            headerIcon = Icons.Default.Gavel
+                        ) {
+                            FormDetailRow(label = "Child ID", value = courtCase.childId.toString())
+                            val child = children.find { it.childId == courtCase.childId }
+                            if (child != null) {
+                                FormDetailRow(label = "Child Name", value = "${child.firstName} ${child.lastName}")
                             }
+                            FormDetailRow(label = "Status", value = courtCase.status ?: "Pending", valueColor = MaterialTheme.colorScheme.primary)
+                            FormDetailRow(label = "Hearing Date", value = courtCase.hearingDate ?: "Not set")
                         }
                     }
                 }
@@ -130,9 +127,13 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
             title = { Text("Add Court Case") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") })
-                    OutlinedTextField(value = caseNumber, onValueChange = { caseNumber = it }, label = { Text("Case Number") })
-                    OutlinedTextField(value = courtName, onValueChange = { courtName = it }, label = { Text("Court Name") })
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId }
+                    )
+                    OutlinedTextField(value = caseNumber, onValueChange = { caseNumber = it }, label = { Text("Case Number") }, singleLine = true)
+                    OutlinedTextField(value = courtName, onValueChange = { courtName = it }, label = { Text("Court Name") }, singleLine = true)
                     ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
                         OutlinedTextField(
                             value = status,
@@ -140,7 +141,7 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
                             readOnly = true,
                             label = { Text("Status") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
                             statuses.forEach { s ->
@@ -155,19 +156,20 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val cid = childId.text.toIntOrNull()
+                    val cid = selectedChildId
                     if (cid != null && caseNumber.text.isNotBlank()) {
-                        scope.launch {
-                            db.courtCaseDao().insert(
-                                CourtCaseEntity(
-                                    childId = cid,
-                                    caseNumber = caseNumber.text,
-                                    courtName = courtName.text,
-                                    status = status
-                                )
+                        viewModel.insertCase(
+                            CourtCaseEntity(
+                                childId = cid,
+                                caseNumber = caseNumber.text,
+                                courtName = courtName.text,
+                                status = status
                             )
-                            showCreate = false
-                        }
+                        )
+                        showCreate = false
+                        selectedChildId = null
+                        caseNumber = TextFieldValue("")
+                        courtName = TextFieldValue("")
                     }
                 }) { Text("Save") }
             },
@@ -178,10 +180,31 @@ fun CourtCasesScreen(onBack: () -> Unit = {}) {
     }
 }
 
+@Composable
+fun CourtCaseSummaryCard(cases: List<CourtCaseEntity>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Legal Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Total Active Cases:")
+                Text("${cases.count { it.status != "Closed" }}", fontWeight = FontWeight.Bold)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Ongoing Hearings:")
+                Text("${cases.count { it.status == "Ongoing" }}", fontWeight = FontWeight.Medium)
+            }
+        }
+    }
+}
+
 /**
  * Helper function to fetch court cases from API.
  */
-private fun fetchFromApi(
+fun fetchFromApi(
     repository: CourtCaseRepositoryImpl,
     authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,

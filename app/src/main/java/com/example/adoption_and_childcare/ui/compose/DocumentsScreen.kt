@@ -1,122 +1,199 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
-import com.example.adoption_and_childcare.data.repository.DocumentRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
-import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
+import com.example.adoption_and_childcare.viewmodel.DocumentsViewModel
 import kotlinx.coroutines.launch
 
+/**
+ * Screen for managing documents related to child care and adoption.
+ * 
+ * Users can search, filter, view, add, edit, and delete documents.
+ * 
+ * @param onBack Callback for navigating back.
+ * @param viewModel ViewModel for document management logic.
+ */
+@Suppress("SpellCheckingInspection")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentsScreen(onBack: () -> Unit = {}) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { DocumentRepositoryImpl(db.documentDao(), db.syncQueueDao(), apiService, authManager) }
+fun DocumentsScreen(
+    onBack: () -> Unit = {},
+    viewModel: DocumentsViewModel = hiltViewModel()
+) {
+    val docs by viewModel.documents.collectAsState(initial = emptyList())
+    val children by viewModel.children.collectAsState(initial = emptyList())
     
-    var docs by remember { mutableStateOf<List<DocumentEntity>>(emptyList()) }
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            /**
+             * The error message to be displayed in the snackbar.
+             */
+            snackbarHostState.showSnackbar(message)
+        }
+    }
     
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedDoc by remember { mutableStateOf<DocumentEntity?>(null) }
     
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var isViewingPdf by remember { mutableStateOf(false) }
+
+    if (isViewingPdf && selectedDoc != null) {
+        val docName = selectedDoc?.fileName ?: ""
+        val downloadMessage = stringResource(R.string.docs_downloading, docName)
+        
+        PdfViewerScreen(
+            fileName = if (docName.isNotEmpty()) docName else stringResource(R.string.search_document_label),
+            onBack = { isViewingPdf = false; selectedDoc = null },
+            onDownload = {
+                scope.launch {
+                    snackbarHostState.showSnackbar(downloadMessage)
+                }
+            },
+            onShare = {
+                val sendIntent: Intent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "Sharing document: $docName")
+                    type = "text/plain"
+                }
+                val shareIntent = Intent.createChooser(sendIntent, null)
+                context.startActivity(shareIntent)
+            },
+            onPrint = {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Preparing to print $docName...")
+                }
+            }
+        )
+        return
+    }
+
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var docType by remember { mutableStateOf(TextFieldValue("")) }
     var fileName by remember { mutableStateOf(TextFieldValue("")) }
     var filePath by remember { mutableStateOf(TextFieldValue("")) }
 
-    // Load from local DB
-    LaunchedEffect(Unit) {
-        db.documentDao().observeAll().collectLatest { list ->
-            docs = list
-        }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
+    // Search and Filter (Real-world enhancement)
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredDocs = docs.filter { doc ->
+        /**
+         * Filter documents by file name or document type.
+         */
+        doc.fileName.contains(searchQuery, ignoreCase = true) || 
+        (doc.documentType.contains(searchQuery, ignoreCase = true))
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text("Documents") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            Column {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.docs_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.docs_back_desc))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.refreshFromApi() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.docs_refresh_desc))
+                        }
                     }
-                }
-            )
+                )
+                SearchBarModern(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Document")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.docs_add_desc))
             }
         }
-    ) { padding ->
-        Column(Modifier.fillMaxSize().padding(16.dp).padding(padding)) {
-            if (docs.isEmpty()) {
+    ) { paddingValues ->
+        /**
+         * Main content area of the Documents screen.
+         */
+        Column(Modifier.fillMaxSize().padding(16.dp).padding(paddingValues)) {
+            if (filteredDocs.isEmpty() && !isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No documents yet", style = MaterialTheme.typography.bodyLarge)
+                        Text(if (searchQuery.isEmpty()) stringResource(R.string.docs_no_docs) else stringResource(R.string.docs_no_match, searchQuery), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(docs) { d ->
-                        ElevatedCard(Modifier.fillMaxWidth()) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.padding(12.dp).weight(1f)) {
-                                    Text(d.fileName, style = MaterialTheme.typography.titleMedium)
-                                    Text("Child ID: ${d.childId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    d.documentType?.let { Text("Type: $it", style = MaterialTheme.typography.bodySmall) }
-                                    d.uploadedAt?.let { Text("Uploaded: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                                }
-                                Row(verticalAlignment = Alignment.Top) {
-                                    IconButton(onClick = {
-                                        selectedDoc = d
-                                        showEditDialog = true
-                                        childId = TextFieldValue(d.childId.toString())
-                                        docType = TextFieldValue(d.documentType ?: "")
-                                        fileName = TextFieldValue(d.fileName)
-                                        filePath = TextFieldValue(d.filePath ?: "")
-                                    }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
-                                    }
-                                    IconButton(onClick = {
-                                        selectedDoc = d
-                                        showDeleteDialog = true
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
+                    items(filteredDocs) { docItem ->
+                        /**
+                         * A single document record card.
+                         */
+                        FormRecordCard(
+                            title = stringResource(R.string.docs_item_id, docItem.documentId),
+                            subtitle = docItem.fileName,
+                            pageNumber = 1,
+                            onEdit = {
+                                selectedDoc = docItem
+                                showEditDialog = true
+                                selectedChildId = docItem.childId
+                                docType = TextFieldValue(docItem.documentType)
+                                fileName = TextFieldValue(docItem.fileName)
+                                filePath = TextFieldValue(docItem.filePath ?: "")
+                            },
+                            onDelete = {
+                                selectedDoc = docItem
+                                showDeleteDialog = true
+                            },
+                            onDownloadPdf = {
+                                selectedDoc = docItem
+                                isViewingPdf = true
+                            },
+                            headerIcon = Icons.AutoMirrored.Filled.InsertDriveFile
+                        ) {
+                            FormDetailRow(label = stringResource(R.string.docs_label_child_id), value = docItem.childId.toString())
+                            val child = children.find { c -> 
+                                /**
+                                 * Find the child associated with this document.
+                                 */
+                                c.childId == docItem.childId 
                             }
+                            if (child != null) {
+                                FormDetailRow(label = stringResource(R.string.docs_label_child_name), value = "${child.firstName} ${child.lastName}")
+                            }
+                            FormDetailRow(label = stringResource(R.string.docs_label_type), value = docItem.documentType)
+                            val path = docItem.filePath
+                            FormDetailRow(label = stringResource(R.string.docs_label_path), value = path ?: stringResource(R.string.docs_no_path))
+                            val uploaded = docItem.uploadedAt
+                            FormDetailRow(label = stringResource(R.string.docs_label_uploaded), value = uploaded ?: stringResource(R.string.search_na))
                         }
                     }
                 }
@@ -125,40 +202,46 @@ fun DocumentsScreen(onBack: () -> Unit = {}) {
             if (showCreate) {
                 AlertDialog(
                     onDismissRequest = { showCreate = false },
-                    title = { Text("Add Document") },
+                    title = { Text(stringResource(R.string.docs_add_dialog_title)) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true)
-                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text("Document type") }, singleLine = true)
-                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text("File name") }, singleLine = true)
-                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text("File path") }, singleLine = true)
+                            SearchableChildSelector(
+                                children = children,
+                                selectedChildId = selectedChildId,
+                                onChildSelected = { child -> 
+                                    /**
+                                     * Update selected child ID when a child is selected from the list.
+                                     */
+                                    selectedChildId = child.childId 
+                                }
+                            )
+                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text(stringResource(R.string.docs_field_type)) }, singleLine = true)
+                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text(stringResource(R.string.docs_field_name)) }, singleLine = true)
+                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text(stringResource(R.string.docs_field_path)) }, singleLine = true)
                         }
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            val cid = childId.text.toIntOrNull()
+                            val cid = selectedChildId
                             if (cid != null && docType.text.isNotBlank() && fileName.text.isNotBlank() && filePath.text.isNotBlank()) {
-                                scope.launch {
-                                    db.documentDao().insertWithSync(
-                                        DocumentEntity(
-                                            childId = cid,
-                                            documentType = docType.text,
-                                            fileName = fileName.text,
-                                            filePath = filePath.text
-                                        ),
-                                        db.syncQueueDao()
+                                viewModel.insertDocument(
+                                    DocumentEntity(
+                                        childId = cid,
+                                        documentType = docType.text,
+                                        fileName = fileName.text,
+                                        filePath = filePath.text
                                     )
-                                    showCreate = false
-                                    childId = TextFieldValue("")
-                                    docType = TextFieldValue("")
-                                    fileName = TextFieldValue("")
-                                    filePath = TextFieldValue("")
-                                }
+                                )
+                                showCreate = false
+                                selectedChildId = null
+                                docType = TextFieldValue("")
+                                fileName = TextFieldValue("")
+                                filePath = TextFieldValue("")
                             }
-                        }) { Text("Save") }
+                        }) { Text(stringResource(R.string.docs_save)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showCreate = false }) { Text("Cancel") }
+                        TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.docs_cancel)) }
                     }
                 )
             }
@@ -166,33 +249,48 @@ fun DocumentsScreen(onBack: () -> Unit = {}) {
             if (showEditDialog && selectedDoc != null) {
                 AlertDialog(
                     onDismissRequest = { showEditDialog = false },
-                    title = { Text("Edit Document") },
+                    title = { Text(stringResource(R.string.docs_edit_dialog_title)) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true, enabled = false)
-                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text("Document type") }, singleLine = true)
-                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text("File name") }, singleLine = true)
-                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text("File path") }, singleLine = true)
+                            SearchableChildSelector(
+                                children = children,
+                                selectedChildId = selectedChildId,
+                                onChildSelected = { child -> 
+                                    /**
+                                     * Update selected child ID for the document being edited.
+                                     */
+                                    selectedChildId = child.childId 
+                                },
+                                label = stringResource(R.string.docs_child_readonly)
+                            )
+                            OutlinedTextField(value = docType, onValueChange = { docType = it }, label = { Text(stringResource(R.string.docs_field_type)) }, singleLine = true)
+                            OutlinedTextField(value = fileName, onValueChange = { fileName = it }, label = { Text(stringResource(R.string.docs_field_name)) }, singleLine = true)
+                            OutlinedTextField(value = filePath, onValueChange = { filePath = it }, label = { Text(stringResource(R.string.docs_field_path)) }, singleLine = true)
                         }
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            if (fileName.text.isNotBlank()) {
-                                scope.launch {
-                                    val updated = selectedDoc!!.copy(
+                            if (fileName.text.isNotBlank() && selectedChildId != null) {
+                                selectedDoc?.let { docEntityToUpdate ->
+                                    /**
+                                     * The document entity to be updated in the database.
+                                     */
+                                    val updated = docEntityToUpdate.copy(
+                                        childId = selectedChildId ?: docEntityToUpdate.childId,
                                         documentType = docType.text,
                                         fileName = fileName.text,
                                         filePath = filePath.text
                                     )
-                                    db.documentDao().updateWithSync(updated, db.syncQueueDao())
+                                    viewModel.updateDocument(updated)
                                     showEditDialog = false
                                     selectedDoc = null
+                                    selectedChildId = null
                                 }
                             }
-                        }) { Text("Update") }
+                        }) { Text(stringResource(R.string.docs_update)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showEditDialog = false; selectedDoc = null }) { Text("Cancel") }
+                        TextButton(onClick = { showEditDialog = false; selectedDoc = null; selectedChildId = null }) { Text(stringResource(R.string.docs_cancel)) }
                     }
                 )
             }
@@ -200,50 +298,28 @@ fun DocumentsScreen(onBack: () -> Unit = {}) {
             if (showDeleteDialog && selectedDoc != null) {
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false; selectedDoc = null },
-                    title = { Text("Delete Document") },
-                    text = { Text("Are you sure you want to delete ${selectedDoc!!.fileName}?") },
+                    title = { Text(stringResource(R.string.docs_delete_dialog_title)) },
+                    text = {
+                        val name = selectedDoc?.fileName ?: ""
+                        Text(stringResource(R.string.docs_delete_confirm, name))
+                    },
                     confirmButton = {
                         TextButton(onClick = {
-                            scope.launch {
-                                db.documentDao().deleteByIdWithSync(selectedDoc!!.documentId, db.syncQueueDao())
-                                showDeleteDialog = false
-                                selectedDoc = null
+                            selectedDoc?.let { docItemToDelete ->
+                                /**
+                                 * The document item selected for deletion.
+                                 */
+                                viewModel.deleteDocument(docItemToDelete.documentId)
                             }
-                        }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                            showDeleteDialog = false
+                            selectedDoc = null
+                        }) { Text(stringResource(R.string.docs_delete), color = MaterialTheme.colorScheme.error) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false; selectedDoc = null }) { Text("Cancel") }
+                        TextButton(onClick = { showDeleteDialog = false; selectedDoc = null }) { Text(stringResource(R.string.docs_cancel)) }
                     }
                 )
             }
-        }
-    }
-}
-
-/**
- * Helper function to fetch documents from API.
- */
-private fun fetchFromApi(
-    repository: DocumentRepositoryImpl,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoading: (Boolean, String?) -> Unit
-) {
-    scope.launch {
-        onLoading(true, null)
-        try {
-            val token = "" // TODO: Get actual auth token
-            if (token.isNotEmpty()) {
-                val result = repository.fetchFromApi(token)
-                if (result.isFailure) {
-                    onLoading(false, result.exceptionOrNull()?.message)
-                } else {
-                    onLoading(false, null)
-                }
-            } else {
-                onLoading(false, "No authentication token available")
-            }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch documents: ${e.message}")
         }
     }
 }

@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.FosterMatchEntity
 import com.example.adoption_and_childcare.data.repository.FosterMatchRepositoryImpl
@@ -20,6 +23,14 @@ import com.example.adoption_and_childcare.utils.AuthManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * Screen for managing and viewing foster placement matches.
+ * 
+ * Users can view a list of matches between children and families,
+ * add new matches, and update match statuses.
+ * 
+ * @param onBack Callback for navigating back.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FosterMatchesScreen(onBack: () -> Unit = {}) {
@@ -30,6 +41,7 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     val repository = remember { FosterMatchRepositoryImpl(db.fosterMatchDao(), db.syncQueueDao(), apiService, authManager) }
     
     var matches by remember { mutableStateOf<List<FosterMatchEntity>>(emptyList()) }
+    var children by remember { mutableStateOf<List<com.example.adoption_and_childcare.data.db.entities.ChildEntity>>(emptyList()) }
     val scope = rememberCoroutineScope()
     
     // UI State
@@ -43,7 +55,7 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     
     var familyId by remember { mutableStateOf(TextFieldValue("")) }
     var caseWorkerId by remember { mutableStateOf(TextFieldValue("")) }
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var status by remember { mutableStateOf("Pending") }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
 
@@ -56,10 +68,13 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
             matches = list
         }
     }
+    LaunchedEffect(Unit) {
+        db.childDao().observeAll().collectLatest { list -> children = list }
+    }
     
     // Fetch from API
     LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
+        fetchFromApi(repository, authManager, scope) { loading, error ->
             isLoading = loading
             errorMessage = error
         }
@@ -68,17 +83,17 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Foster Matches") },
+                title = { Text(stringResource(R.string.foster_matches_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.foster_matches_back_desc))
                     }
                 }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Foster Match")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.foster_matches_add_desc))
             }
         }
     ) { padding ->
@@ -93,7 +108,7 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.PeopleAlt, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No foster matches yet", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.foster_matches_no_matches), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             } else {
@@ -102,17 +117,17 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.padding(12.dp).weight(1f)) {
-                                    Text("Match #${match.matchId}", style = MaterialTheme.typography.titleMedium)
-                                    Text("Family ID: ${match.familyId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    match.childId?.let { Text("Child ID: $it", style = MaterialTheme.typography.bodySmall) }
-                                    match.caseWorkerId?.let { Text("Case Worker: $it", style = MaterialTheme.typography.bodySmall) }
-                                    Text("Status: ${match.status}", style = MaterialTheme.typography.bodySmall, color = when(match.status) {
+                                    Text(stringResource(R.string.foster_matches_item_id, match.matchId), style = MaterialTheme.typography.titleMedium)
+                                    Text(stringResource(R.string.foster_matches_family_id_label, match.familyId), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                                    match.childId?.let { Text(stringResource(R.string.foster_matches_child_id_label, it), style = MaterialTheme.typography.bodySmall) }
+                                    match.caseWorkerId?.let { Text(stringResource(R.string.foster_matches_case_worker_label, it), style = MaterialTheme.typography.bodySmall) }
+                                    Text(stringResource(R.string.foster_matches_status_label, match.status ?: ""), style = MaterialTheme.typography.bodySmall, color = when(match.status) {
                                         "Approved", "Completed" -> MaterialTheme.colorScheme.primary
                                         "Under Review" -> MaterialTheme.colorScheme.tertiary
                                         else -> MaterialTheme.colorScheme.outline
                                     })
                                     match.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                                    match.createdAt?.let { Text("Created: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                    match.createdAt?.let { Text(stringResource(R.string.foster_matches_created_label, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                                 }
                                 Row(verticalAlignment = Alignment.Top) {
                                     IconButton(onClick = {
@@ -120,17 +135,17 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                                         showEditDialog = true
                                         familyId = TextFieldValue(match.familyId.toString())
                                         caseWorkerId = TextFieldValue(match.caseWorkerId?.toString() ?: "")
-                                        childId = TextFieldValue(match.childId?.toString() ?: "")
+                                        selectedChildId = match.childId
                                         status = match.status ?: "Pending"
                                         notes = TextFieldValue(match.notes ?: "")
                                     }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.foster_tasks_edit_desc), tint = MaterialTheme.colorScheme.primary)
                                     }
                                     IconButton(onClick = {
                                         selectedMatch = match
                                         showDeleteDialog = true
                                     }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.foster_tasks_delete_desc), tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }
@@ -145,20 +160,24 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("Add Foster Match") },
+            title = { Text(stringResource(R.string.foster_matches_add_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = familyId, onValueChange = { familyId = it }, label = { Text("Family ID") }, singleLine = true)
-                    OutlinedTextField(value = caseWorkerId, onValueChange = { caseWorkerId = it }, label = { Text("Case Worker ID (optional)") }, singleLine = true)
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID (optional)") }, singleLine = true)
+                    OutlinedTextField(value = familyId, onValueChange = { familyId = it }, label = { Text(stringResource(R.string.foster_matches_field_family_id)) }, singleLine = true)
+                    OutlinedTextField(value = caseWorkerId, onValueChange = { caseWorkerId = it }, label = { Text(stringResource(R.string.foster_matches_field_cw_id)) }, singleLine = true)
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId }
+                    )
                     ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
                         OutlinedTextField(
                             value = status,
                             onValueChange = { },
                             readOnly = true,
-                            label = { Text("Status") },
+                            label = { Text(stringResource(R.string.foster_matches_field_status)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
                             statuses.forEach { statusOption ->
@@ -169,14 +188,14 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                             }
                         }
                     }
-                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes (optional)") }, singleLine = true)
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(stringResource(R.string.foster_matches_field_notes)) }, singleLine = true)
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     val fid = familyId.text.toIntOrNull()
                     val cwId = caseWorkerId.text.toIntOrNull()
-                    val cid = childId.text.toIntOrNull()
+                    val cid = selectedChildId
                     if (fid != null) {
                         scope.launch {
                             db.fosterMatchDao().insert(
@@ -191,15 +210,15 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                             showCreate = false
                             familyId = TextFieldValue("")
                             caseWorkerId = TextFieldValue("")
-                            childId = TextFieldValue("")
+                            selectedChildId = null
                             status = "Pending"
                             notes = TextFieldValue("")
                         }
                     }
-                }) { Text("Save") }
+                }) { Text(stringResource(R.string.foster_matches_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("Cancel") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.foster_matches_cancel)) }
             }
         )
     }
@@ -208,20 +227,25 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     if (showEditDialog && selectedMatch != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit Foster Match") },
+            title = { Text(stringResource(R.string.foster_matches_edit_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = familyId, onValueChange = { familyId = it }, label = { Text("Family ID") }, singleLine = true)
-                    OutlinedTextField(value = caseWorkerId, onValueChange = { caseWorkerId = it }, label = { Text("Case Worker ID (optional)") }, singleLine = true)
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID (optional)") }, singleLine = true)
-                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, singleLine = true)
+                    OutlinedTextField(value = familyId, onValueChange = { familyId = it }, label = { Text(stringResource(R.string.foster_matches_field_family_id)) }, singleLine = true)
+                    OutlinedTextField(value = caseWorkerId, onValueChange = { caseWorkerId = it }, label = { Text(stringResource(R.string.foster_matches_field_cw_id)) }, singleLine = true)
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId },
+                        label = stringResource(R.string.reports_label_child_name)
+                    )
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(stringResource(R.string.foster_matches_field_notes_edit)) }, singleLine = true)
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     val fid = familyId.text.toIntOrNull()
                     val cwId = caseWorkerId.text.toIntOrNull()
-                    val cid = childId.text.toIntOrNull()
+                    val cid = selectedChildId
                     if (fid != null) {
                         scope.launch {
                             val match = selectedMatch ?: return@launch
@@ -235,12 +259,13 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                             )
                             showEditDialog = false
                             selectedMatch = null
+                            selectedChildId = null
                         }
                     }
-                }) { Text("Update") }
+                }) { Text(stringResource(R.string.foster_matches_update)) }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false; selectedMatch = null }) { Text("Cancel") }
+                TextButton(onClick = { showEditDialog = false; selectedMatch = null; selectedChildId = null }) { Text(stringResource(R.string.foster_matches_cancel)) }
             }
         )
     }
@@ -249,8 +274,8 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
     if (showDeleteDialog && selectedMatch != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Foster Match") },
-            text = { Text("Are you sure you want to delete this foster match?") },
+            title = { Text(stringResource(R.string.foster_matches_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.foster_matches_delete_confirm)) },
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
@@ -260,27 +285,29 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                         showDeleteDialog = false
                         selectedMatch = null
                     }
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.foster_matches_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; selectedMatch = null }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false; selectedMatch = null }) { Text(stringResource(R.string.foster_matches_cancel)) }
             }
         )
     }
 }
+
 
 /**
  * Helper function to fetch foster matches from API.
  */
 private fun fetchFromApi(
     repository: FosterMatchRepositoryImpl,
+    authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
 ) {
     scope.launch {
         onLoading(true, null)
         try {
-            val token = "" // TODO: Get actual auth token
+            val token = authManager.getAuthToken() ?: ""
             if (token.isNotEmpty()) {
                 val result = repository.fetchFromApi(token)
                 if (result.isFailure) {

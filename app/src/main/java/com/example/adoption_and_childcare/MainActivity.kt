@@ -1,17 +1,18 @@
 package com.example.adoption_and_childcare
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,31 +28,30 @@ import androidx.navigation.compose.rememberNavController
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.DatabaseInitializer
 import com.example.adoption_and_childcare.ui.compose.*
+import com.example.adoption_and_childcare.ui.theme.AdoptionChildcareTheme
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
 import com.example.adoption_and_childcare.viewmodel.SOSState
 import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import com.example.adoption_and_childcare.viewmodel.SyncViewModel
-import com.yourdomain.adoptionchildcare.BuildConfig
-import com.yourdomain.adoptionchildcare.R
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Constants used throughout the MainActivity.
  */
 @Suppress("HardcodedStringLiteral")
 internal object MainActivityConstants {
-    const val DEFAULT_USER = "John Doe"
-    const val DEFAULT_ROLE = "Admin"
     const val SYNC_PREFS = "sync_prefs"
     const val LAST_SYNCED_KEY = "last_synced_at"
-    const val IMAGE_MIME_TYPE = "image/*"
     const val ONBOARDING_TRANSITION_LABEL = "onboarding_transition"
+    const val IMAGE_MIME_TYPE = "image/*"
+    const val LOG_TAG = "MainActivity"
     
     // Routes
     const val DASHBOARD_ROUTE = "dashboard"
@@ -121,6 +121,7 @@ internal object MainActivityConstants {
     const val SHORTCUTS_ROUTE = "shortcuts"
     const val PERMISSIONS_ROUTE = "permissions"
     const val HELP_ABOUT_ROUTE = "help_about"
+    const val SOS_EMERGENCY_ROUTE = "sos_emergency"
     
     const val SYNC_THRESHOLD_SECONDS = 15 * 60
 }
@@ -128,8 +129,9 @@ internal object MainActivityConstants {
 /**
  * Routes for the application navigation.
  *
- * @property route The string representation of the route.
+ * @param route The string representation of the route.
  */
+@Suppress("HardcodedStringLiteral")
 private enum class AppRoute(val route: String) {
     DASHBOARD(MainActivityConstants.DASHBOARD_ROUTE),
     CHILDREN_LIST(MainActivityConstants.CHILDREN_LIST_ROUTE),
@@ -197,18 +199,21 @@ private enum class AppRoute(val route: String) {
     RECENT_ACTIVITY(MainActivityConstants.RECENT_ACTIVITY_ROUTE),
     SHORTCUTS(MainActivityConstants.SHORTCUTS_ROUTE),
     PERMISSIONS(MainActivityConstants.PERMISSIONS_ROUTE),
-    HELP_ABOUT(MainActivityConstants.HELP_ABOUT_ROUTE)
+    HELP_ABOUT(MainActivityConstants.HELP_ABOUT_ROUTE),
+    SOS_EMERGENCY(MainActivityConstants.SOS_EMERGENCY_ROUTE)
 }
 
 /**
  * Main activity of the application, handling navigation, state management, and main UI shell.
  */
 @AndroidEntryPoint
-@Suppress("HardcodedStringLiteral")
 class MainActivity : ComponentActivity() {
 
-    @javax.inject.Inject
-    lateinit var database: AppDatabase
+    /**
+     * Database instance for the application, lazily injected via Hilt.
+     */
+    @Inject
+    lateinit var database: dagger.Lazy<AppDatabase>
 
     /**
      * Called when the activity is starting.
@@ -218,316 +223,337 @@ class MainActivity : ComponentActivity() {
      *     recently supplied.
      */
     @OptIn(ExperimentalMaterial3Api::class)
+    @Suppress("LongMethod")
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            val navController = rememberNavController()
-            val context = LocalContext.current
-            val session = remember { SessionManager(context) }
-            val isLoggedInState = session.isLoggedIn()
+            AdoptionChildcareTheme {
+                val navController = rememberNavController()
+                val context = LocalContext.current
+                val session = remember { SessionManager(context) }
+                val isLoggedInState = session.isLoggedIn()
 
-            val syncViewModel: SyncViewModel = hiltViewModel()
-            val notificationsViewModel: NotificationsViewModel = hiltViewModel()
-            val sosViewModel: SOSViewModel = hiltViewModel()
+                val syncViewModel: SyncViewModel = hiltViewModel()
+                val notificationsViewModel: NotificationsViewModel = hiltViewModel()
+                val sosViewModel: SOSViewModel = hiltViewModel()
 
-            val sosState by sosViewModel.sosState.collectAsState()
+                val sosState by sosViewModel.sosState.collectAsState()
 
-            val lifecycleOwner = LocalLifecycleOwner.current
-            DisposableEffect(lifecycleOwner) {
-                val observer = LifecycleEventObserver { _, event ->
-                    if (event == Lifecycle.Event.ON_RESUME) {
-                        val lastSynced = context.getSharedPreferences(MainActivityConstants.SYNC_PREFS, MODE_PRIVATE)
-                            .getLong(MainActivityConstants.LAST_SYNCED_KEY, 0L)
-                        val now = System.currentTimeMillis() / 1000
-                        if (now - lastSynced > MainActivityConstants.SYNC_THRESHOLD_SECONDS) {
-                            syncViewModel.triggerSync()
+                val lifecycleOwner = LocalLifecycleOwner.current
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event -> // _: source, event: Lifecycle event
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            val lastSynced = context.getSharedPreferences(MainActivityConstants.SYNC_PREFS, android.content.Context.MODE_PRIVATE)
+                                .getLong(MainActivityConstants.LAST_SYNCED_KEY, 0L)
+                            val now = System.currentTimeMillis() / 1000
+                            if ((now - lastSynced) > MainActivityConstants.SYNC_THRESHOLD_SECONDS) {
+                                syncViewModel.triggerSync()
+                            }
                         }
                     }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose {
+                        lifecycleOwner.lifecycle.removeObserver(observer)
+                    }
                 }
-                lifecycleOwner.lifecycle.addObserver(observer)
-                onDispose {
-                    lifecycleOwner.lifecycle.removeObserver(observer)
+
+                val hasLoggedInBefore = remember { session.hasLoggedInBefore() }
+                var isLoggedIn by remember { mutableStateOf(value = isLoggedInState) }
+                var isLoadingAfterLogin by remember { mutableStateOf(value = false) }
+                var onboardingStep by remember { mutableIntStateOf(if (isLoggedInState) 5 else if (hasLoggedInBefore) 1 else 0) }
+                var registrationSuccessMessage by remember { mutableStateOf(value = "") }
+                var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+                var headerSearchQuery by remember { mutableStateOf(value = "") }
+                
+                val guestLabel = stringResource(R.string.dashboard_guest)
+                val adminRoleVal = stringResource(R.string.role_admin_val)
+                val supervisorRoleVal = stringResource(R.string.role_supervisor_val)
+                val caseWorkerRoleVal = stringResource(R.string.role_case_worker_val)
+                val socialWorkerRoleVal = stringResource(R.string.role_social_worker_val)
+                val guardianRoleVal = stringResource(R.string.role_guardian_val)
+                
+                var currentUser by remember(isLoggedInState) { mutableStateOf(value = if (isLoggedInState) session.getUsername() ?: guestLabel else guestLabel) }
+                var currentRole by remember(isLoggedInState) { mutableStateOf(value = if (isLoggedInState) session.getRole() ?: adminRoleVal else adminRoleVal) }
+
+                LaunchedEffect(Unit) {
+                    launch(kotlinx.coroutines.Dispatchers.IO) {
+                        DatabaseInitializer.initializeDatabase(database.get())
+                    }
                 }
-            }
 
-            val hasLoggedInBefore = remember { session.hasLoggedInBefore() }
-            var isLoggedIn by remember { mutableStateOf(isLoggedInState) }
-            var isLoadingAfterLogin by remember { mutableStateOf(false) }
-            var onboardingStep by remember { mutableIntStateOf(if (isLoggedInState) 5 else if (hasLoggedInBefore) 1 else 0) }
-            var registrationSuccessMessage by remember { mutableStateOf("") }
-            var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
-            var headerSearchQuery by remember { mutableStateOf("") }
-            var currentUser by remember { mutableStateOf(if (isLoggedInState) session.getUsername() ?: MainActivityConstants.DEFAULT_USER else MainActivityConstants.DEFAULT_USER) }
-            var currentRole by remember { mutableStateOf(if (isLoggedInState) session.getRole() ?: MainActivityConstants.DEFAULT_ROLE else MainActivityConstants.DEFAULT_ROLE) }
+                val imagePickerLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.GetContent()
+                ) { selectedUri -> // selectedUri: The URI of the selected image
+                    profilePhotoUri = selectedUri
+                }
 
-            LaunchedEffect(Unit) {
-                DatabaseInitializer.initializeDatabase(database)
-            }
-
-            val imagePickerLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { selectedUri ->
-                profilePhotoUri = selectedUri
-            }
-
-            if (!isLoggedIn) {
-                if (isLoadingAfterLogin) {
-                    LoadingAnimationScreen(
-                        onComplete = {
-                            isLoadingAfterLogin = false
-                            isLoggedIn = true
-                        },
-                        username = currentUser
-                    )
+                if (!isLoggedIn) {
+                    if (isLoadingAfterLogin) {
+                        LoadingAnimationScreen(
+                            onComplete = {
+                                isLoadingAfterLogin = false
+                                isLoggedIn = true
+                            },
+                            username = currentUser
+                        )
+                    } else {
+                        Crossfade(targetState = onboardingStep, label = MainActivityConstants.ONBOARDING_TRANSITION_LABEL) { currentStep -> // currentStep: onboarding index
+                            when (currentStep) {
+                                0 -> WelcomeScreen { onboardingStep = 1 }
+                                1 -> ModernLandingPage(
+                                        onGetStarted = { 
+                                            onboardingStep = if (hasLoggedInBefore) 3 else 2 
+                                        }, 
+                                        onLogin = { onboardingStep = 3 }
+                                    )
+                                2 -> TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
+                                3 -> LoginScreen(
+                                        onLoginSuccess = { userEntity -> // userEntity: the logged in user
+                                            currentUser = userEntity.username
+                                            currentRole = userEntity.role
+                                            isLoadingAfterLogin = true
+                                        },
+                                        onNavigateToRegister = {
+                                            registrationSuccessMessage = ""
+                                            onboardingStep = 4
+                                        },
+                                        successMessage = registrationSuccessMessage
+                                    )
+                                4 -> RegisterScreen(
+                                        onRegisterSuccess = { message -> // message: registration success message
+                                            registrationSuccessMessage = message
+                                            onboardingStep = 3
+                                        },
+                                        onNavigateToLogin = {
+                                            registrationSuccessMessage = ""
+                                            onboardingStep = 3
+                                        }
+                                    )
+                                else -> WelcomeScreen { onboardingStep = 1 }
+                            }
+                        }
+                    }
                 } else {
-                    androidx.compose.animation.Crossfade(targetState = onboardingStep, label = MainActivityConstants.ONBOARDING_TRANSITION_LABEL) { currentStepIndex ->
-                        when (currentStepIndex) {
-                            0 -> WelcomeScreen(onExploreClicked = { onboardingStep = 1 })
-                            1 -> ModernLandingPage(
-                                    onGetStarted = { 
-                                        // If already registered, go straight to login. Else, go to terms.
-                                        onboardingStep = if (hasLoggedInBefore) 3 else 2 
-                                    }, 
-                                    onLogin = { onboardingStep = 3 }
-                                )
-                            2 -> TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
-                            3 -> LoginScreen(
-                                    onLoginSuccess = { userEntity ->
-                                        currentUser = userEntity.username
-                                        currentRole = userEntity.role
-                                        isLoadingAfterLogin = true
-                                    },
-                                    onNavigateToRegister = {
-                                        registrationSuccessMessage = ""
-                                        onboardingStep = 4
-                                    },
-                                    successMessage = registrationSuccessMessage
-                                )
-                            4 -> RegisterScreen(
-                                    onRegisterSuccess = { message ->
-                                        registrationSuccessMessage = message
-                                        onboardingStep = 3
-                                    },
-                                    onNavigateToLogin = {
-                                        registrationSuccessMessage = ""
-                                        onboardingStep = 3
+                    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                    val scope = rememberCoroutineScope()
+                    ModalNavigationDrawer(
+                        drawerState = drawerState,
+                        drawerContent = {
+                            ModalDrawerSheet {
+                                DrawerHeader(
+                                    profilePhotoUri = profilePhotoUri,
+                                    username = currentUser,
+                                    role = currentRole,
+                                    onLogout = {
+                                        session.clearSession()
+                                        isLoggedIn = false
+                                        scope.launch { drawerState.close() }
                                     }
                                 )
-                            else -> WelcomeScreen(onExploreClicked = { onboardingStep = 1 })
-                        }
-                    }
-                }
-            } else {
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                val scope = rememberCoroutineScope()
-                ModalNavigationDrawer(
-                    drawerState = drawerState,
-                    drawerContent = {
-                        ModalDrawerSheet {
-                            DrawerHeader(
-                                profilePhotoUri = profilePhotoUri,
-                                username = currentUser,
-                                role = currentRole,
-                                onLogout = {
-                                    session.clearSession()
-                                    isLoggedIn = false
-                                    scope.launch { drawerState.close() }
+                                Spacer(Modifier.height(12.dp))
+                                
+                                Column(
+                                    modifier = Modifier
+                                        .verticalScroll(rememberScrollState())
+                                        .padding(bottom = 16.dp)
+                                ) {
+                                    if (canAccessRoute(AppRoute.CHILDREN_LIST.route, currentRole, adminRoleVal, supervisorRoleVal, caseWorkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                        NavigationDrawerItem(
+                                            icon = { Icon(Icons.Default.ChildCare, contentDescription = null) },
+                                            label = { Text(stringResource(R.string.module_children)) },
+                                            selected = currentRoute(navController) == AppRoute.CHILDREN_LIST.route,
+                                            onClick = {
+                                                navController.navigate(AppRoute.CHILDREN_LIST.route)
+                                                scope.launch { drawerState.close() }
+                                            },
+                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                        )
+                                    }
+                                    
+                                    if (canAccessRoute(AppRoute.FAMILIES.route, currentRole, adminRoleVal, supervisorRoleVal, caseWorkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                        NavigationDrawerItem(
+                                            icon = { Icon(Icons.Default.FamilyRestroom, contentDescription = null) },
+                                            label = { Text(stringResource(R.string.module_families)) },
+                                            selected = currentRoute(navController) == AppRoute.FAMILIES.route,
+                                            onClick = {
+                                                navController.navigate(AppRoute.FAMILIES.route)
+                                                scope.launch { drawerState.close() }
+                                            },
+                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                        )
+                                    }
+                                    
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                                    
+                                    if (currentRole == adminRoleVal || currentRole == supervisorRoleVal) {
+                                        Text(
+                                            stringResource(R.string.dashboard_administration),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
+                                        )
+                                        
+                                        if (canAccessRoute(AppRoute.USER_MANAGEMENT.route, currentRole, adminRoleVal, supervisorRoleVal, caseWorkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                            NavigationDrawerItem(
+                                                icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) },
+                                                label = { Text(stringResource(R.string.user_management_title)) },
+                                                selected = currentRoute(navController) == AppRoute.USER_MANAGEMENT.route,
+                                                onClick = {
+                                                    navController.navigate(AppRoute.USER_MANAGEMENT.route)
+                                                    scope.launch { drawerState.close() }
+                                                },
+                                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            )
+                                        }
+                                        
+                                        if (canAccessRoute(AppRoute.USER_ROLES.route, currentRole, adminRoleVal, supervisorRoleVal, caseWorkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                            NavigationDrawerItem(
+                                                icon = { Icon(Icons.Default.Badge, contentDescription = null) },
+                                                label = { Text(stringResource(R.string.dashboard_label_user_roles)) },
+                                                selected = currentRoute(navController) == AppRoute.USER_ROLES.route,
+                                                onClick = {
+                                                    navController.navigate(AppRoute.USER_ROLES.route)
+                                                    scope.launch { drawerState.close() }
+                                                },
+                                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                            )
+                                        }
+                                    }
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.action_settings)) },
+                                        selected = currentRoute(navController) == AppRoute.SETTINGS.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.SETTINGS.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.Inbox, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.title_case_inbox)) },
+                                        selected = currentRoute(navController) == AppRoute.CASE_INBOX.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.CASE_INBOX.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.History, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.title_recent_activity)) },
+                                        selected = currentRoute(navController) == AppRoute.RECENT_ACTIVITY.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.RECENT_ACTIVITY.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.PushPin, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.title_shortcuts)) },
+                                        selected = currentRoute(navController) == AppRoute.SHORTCUTS.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.SHORTCUTS.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.title_permissions)) },
+                                        selected = currentRoute(navController) == AppRoute.PERMISSIONS.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.PERMISSIONS.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
+
+                                    NavigationDrawerItem(
+                                        icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                                        label = { Text(stringResource(R.string.help_about_label)) },
+                                        selected = currentRoute(navController) == AppRoute.HELP_ABOUT.route,
+                                        onClick = {
+                                            navController.navigate(AppRoute.HELP_ABOUT.route)
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
                                 }
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            
+
+                                val versionDisplay = stringResource(R.string.app_version_format, "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+                                Text(
+                                    text = versionDisplay,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                                )
+                            }
+                        }
+                    ) {
+                        Scaffold(
+                            topBar = {
+                                Column {
+                                    if (sosState == SOSState.ACTIVE) {
+                                        EmergencyActiveBanner()
+                                    }
+                                    GreenHeader(
+                                        profilePhotoUri = profilePhotoUri,
+                                        searchQuery = headerSearchQuery,
+                                        onSearchQueryChange = { updatedQuery -> // updatedQuery: the search text
+                                            headerSearchQuery = updatedQuery
+                                            val currentPath = navController.currentDestination?.route
+                                            if (updatedQuery.isNotEmpty() && currentPath != AppRoute.SEARCH.route) {
+                                                navController.navigate(AppRoute.SEARCH.route)
+                                            }
+                                        },
+                                        onImagePicker = { imagePickerLauncher.launch(MainActivityConstants.IMAGE_MIME_TYPE) },
+                                        onMenuClick = {
+                                            scope.launch { drawerState.open() }
+                                        }
+                                    )
+                                }
+                            },
+                            bottomBar = {
+                                BottomNavBar(
+                                    navController = navController,
+                                    syncViewModel = syncViewModel,
+                                    notificationsViewModel = notificationsViewModel,
+                                    sosViewModel = sosViewModel
+                                )
+                            }
+                        ) { paddingValues -> // paddingValues: Scaffold padding
                             Column(
                                 modifier = Modifier
-                                    .verticalScroll(rememberScrollState())
-                                    .padding(bottom = 16.dp)
+                                    .fillMaxSize()
+                                    .padding(paddingValues)
                             ) {
-                                if (canAccessRoute(AppRoute.CHILDREN_LIST.route, currentRole)) {
-                                    NavigationDrawerItem(
-                                        icon = { Icon(Icons.Default.ChildCare, contentDescription = null) },
-                                        label = { Text(stringResource(R.string.module_children)) },
-                                        selected = currentRoute(navController) == AppRoute.CHILDREN_LIST.route,
-                                        onClick = {
-                                            navController.navigate(AppRoute.CHILDREN_LIST.route)
-                                            scope.launch { drawerState.close() }
-                                        },
-                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                    )
-                                }
-                                
-                                if (canAccessRoute(AppRoute.FAMILIES.route, currentRole)) {
-                                    NavigationDrawerItem(
-                                        icon = { Icon(Icons.Default.FamilyRestroom, contentDescription = null) },
-                                        label = { Text(stringResource(R.string.module_families)) },
-                                        selected = currentRoute(navController) == AppRoute.FAMILIES.route,
-                                        onClick = {
-                                            navController.navigate(AppRoute.FAMILIES.route)
-                                            scope.launch { drawerState.close() }
-                                        },
-                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                    )
-                                }
-                                
-                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-                                
-                                if (currentRole == "Admin" || currentRole == "Supervisor") {
-                                    Text(
-                                        "Administration",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
-                                    )
-                                    
-                                    if (canAccessRoute(AppRoute.USER_MANAGEMENT.route, currentRole)) {
-                                        NavigationDrawerItem(
-                                            icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) },
-                                            label = { Text("User Management") },
-                                            selected = currentRoute(navController) == AppRoute.USER_MANAGEMENT.route,
-                                            onClick = {
-                                                navController.navigate(AppRoute.USER_MANAGEMENT.route)
-                                                scope.launch { drawerState.close() }
-                                            },
-                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                        )
-                                    }
-                                    
-                                    if (canAccessRoute(AppRoute.USER_ROLES.route, currentRole)) {
-                                        NavigationDrawerItem(
-                                            icon = { Icon(Icons.Default.Badge, contentDescription = null) },
-                                            label = { Text("User Roles") },
-                                            selected = currentRoute(navController) == AppRoute.USER_ROLES.route,
-                                            onClick = {
-                                                navController.navigate(AppRoute.USER_ROLES.route)
-                                                scope.launch { drawerState.close() }
-                                            },
-                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                        )
-                                    }
-                                }
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                                    label = { Text(stringResource(R.string.action_settings)) },
-                                    selected = currentRoute(navController) == AppRoute.SETTINGS.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.SETTINGS.route)
-                                        scope.launch { drawerState.close() }
+                                AppNavHost(
+                                    navController = navController,
+                                    headerSearchQuery = headerSearchQuery,
+                                    onSearchQueryChange = { newQuery -> // newQuery: search string
+                                        headerSearchQuery = newQuery 
                                     },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-
-                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Inbox, contentDescription = null) },
-                                    label = { Text("Case Inbox") },
-                                    selected = currentRoute(navController) == AppRoute.CASE_INBOX.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.CASE_INBOX.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.History, contentDescription = null) },
-                                    label = { Text("Recent Activity") },
-                                    selected = currentRoute(navController) == AppRoute.RECENT_ACTIVITY.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.RECENT_ACTIVITY.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.PushPin, contentDescription = null) },
-                                    label = { Text("Shortcuts") },
-                                    selected = currentRoute(navController) == AppRoute.SHORTCUTS.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.SHORTCUTS.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                                    label = { Text("Permissions") },
-                                    selected = currentRoute(navController) == AppRoute.PERMISSIONS.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.PERMISSIONS.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-
-                                NavigationDrawerItem(
-                                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                                    label = { Text("Help/About") },
-                                    selected = currentRoute(navController) == AppRoute.HELP_ABOUT.route,
-                                    onClick = {
-                                        navController.navigate(AppRoute.HELP_ABOUT.route)
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    userRole = currentRole,
+                                    adminRole = adminRoleVal,
+                                    supervisorRole = supervisorRoleVal,
+                                    caseWorkerRole = caseWorkerRoleVal,
+                                    socialWorkerRole = socialWorkerRoleVal,
+                                    guardianRole = guardianRoleVal,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
-
-                            Text(
-                                text = "Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                            )
-                        }
-                    }
-                ) {
-                    Scaffold(
-                        topBar = {
-                            Column {
-                                if (sosState == SOSState.ACTIVE) {
-                                    EmergencyActiveBanner()
-                                }
-                                GreenHeader(
-                                    profilePhotoUri = profilePhotoUri,
-                                    searchQuery = headerSearchQuery,
-                                    onSearchQueryChange = { updatedQueryText ->
-                                        headerSearchQuery = updatedQueryText
-                                        val currentRouteStr = navController.currentDestination?.route
-                                        if (updatedQueryText.isNotEmpty() && currentRouteStr != AppRoute.SEARCH.route) {
-                                            navController.navigate(AppRoute.SEARCH.route)
-                                        }
-                                    },
-                                    onImagePicker = { imagePickerLauncher.launch(MainActivityConstants.IMAGE_MIME_TYPE) },
-                                    onMenuClick = {
-                                        scope.launch { drawerState.open() }
-                                    }
-                                )
-                            }
-                        },
-                        bottomBar = {
-                            BottomNavBar(
-                                navController = navController,
-                                syncViewModel = syncViewModel,
-                                notificationsViewModel = notificationsViewModel,
-                                sosViewModel = sosViewModel
-                            )
-                        }
-                    ) { scaffoldPaddingValues ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(scaffoldPaddingValues)
-                        ) {
-                            AppNavHost(
-                                navController = navController,
-                                headerSearchQuery = headerSearchQuery,
-                                onSearchQueryChange = { newQuery -> headerSearchQuery = newQuery },
-                                userRole = currentRole,
-                                modifier = Modifier.weight(1f)
-                            )
                         }
                     }
                 }
@@ -539,36 +565,51 @@ class MainActivity : ComponentActivity() {
 /**
  * Main navigation host for the application.
  *
- * @param navController The navigation controller.
- * @param headerSearchQuery The current search query string.
- * @param onSearchQueryChange Callback when the search query is modified.
- * @param userRole The current user role.
- * @param modifier The modifier to apply to this layout.
+ * @param navController The navigation controller instance.
+ * @param headerSearchQuery The current search query from the header.
+ * @param onSearchQueryChange Callback when the search query changes.
+ * @param userRole The role of the current user.
+ * @param adminRole String for admin role.
+ * @param supervisorRole String for supervisor role.
+ * @param caseWorkerRole String for case worker role.
+ * @param socialWorkerRole String for social worker role.
+ * @param guardianRole String for guardian role.
+ * @param modifier The modifier to be applied to the NavHost.
  */
 @Composable
+@Suppress("LongMethod", "LongParameterList")
 private fun AppNavHost(
     navController: NavHostController,
     headerSearchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     userRole: String,
+    adminRole: String,
+    supervisorRole: String,
+    caseWorkerRole: String,
+    socialWorkerRole: String,
+    guardianRole: String,
     modifier: Modifier = Modifier
 ) {
+    val navMedicalDetailTemplate = stringResource(R.string.nav_medical_detail)
+    val navMedicalDetailRoute = stringResource(R.string.nav_medical_detail_route)
+    val deniedMsgTemplate = stringResource(R.string.error_access_denied)
+
     NavHost(navController = navController, startDestination = AppRoute.DASHBOARD.route, modifier = modifier) {
         composable(AppRoute.DASHBOARD.route) {
             val currentDest = navController.currentDestination?.route
             DashboardScreenModern(
                 userRole = userRole,
-                onNavigate = { destinationRouteStr ->
-                    if (currentDest != destinationRouteStr) {
-                        if (canAccessRoute(destinationRouteStr, userRole)) {
-                            navController.navigate(destinationRouteStr) {
+                onNavigate = { routeDestination -> // routeDestination: target
+                    if (currentDest != routeDestination) {
+                        if (canAccessRoute(routeDestination, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole)) {
+                            navController.navigate(routeDestination) {
                                 popUpTo(AppRoute.DASHBOARD.route) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
                         } else {
-                            // Optionally show a toast or snackbar: "Access Denied"
-                            println("Access Denied for route: $destinationRouteStr for role: $userRole")
+                            val deniedMsg = String.format(deniedMsgTemplate, routeDestination, userRole)
+                            Log.d(MainActivityConstants.LOG_TAG, deniedMsg)
                         }
                     }
                 }
@@ -584,9 +625,16 @@ private fun AppNavHost(
         composable(AppRoute.EDUCATION.route) { EducationScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.MEDICAL.route) { MedicalScreen(
             onBack = { navController.popBackStack() },
-            onRecordClick = { id -> navController.navigate("medical_detail/$id") }
+            onMedicalRecordClick = { recordId -> // recordId: ID of the selected medical record
+                val medicalDetailPath = if (navMedicalDetailTemplate.contains("%1\$d")) {
+                    String.format(navMedicalDetailTemplate, recordId)
+                } else {
+                    "${AppRoute.MEDICAL.route}_detail/$recordId"
+                }
+                navController.navigate(medicalDetailPath) 
+            }
         ) }
-        composable("medical_detail/{recordId}") { backStackEntry ->
+        composable(navMedicalDetailRoute) { backStackEntry -> // backStackEntry: nav entry
             val recordId = backStackEntry.arguments?.getString("recordId")?.toIntOrNull() ?: 0
             MedicalDetailScreen(
                 recordId = recordId,
@@ -604,6 +652,7 @@ private fun AppNavHost(
             )
         }
         composable(AppRoute.MAP.route) { MapScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.SOS_EMERGENCY.route) { SOSScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.BACKGROUND_CHECKS.route) { BackgroundChecksScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.USER_MANAGEMENT.route) { UserManagementScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.NOTIFICATIONS.route) { NotificationsScreen(onBack = { navController.popBackStack() }) }
@@ -618,11 +667,11 @@ private fun AppNavHost(
         composable(AppRoute.CAMERA.route) { CameraScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.USER_ROLES.route) { UserRolesScreen(onBack = { navController.popBackStack() }) }
         // Add additional screens to navigation
-        composable(MainActivityConstants.ANALYTICS_ROUTE) { AnalyticsScreen(onBack = { navController.popBackStack() }) }
-        composable(MainActivityConstants.GUARDIANS_ROUTE) { GuardiansScreen(onBack = { navController.popBackStack() }) }
-        composable(MainActivityConstants.COURT_CASES_ROUTE) { CourtCasesScreen(onBack = { navController.popBackStack() }) }
-        composable(MainActivityConstants.FOSTER_TASKS_ROUTE) { FosterTasksScreen(onBack = { navController.popBackStack() }) }
-        composable(MainActivityConstants.FOSTER_MATCHES_ROUTE) { FosterMatchesScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.ANALYTICS.route) { AnalyticsScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.GUARDIANS.route) { GuardiansScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.COURT_CASES.route) { CourtCasesScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.FOSTER_TASKS.route) { FosterTasksScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.FOSTER_MATCHES.route) { FosterMatchesScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.TASKS.route) { TasksScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.ACTION_ITEMS.route) { ActionItemsScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.RISK_ASSESSMENTS.route) { RiskAssessmentCenterScreen(onBack = { navController.popBackStack() }) }
@@ -634,7 +683,7 @@ private fun AppNavHost(
         composable(AppRoute.CRITICAL_DATES.route) { CriticalDatesScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.WORKLOAD.route) { WorkloadDashboardScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.WORKER_MESSAGES.route) { WorkerMessagesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.PLACEMENT_COMPATIBILITY.route) { PlacementCompatibilityScreen(onBack = { navController.popBackStack() }) }
+        composable(AppRoute.PLACEMENT_COMPATIBILITY.route) { PlacementCompatibilityEngineScreen(onBack = { navController.popBackStack() }) }
         composable(AppRoute.DASHBOARD_PREFERENCES.route) { DashboardPreferencesScreen(onBack = { navController.popBackStack() }) }
         // New screens
         composable(AppRoute.VACCINATION_RECORDS.route) { VaccinationRecordsScreen(onBack = { navController.popBackStack() }) }
@@ -671,9 +720,25 @@ private fun AppNavHost(
 
 /**
  * Check if current user can access a specific route based on their role.
+ *
+ * @param route The destination route to check.
+ * @param userRole The role of the current user.
+ * @param adminRole String for admin role.
+ * @param supervisorRole String for supervisor role.
+ * @param caseWorkerRole String for case worker role.
+ * @param socialWorkerRole String for social worker role.
+ * @param guardianRole String for guardian role.
+ * @return True if the user has permission to access the route.
  */
-@Suppress("unused")
-internal fun canAccessRoute(route: String, userRole: String): Boolean {
+internal fun canAccessRoute(
+    route: String,
+    userRole: String,
+    adminRole: String,
+    supervisorRole: String,
+    caseWorkerRole: String,
+    socialWorkerRole: String,
+    guardianRole: String
+): Boolean {
     val commonRoutes = listOf(
         MainActivityConstants.DASHBOARD_ROUTE,
         MainActivityConstants.SETTINGS_ROUTE,
@@ -688,15 +753,15 @@ internal fun canAccessRoute(route: String, userRole: String): Boolean {
     )
 
     return when (userRole) {
-        "Admin", "Supervisor" -> true
+        adminRole, supervisorRole -> true
         
-        "Case Worker" -> route !in listOf(
+        caseWorkerRole -> route !in listOf(
             MainActivityConstants.USER_MANAGEMENT_ROUTE,
             MainActivityConstants.USER_ROLES_ROUTE,
             MainActivityConstants.AUDIT_LOGS_ROUTE
         )
 
-        "Social Worker" -> route in commonRoutes + listOf(
+        socialWorkerRole -> route in commonRoutes + listOf(
             MainActivityConstants.CHILDREN_LIST_ROUTE,
             MainActivityConstants.FAMILIES_ROUTE,
             MainActivityConstants.DOCUMENTS_ROUTE,
@@ -711,7 +776,7 @@ internal fun canAccessRoute(route: String, userRole: String): Boolean {
             MainActivityConstants.CASE_DEADLINES_ROUTE
         )
 
-        "Guardian" -> route in commonRoutes + listOf(
+        guardianRole -> route in commonRoutes + listOf(
             MainActivityConstants.CHILDREN_LIST_ROUTE,
             MainActivityConstants.DOCUMENTS_ROUTE,
             MainActivityConstants.EDUCATION_ROUTE,
@@ -730,7 +795,7 @@ internal fun canAccessRoute(route: String, userRole: String): Boolean {
  * Returns the current route in the navigation stack.
  *
  * @param navController The navigation controller instance.
- * @return The current route string.
+ * @return The current route string or null if not available.
  */
 @Composable
 private fun currentRoute(navController: NavHostController): String? {

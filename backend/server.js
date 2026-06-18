@@ -2,7 +2,6 @@
 const express = require('express');
 // const sqlite3 = require('sqlite3').verbose();
 const mysql = require('mysql2');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -82,44 +81,55 @@ app.use('/api', apiLimiter);
 
 // MySQL connection configuration
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: '127.0.0.1',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  port: process.env.DB_PORT || 3306,
+  port: parseInt(process.env.DB_PORT) || 3306,
   multipleStatements: true,
   charset: 'utf8mb4',
   timezone: '+00:00',
+  connectTimeout: 30000, // 30 seconds
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null
 };
+
+console.log(`[DB CONFIG] Attempting connection to 127.0.0.1:${dbConfig.port} (User: ${dbConfig.user})`);
 
 // Create a connection specifically to ensure the database exists
 const initialDb = mysql.createConnection({ ...dbConfig, database: undefined });
 
-initialDb.connect((err) => {
-  if (err) {
-    console.error(`Failed to connect to MySQL server on port ${dbConfig.port}:`, err.message);
-    console.log('--- TROUBLESHOOTING ---');
-    console.log(`1. Check if MySQL is running on port ${dbConfig.port}.`);
-    console.log(`2. If you are using XAMPP, check if MySQL port is 3306 or 3307.`);
-    console.log(`3. Update DB_PORT in backend/.env to match your MySQL port.`);
-    console.log('------------------------');
-    if (err.message.includes('auth_gssapi_client')) {
-      console.error('TIP: Your MySQL server uses GSSAPI. Try running this in MySQL: ALTER USER "root"@"localhost" IDENTIFIED WITH mysql_native_password BY "";');
-    }
-  } else {
-    console.log('Connected to MySQL server. Ensuring database exists...');
-    const dbName = process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db';
-    initialDb.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``, (err) => {
-      initialDb.end();
-      if (err) {
-        console.error('Failed to create/verify database:', err.message);
+function connectWithRetry(connection, retries = 5) {
+  connection.connect((err) => {
+    if (err) {
+      if (retries > 0) {
+        // Try toggling between 127.0.0.1 and localhost on retry
+        const nextHost = connection.config.host === '127.0.0.1' ? 'localhost' : '127.0.0.1';
+        connection.config.host = nextHost;
+        console.log(`Connection failed (${err.code}). Retrying with ${nextHost}... (${retries} retries left)`);
+        setTimeout(() => connectWithRetry(connection, retries - 1), 2000);
       } else {
-        console.log(`Database "${dbName}" is ready.`);
-        initializeTables(dbName);
+        console.error(`Failed to connect to MySQL server on port ${dbConfig.port}:`, err.message);
+        console.log('--- TROUBLESHOOTING ---');
+        console.log(`1. Check if MySQL is running on port ${dbConfig.port} in XAMPP.`);
+        console.log('2. Ensure no other MySQL instance is blocking the port.');
+        console.log('------------------------');
       }
-    });
-  }
-});
+    } else {
+      console.log('✔ Connected to MySQL server.');
+      const dbName = process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db';
+      connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``, (err) => {
+        connection.end();
+        if (err) {
+          console.error('Failed to create/verify database:', err.message);
+        } else {
+          console.log(`✔ Database "${dbName}" is ready.`);
+          initializeTables(dbName);
+        }
+      });
+    }
+  });
+}
+
+connectWithRetry(initialDb);
 
 let db; // Main database connection variable
 
@@ -177,6 +187,12 @@ function initializeTables(dbName) {
         current_status VARCHAR(50) DEFAULT 'Active',
         created_by INT,
         assigned_case_worker INT,
+        place_of_birth VARCHAR(255),
+        trauma_notes TEXT,
+        allergies TEXT,
+        blood_type VARCHAR(20),
+        primary_physician VARCHAR(255),
+        special_needs TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (created_by) REFERENCES users(user_id)
@@ -219,9 +235,14 @@ function initializeTables(dbName) {
         address VARCHAR(255),
         city VARCHAR(100),
         county VARCHAR(100),
+        sub_county VARCHAR(100),
         state VARCHAR(100),
         country VARCHAR(100),
         status VARCHAR(50) DEFAULT 'Active',
+        license_number VARCHAR(100),
+        license_issue_date DATE,
+        license_expiration_date DATE,
+        license_status VARCHAR(50),
         latitude DOUBLE,
         longitude DOUBLE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -357,9 +378,162 @@ function initializeTables(dbName) {
         name VARCHAR(255) NOT NULL
       );
       CREATE TABLE IF NOT EXISTS user_permissions (
-        user_id INT,
-        permission_id INT,
-        PRIMARY KEY (user_id, permission_id)
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        permission_id INT NOT NULL,
+        granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY (user_id, permission_id)
+      );
+      CREATE TABLE IF NOT EXISTS system_settings (
+        setting_id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT,
+        category VARCHAR(50),
+        description TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS tasks (
+        task_id INT AUTO_INCREMENT PRIMARY KEY,
+        assigned_to INT,
+        title VARCHAR(200),
+        description TEXT,
+        due_date DATETIME,
+        status VARCHAR(50),
+        related_entity_type VARCHAR(50),
+        related_entity_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS action_items (
+        action_id INT AUTO_INCREMENT PRIMARY KEY,
+        task_id INT,
+        description TEXT,
+        is_completed TINYINT(1) DEFAULT 0,
+        completed_at DATETIME,
+        FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS dashboard_metrics (
+        metric_id INT AUTO_INCREMENT PRIMARY KEY,
+        metric_name VARCHAR(100) UNIQUE,
+        metric_value DOUBLE,
+        previous_value DOUBLE,
+        trend_percentage DOUBLE,
+        calculated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS dashboard_preferences (
+        preference_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNIQUE,
+        layout_type VARCHAR(50),
+        show_metrics TINYINT(1) DEFAULT 1,
+        show_alerts TINYINT(1) DEFAULT 1,
+        dark_mode TINYINT(1) DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS critical_dates (
+        date_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        date_type VARCHAR(50),
+        event_date DATE,
+        description TEXT,
+        is_completed TINYINT(1) DEFAULT 0,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS worker_messages (
+        message_id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT,
+        recipient_id INT,
+        content TEXT,
+        is_read TINYINT(1) DEFAULT 0,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sender_id) REFERENCES users(user_id),
+        FOREIGN KEY (recipient_id) REFERENCES users(user_id)
+      );
+      CREATE TABLE IF NOT EXISTS risk_assessments (
+        assessment_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        assessment_date DATE,
+        safety_score INT,
+        risk_level VARCHAR(50),
+        notes TEXT,
+        assessed_by INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (assessed_by) REFERENCES users(user_id)
+      );
+      CREATE TABLE IF NOT EXISTS permanency_plans (
+        plan_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        primary_goal VARCHAR(100),
+        secondary_goal VARCHAR(100),
+        review_date DATE,
+        status VARCHAR(50),
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS caseload (
+        caseload_id INT AUTO_INCREMENT PRIMARY KEY,
+        worker_id INT UNIQUE,
+        active_cases INT DEFAULT 0,
+        pending_reviews INT DEFAULT 0,
+        capacity_percentage INT DEFAULT 0,
+        FOREIGN KEY (worker_id) REFERENCES users(user_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS case_urgency_flags (
+        flag_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        flag_type VARCHAR(50),
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS case_activities (
+        activity_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        activity_type VARCHAR(50),
+        activity_date DATE,
+        duration_minutes INT,
+        notes TEXT,
+        caseworker_id INT,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (caseworker_id) REFERENCES users(user_id)
+      );
+      CREATE TABLE IF NOT EXISTS case_deadlines (
+        deadline_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        deadline_type VARCHAR(100),
+        due_date DATE,
+        status VARCHAR(50),
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS case_approvals (
+        approval_id INT AUTO_INCREMENT PRIMARY KEY,
+        related_entity_type VARCHAR(50),
+        related_entity_id INT,
+        submitted_by INT,
+        reviewed_by INT,
+        status VARCHAR(50) DEFAULT 'Pending',
+        submission_comments TEXT,
+        review_comments TEXT,
+        submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_date TIMESTAMP NULL,
+        FOREIGN KEY (submitted_by) REFERENCES users(user_id),
+        FOREIGN KEY (reviewed_by) REFERENCES users(user_id)
+      );
+      CREATE TABLE IF NOT EXISTS placement_compatibility (
+        compatibility_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT,
+        family_id INT,
+        compatibility_score INT,
+        notes TEXT,
+        last_reviewed DATE,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (family_id) REFERENCES family_profile(family_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS workload_tracking (
+        workload_id INT AUTO_INCREMENT PRIMARY KEY,
+        caseworker_id INT,
+        tracking_date DATE,
+        total_active_cases INT,
+        overdue_tasks_count INT,
+        time_logged_hours DECIMAL(5,2),
+        FOREIGN KEY (caseworker_id) REFERENCES users(user_id) ON DELETE CASCADE
       );
       CREATE TABLE IF NOT EXISTS adoption_applications (
         application_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -465,6 +639,18 @@ function initializeTables(dbName) {
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (event_id) REFERENCES emergency_events(event_id) ON DELETE CASCADE
       );
+      CREATE TABLE IF NOT EXISTS siblings (
+        sibling_id INT AUTO_INCREMENT PRIMARY KEY,
+        child_id INT NOT NULL,
+        sibling_child_id INT NOT NULL,
+        relationship_type VARCHAR(50),
+        same_placement TINYINT(1) DEFAULT 0,
+        contact_allowed TINYINT(1) DEFAULT 1,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (child_id) REFERENCES children(child_id) ON DELETE CASCADE,
+        FOREIGN KEY (sibling_child_id) REFERENCES children(child_id) ON DELETE CASCADE
+      );
     `;
       db.query(createTablesSQL, (err) => {
         if (err) {
@@ -519,10 +705,51 @@ function runMigrations() {
     { table: 'users', column: 'national_id_no', type: 'VARCHAR(50)' },
     { table: 'users', column: 'county', type: 'VARCHAR(100)' },
     { table: 'users', column: 'sub_county', type: 'VARCHAR(100)' },
-    { table: 'users', column: 'created_at', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' },
-    { table: 'users', column: 'updated_at', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP' },
-    { table: 'users', column: 'last_login', type: 'TIMESTAMP NULL' },
-    { table: 'users', column: 'is_active', type: 'TINYINT(1) DEFAULT 1' }
+    { table: 'users', column: 'is_active', type: 'TINYINT(1) DEFAULT 1' },
+    { table: 'children', column: 'photo_data', type: 'LONGBLOB' },
+    { table: 'children', column: 'photo_mime_type', type: 'VARCHAR(100)' },
+    { table: 'children', column: 'photo_size', type: 'INT' },
+    { table: 'children', column: 'current_county', type: 'VARCHAR(100)' },
+    { table: 'children', column: 'is_emancipated', type: 'TINYINT(1) DEFAULT 0' },
+    { table: 'children', column: 'emancipation_date', type: 'DATE' },
+    { table: 'children', column: 'emancipation_reason', type: 'TEXT' },
+    { table: 'families', column: 'latitude', type: 'DOUBLE' },
+    { table: 'families', column: 'longitude', type: 'DOUBLE' },
+    { table: 'families', column: 'national_id_no', type: 'VARCHAR(50)' },
+    { table: 'family_profile', column: 'latitude', type: 'DOUBLE' },
+    { table: 'family_profile', column: 'longitude', type: 'DOUBLE' },
+    { table: 'family_profile', column: 'household_size', type: 'INT' },
+    { table: 'guardians', column: 'legal_doc_data', type: 'LONGBLOB' },
+    { table: 'guardians', column: 'legal_doc_mime_type', type: 'VARCHAR(100)' },
+    { table: 'guardians', column: 'legal_doc_size', type: 'INT' },
+    { table: 'guardians', column: 'verification_status', type: "VARCHAR(20) DEFAULT 'Pending'" },
+    { table: 'medical_records', column: 'medical_report_data', type: 'LONGBLOB' },
+    { table: 'medical_records', column: 'medical_report_mime_type', type: 'VARCHAR(100)' },
+    { table: 'medical_records', column: 'medical_report_size', type: 'INT' },
+    { table: 'case_reports', column: 'report_data', type: 'LONGBLOB' },
+    { table: 'case_reports', column: 'report_mime_type', type: 'VARCHAR(100)' },
+    { table: 'case_reports', column: 'report_size', type: 'INT' },
+    { table: 'money_records', column: 'receipt_data', type: 'LONGBLOB' },
+    { table: 'money_records', column: 'receipt_mime_type', type: 'VARCHAR(100)' },
+    { table: 'money_records', column: 'receipt_size', type: 'INT' },
+    { table: 'education_records', column: 'report_card_data', type: 'LONGBLOB' },
+    { table: 'education_records', column: 'report_card_mime_type', type: 'VARCHAR(100)' },
+    { table: 'education_records', column: 'report_card_size', type: 'INT' },
+    { table: 'home_studies', column: 'study_report_data', type: 'LONGBLOB' },
+    { table: 'home_studies', column: 'study_report_mime_type', type: 'VARCHAR(100)' },
+    { table: 'home_studies', column: 'study_report_size', type: 'INT' },
+    // Extensive Child Details
+    { table: 'children', column: 'place_of_birth', type: 'VARCHAR(255)' },
+    { table: 'children', column: 'trauma_notes', type: 'TEXT' },
+    { table: 'children', column: 'allergies', type: 'TEXT' },
+    { table: 'children', column: 'blood_type', type: 'VARCHAR(20)' },
+    { table: 'children', column: 'primary_physician', type: 'VARCHAR(255)' },
+    { table: 'children', column: 'special_needs', type: 'TEXT' },
+    // Extensive Family Details
+    { table: 'families', column: 'license_number', type: 'VARCHAR(100)' },
+    { table: 'families', column: 'license_issue_date', type: 'DATE' },
+    { table: 'families', column: 'license_expiration_date', type: 'DATE' },
+    { table: 'families', column: 'license_status', type: 'VARCHAR(50)' }
   ];
 
   migrations.forEach(mig => {
@@ -530,7 +757,7 @@ function runMigrations() {
       if (err) {
         console.error(`Migration error for ${mig.table}.${mig.column}:`, err.message);
       } else {
-        console.log(`Ensured column ${mig.column} exists in ${mig.table}`);
+        // console.log(`Ensured column ${mig.column} exists in ${mig.table}`);
       }
     });
   });
@@ -599,12 +826,20 @@ app.post('/auth/register', async (req, res, next) => {
   try {
     const { username, email, password, role, phone, id_number, national_id_no, county, sub_county } = req.body;
     if (!username || !email || !password) return res.status(400).json(formatError('VALIDATION_ERROR', 'Missing fields'));
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userRole = role ? role.toLowerCase() : 'viewer';
-    db.query('INSERT INTO users (username, email, password_hash, role, phone, id_number, national_id_no, county, sub_county) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, email, hashedPassword, userRole, phone, id_number, national_id_no, county, sub_county],
-      (err, results) => {
-        if (err) return next({ code: 'DB_ERROR', message: err.message });
+    const userRole = role || 'Social Worker'; // Match the table's default or common role
+
+    // We include national_id_no as it exists in the table.
+    // We use sub_county as well.
+    const sql = 'INSERT INTO users (username, email, password_hash, role, phone, national_id_no, county, sub_county) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    const params = [username, email, hashedPassword, userRole, phone, national_id_no, county, sub_county];
+
+    db.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Registration error:', err.message);
+            return next({ code: 'DB_ERROR', message: err.message });
+        }
         const token = jwt.sign({ user_id: results.insertId, role: userRole }, SECRET, { expiresIn: '7d' });
         res.json({ success: true, user: { user_id: results.insertId, username, email, role: userRole }, token });
       }
@@ -1135,6 +1370,14 @@ app.post('/api/v2/emergency/alert', (req, res, next) => {
 });
 
 // Listen
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server listening on port ${PORT}`);
+});
+
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    const nextPort = Number(PORT) + 1;
+    console.log(`Port ${PORT} is busy, trying ${nextPort}...`);
+    app.listen(nextPort, '0.0.0.0');
+  }
 });

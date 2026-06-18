@@ -9,22 +9,22 @@ import android.os.IBinder
 import android.os.Looper
 import android.telephony.SmsManager
 import androidx.core.app.NotificationCompat
+import com.example.adoption_and_childcare.data.db.dao.SOSLocationDao
+import com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity
+import com.example.adoption_and_childcare.data.session.AppSettings
+import com.example.adoption_and_childcare.data.session.SessionManager
+import com.example.adoption_and_childcare.network.ApiService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
-
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import com.example.adoption_and_childcare.data.db.dao.SOSLocationDao
-import com.example.adoption_and_childcare.data.db.entities.SOSLocationEntity
-import com.example.adoption_and_childcare.network.ApiService
-import com.example.adoption_and_childcare.data.session.SessionManager
 
 @AndroidEntryPoint
 class SOSLocationService : Service() {
@@ -32,6 +32,7 @@ class SOSLocationService : Service() {
     @Inject lateinit var sosLocationDao: SOSLocationDao
     @Inject lateinit var apiService: ApiService
     @Inject lateinit var sessionManager: SessionManager
+    @Inject lateinit var appSettings: AppSettings
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -106,8 +107,8 @@ class SOSLocationService : Service() {
         // Feature E3 — Post to backend
         serviceScope.launch {
             try {
-                currentEventId?.let { eventId ->
-                    val token = "Bearer ${sessionManager.getAuthToken()}"
+                currentEventId?.let { _ ->
+                    // val token = "Bearer ${sessionManager.getAuthToken()}"
                     // Assuming endpoint exists or will be added to ApiService
                     // apiService.postEmergencyLocation(token, eventId, location.latitude, location.longitude, location.accuracy)
                 }
@@ -137,12 +138,23 @@ class SOSLocationService : Service() {
         }
 
         try {
-            val smsManager = SmsManager.getDefault()
-            val prefs = getSharedPreferences("sos_prefs", Context.MODE_PRIVATE)
-            val contactsJson = prefs.getString("sos_emergency_contacts", "[]")
-            // Parse contacts and send. For now, sending to primary emergency phone.
-            val primaryPhone = prefs.getString("sos_emergency_phone", "999") ?: "999"
-            smsManager.sendTextMessage(primaryPhone, null, message, null, null)
+            val smsManager = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                this.getSystemService(SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                SmsManager.getDefault()
+            }
+
+            val contact1Phone = appSettings.getSosContact("emergency1_phone")
+            val contact2Phone = appSettings.getSosContact("emergency2_phone")
+            val policePhone = appSettings.getSosContact("police").ifBlank { "999" }
+
+            if (contact1Phone.isNotBlank()) smsManager.sendTextMessage(contact1Phone, null, message, null, null)
+            if (contact2Phone.isNotBlank()) smsManager.sendTextMessage(contact2Phone, null, message, null, null)
+            
+            // Optionally notify police via SMS if configured/required
+            // smsManager.sendTextMessage(policePhone, null, message, null, null)
+
         } catch (e: Exception) {}
     }
 

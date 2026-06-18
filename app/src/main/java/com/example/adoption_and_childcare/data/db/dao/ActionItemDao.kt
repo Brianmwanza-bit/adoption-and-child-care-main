@@ -6,6 +6,9 @@ import com.example.adoption_and_childcare.data.db.entities.SyncQueueEntity
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Data Access Object for action item-related database operations.
+ */
 @Dao
 interface ActionItemDao {
     @Query("SELECT * FROM action_items")

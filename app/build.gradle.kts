@@ -1,7 +1,6 @@
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -9,13 +8,13 @@ plugins {
 }
 
 android {
-    namespace = "com.yourdomain.adoptionchildcare"
-    compileSdk = 35
+    namespace = "com.example.adoption_and_childcare"
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.adoption_and_childcare"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -23,17 +22,26 @@ android {
     }
 
     buildTypes {
+        val buildConfigType = libs.versions.buildConfigType.get()
+        val buildConfigBaseUrl = libs.versions.buildConfigBaseUrl.get()
+        
+        val prodUrl = project.findProperty("BASE_URL_PROD")?.toString() ?: ""
+        val debugPort = project.findProperty("DEBUG_PORT")?.toString() ?: ""
+        val hostIp = project.findProperty("HOST_IP")?.toString() ?: ""
+
         debug {
-            versionNameSuffix = "-debug"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:50000/\"")
+            versionNameSuffix = libs.versions.debugVersionNameSuffix.get()
+            val urlTemplate = libs.versions.debugUrlTemplate.get()
+            val debugUrl = String.format("\"$urlTemplate\"", hostIp, debugPort)
+            buildConfigField(buildConfigType, buildConfigBaseUrl, debugUrl)
         }
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile(libs.versions.proguardOptimizeFile.get()),
+                libs.versions.proguardRulesFile.get(),
             )
-            buildConfigField("String", "BASE_URL", "\"https://api.production-adoption.org/\"")
+            buildConfigField(buildConfigType, buildConfigBaseUrl, "\"$prodUrl\"")
         }
     }
     compileOptions {
@@ -57,12 +65,19 @@ hilt {
 }
 
 ksp {
-    arg("hilt.disableAndroidSuperclassValidation", "true")
-    arg("hilt.projectType", "APP")
+    val disableValidation = true
+    val projectTypeApp = "APP"
+    arg("hilt.disableAndroidSuperclassValidation", disableValidation.toString())
+    arg("hilt.projectType", projectTypeApp)
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(listOf("-Xlint:-processing", "-Xlint:-options"))
+    options.compilerArgs.addAll(
+        listOf(
+            libs.versions.lintProcessing.get(),
+            libs.versions.lintOptionsArg.get()
+        )
+    )
 }
 
 dependencies {
@@ -81,9 +96,11 @@ dependencies {
 
     // Jetpack Compose
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
@@ -112,6 +129,7 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.firestore)
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
@@ -151,4 +169,5 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(libs.guava)
 }

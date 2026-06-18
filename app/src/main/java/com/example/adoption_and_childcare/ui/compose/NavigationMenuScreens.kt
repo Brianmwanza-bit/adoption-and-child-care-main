@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -262,7 +262,7 @@ fun HelpAboutScreen() {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = stringResource(R.string.app_version_format, "1.4.0"),
+            text = stringResource(R.string.app_version_format, com.example.adoption_and_childcare.BuildConfig.VERSION_NAME),
             color = Color.Gray
         )
         Spacer(modifier = Modifier.height(32.dp))

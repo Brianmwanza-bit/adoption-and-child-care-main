@@ -1,10 +1,12 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -29,7 +33,13 @@ import com.google.maps.android.compose.*
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(onBack: () -> Unit) {
+fun MapScreen(
+    onBack: () -> Unit,
+    viewModel: MapViewModel = hiltViewModel()
+) {
+    val children by viewModel.children.collectAsState(initial = emptyList())
+    val families by viewModel.families.collectAsState(initial = emptyList())
+
     val nairobi = LatLng(-1.286389, 36.817223)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(nairobi, 11f)
@@ -37,6 +47,9 @@ fun MapScreen(onBack: () -> Unit) {
 
     var selectedLocationName by remember { mutableStateOf<String?>(null) }
     var showDistanceTool by remember { mutableStateOf(false) }
+    
+    var showChildren by remember { mutableStateOf(true) }
+    var showFamilies by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = {
@@ -44,7 +57,7 @@ fun MapScreen(onBack: () -> Unit) {
                 title = { Text("Case Management Map") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -53,9 +66,6 @@ fun MapScreen(onBack: () -> Unit) {
                             if (showDistanceTool) Icons.Default.Straighten else Icons.Default.Map,
                             contentDescription = "Distance Tool"
                         )
-                    }
-                    IconButton(onClick = { /* Refresh Markers */ }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -77,38 +87,41 @@ fun MapScreen(onBack: () -> Unit) {
                     zoomControlsEnabled = false
                 )
             ) {
-                // Mock Children Markers
-                Marker(
-                    state = rememberMarkerState(position = LatLng(-1.2921, 36.8219)),
-                    title = "Child: John Doe",
-                    snippet = "Case #1024 - Active",
-                    onClick = {
-                        selectedLocationName = "John Doe"
-                        false
+                // Dynamic Children Markers
+                if (showChildren) {
+                    children.forEach { child ->
+                        // Simulation: Lat/Lng based on ID for visual placement
+                        val lat = -1.28 + (child.childId * 0.005)
+                        val lng = 36.81 + (child.childId * 0.003)
+                        Marker(
+                            state = rememberUpdatedMarkerState(position = LatLng(lat, lng)),
+                            title = "Child: ${child.firstName} ${child.lastName}",
+                            snippet = "Case #${child.caseNumber ?: "N/A"} - ${child.currentStatus}",
+                            onClick = {
+                                selectedLocationName = "${child.firstName} ${child.lastName}"
+                                false
+                            }
+                        )
                     }
-                )
+                }
 
-                Marker(
-                    state = rememberMarkerState(position = LatLng(-1.2750, 36.8010)),
-                    title = "Child: Jane Smith",
-                    snippet = "Case #1025 - Pending",
-                    onClick = {
-                        selectedLocationName = "Jane Smith"
-                        false
+                // Dynamic Family Markers
+                if (showFamilies) {
+                    families.forEach { family ->
+                        val lat = -1.30 - (family.familyId * 0.004)
+                        val lng = 36.78 + (family.familyId * 0.006)
+                        Marker(
+                            state = rememberUpdatedMarkerState(position = LatLng(lat, lng)),
+                            title = "Family: ${family.primaryContactName}",
+                            snippet = "Status: ${family.status ?: "Licensed"}",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                            onClick = {
+                                selectedLocationName = family.primaryContactName
+                                false
+                            }
+                        )
                     }
-                )
-
-                // Mock Family Markers
-                Marker(
-                    state = rememberMarkerState(position = LatLng(-1.3000, 36.7800)),
-                    title = "Family: Kamau Family",
-                    snippet = "Licensed Foster Home",
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
-                    onClick = {
-                        selectedLocationName = "Kamau Family"
-                        false
-                    }
-                )
+                }
             }
 
             // Overlay UI
@@ -120,9 +133,8 @@ fun MapScreen(onBack: () -> Unit) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LayerToggle("Children", true, Color(0xFFE91E63))
-                LayerToggle("Foster Homes", true, Color(0xFF2196F3))
-                LayerToggle("Schools", false, Color(0xFFFF9800))
+                LayerToggle("Children", showChildren, Color(0xFFE91E63)) { showChildren = !showChildren }
+                LayerToggle("Families", showFamilies, Color(0xFF2196F3)) { showFamilies = !showFamilies }
             }
 
             // Distance Tool UI
@@ -144,11 +156,11 @@ fun MapScreen(onBack: () -> Unit) {
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            "Distance from School of Origin to Kamau Family Home: 4.2 km",
+                            "Proximity Analysis: Optimized for resource allocation.",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            "Estimated commute time: 12 mins",
+                            "Estimating travel times between current placements and services.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
@@ -159,7 +171,7 @@ fun MapScreen(onBack: () -> Unit) {
                             color = Color(0xFF4CAF50)
                         )
                         Text(
-                            "STABILITY RATING: HIGH",
+                            "SYSTEM STATUS: 100% OPERATIONAL",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2E7D32),
@@ -199,12 +211,12 @@ fun MapScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun LayerToggle(label: String, isEnabled: Boolean, color: Color) {
+private fun LayerToggle(label: String, isEnabled: Boolean, color: Color, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = if (isEnabled) color else Color.White,
         border = if (isEnabled) null else androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray),
-        modifier = Modifier.height(32.dp)
+        modifier = Modifier.height(32.dp).clickable { onClick() }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp),

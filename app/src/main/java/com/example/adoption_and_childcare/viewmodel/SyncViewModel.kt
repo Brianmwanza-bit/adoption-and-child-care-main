@@ -3,6 +3,7 @@ package com.example.adoption_and_childcare.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
+import com.example.adoption_and_childcare.data.sync.FirestoreSyncManager
 import com.example.adoption_and_childcare.data.sync.SyncManager
 import com.example.adoption_and_childcare.data.sync.SyncResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,24 +30,31 @@ data class SyncStatus(
  * methods to trigger synchronization with the remote server.
  * 
  * @property syncManager Manager for sync operations.
+ * @property firestoreSyncManager Manager for Firestore batch sync.
  * @property syncQueueDao DAO for accessing the sync queue.
  */
 @HiltViewModel
 class SyncViewModel @Inject constructor(
     private val syncManager: SyncManager,
+    private val firestoreSyncManager: FirestoreSyncManager,
     private val syncQueueDao: SyncQueueDao
 ) : ViewModel() {
     private val _syncStatus = MutableStateFlow(SyncStatus(SyncState.ONLINE_IDLE))
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             syncQueueDao.getPendingCount().collectLatest { count ->
                 _syncStatus.value = _syncStatus.value.copy(
                     pendingCount = count,
                     state = if (count > 0 && _syncStatus.value.state != SyncState.SYNCING) 
                         SyncState.ONLINE_PENDING else _syncStatus.value.state
                 )
+                
+                // Auto-trigger sync if pending changes exist and we aren't already syncing
+                if (count > 0 && _syncStatus.value.state != SyncState.SYNCING) {
+                    triggerSync()
+                }
             }
         }
     }
@@ -56,7 +64,17 @@ class SyncViewModel @Inject constructor(
 
         viewModelScope.launch {
             _syncStatus.value = _syncStatus.value.copy(state = SyncState.SYNCING)
+            
+            // 1. Retrofit Sync
             val result = syncManager.sync()
+            
+            // 2. Firestore Sync
+            try {
+                firestoreSyncManager.pushChangesInBatch()
+            } catch (e: Exception) {
+                // Non-critical if Firestore fails but Retrofit succeeded
+            }
+
             when (result) {
                 is SyncResult.Success -> {
                     _syncStatus.value = _syncStatus.value.copy(

@@ -20,12 +20,12 @@ import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.session.AppSettings
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.viewmodel.SettingsViewModel
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 // Internal Constants to avoid hardcoded strings and lint warnings
-private const val DEFAULT_API_BASE_URL = "http://10.0.2.2:50000/"
+private const val DEFAULT_API_BASE_URL = com.example.adoption_and_childcare.BuildConfig.BASE_URL
 private const val EMERGENCY_911 = "911"
 
 /**
@@ -162,6 +162,10 @@ fun SettingsScreen(
 
     // Sync UI from Room Primary Storage
     LaunchedEffect(roomSettings) {
+        /**
+         * Iterates through the list of settings retrieved from the database and updates the UI state.
+         * @param settingItem The specific setting record being processed.
+         */
         roomSettings.forEach { settingItem ->
             when (settingItem.settingKey) {
                 keyApiUrlStr -> {
@@ -217,7 +221,7 @@ fun SettingsScreen(
                 )
             )
         }
-    ) { scaffoldPadding ->
+    ) { scaffoldPadding: PaddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -247,7 +251,10 @@ fun SettingsScreen(
                         label = { Text(stringResource(R.string.settings_email_label)) },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    ExposedDropdownMenuBox(expanded = showRoleMenuState, onExpandedChange = { showRoleMenuState = !showRoleMenuState }) {
+                    ExposedDropdownMenuBox(
+                        expanded = showRoleMenuState,
+                        onExpandedChange = { showRoleMenuState = it }
+                    ) {
                         OutlinedTextField(
                             value = roleState,
                             onValueChange = { },
@@ -255,15 +262,21 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleMenuState) },
                             modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
                         )
-                        ExposedDropdownMenu(expanded = showRoleMenuState, onDismissRequest = { showRoleMenuState = false }) {
+                        ExposedDropdownMenu(
+                            expanded = showRoleMenuState,
+                            onDismissRequest = { showRoleMenuState = false }
+                        ) {
                             rolesList.forEach { roleOption ->
-                                DropdownMenuItem(text = { Text(roleOption) }, onClick = {
-                                    roleState = roleOption
-                                    showRoleMenuState = false
-                                })
+                                DropdownMenuItem(
+                                    text = { Text(roleOption) },
+                                    onClick = {
+                                        roleState = roleOption
+                                        showRoleMenuState = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -314,7 +327,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = apiTimeoutState,
                         onValueChange = { timeoutText ->
-                            if (timeoutText.all { it.isDigit() }) { apiTimeoutState = timeoutText }
+                            if (timeoutText.all { char -> char.isDigit() }) { apiTimeoutState = timeoutText }
                         },
                         label = { Text(stringResource(R.string.settings_api_timeout_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -322,7 +335,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = apiRetryCountState,
                         onValueChange = { retryCountText ->
-                            if (retryCountText.all { it.isDigit() }) { apiRetryCountState = retryCountText }
+                            if (retryCountText.all { char -> char.isDigit() }) { apiRetryCountState = retryCountText }
                         },
                         label = { Text(stringResource(R.string.settings_retry_count_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -354,7 +367,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = syncIntervalState,
                         onValueChange = { intervalText ->
-                            if (intervalText.all { it.isDigit() }) { syncIntervalState = intervalText }
+                            if (intervalText.all { char -> char.isDigit() }) { syncIntervalState = intervalText }
                         },
                         label = { Text(stringResource(R.string.settings_sync_interval_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -364,6 +377,10 @@ fun SettingsScreen(
                         Switch(
                             checked = autoSyncEnabledState,
                             onCheckedChange = { isAutoSyncEnabled ->
+                                /**
+                                 * Toggles the automatic sync status.
+                                 * @param isAutoSyncEnabled Boolean state indicating if automatic sync is toggled on.
+                                 */
                                 autoSyncEnabledState = isAutoSyncEnabled
                                 settings.autoSyncEnabled = isAutoSyncEnabled
                                 viewModel.saveSetting(keyAutoSyncStr, isAutoSyncEnabled.toString(), catSyncStr)
@@ -375,6 +392,10 @@ fun SettingsScreen(
                         Switch(
                             checked = notificationsEnabledState,
                             onCheckedChange = { isNotifEnabled ->
+                                /**
+                                 * Toggles the notification status.
+                                 * @param isNotifEnabled Boolean state indicating if notifications are enabled.
+                                 */
                                 notificationsEnabledState = isNotifEnabled
                                 settings.notificationsEnabled = isNotifEnabled
                                 viewModel.saveSetting(keyNotifEnabledStr, isNotifEnabled.toString(), catSyncStr)
@@ -386,6 +407,10 @@ fun SettingsScreen(
                         Switch(
                             checked = wifiOnlySyncState,
                             onCheckedChange = { isWifiOnly ->
+                                /**
+                                 * Toggles the Wi-Fi only sync status.
+                                 * @param isWifiOnly Boolean state indicating if sync should only occur on Wi-Fi.
+                                 */
                                 wifiOnlySyncState = isWifiOnly
                                 settings.wifiOnlySync = isWifiOnly
                                 viewModel.saveSetting(keyWifiSyncStr, isWifiOnly.toString(), catSyncStr)
@@ -417,7 +442,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = maxFileSizeState,
                         onValueChange = { maxFileSizeText ->
-                            if (maxFileSizeText.all { it.isDigit() }) { maxFileSizeState = maxFileSizeText }
+                            if (maxFileSizeText.all { char -> char.isDigit() }) { maxFileSizeState = maxFileSizeText }
                         },
                         label = { Text(stringResource(R.string.settings_max_file_size_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -425,7 +450,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = uploadTimeoutState,
                         onValueChange = { uploadTimeoutText ->
-                            if (uploadTimeoutText.all { it.isDigit() }) { uploadTimeoutState = uploadTimeoutText }
+                            if (uploadTimeoutText.all { char -> char.isDigit() }) { uploadTimeoutState = uploadTimeoutText }
                         },
                         label = { Text(stringResource(R.string.settings_upload_timeout_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -456,7 +481,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = sessionTimeoutState,
                         onValueChange = { sessionTimeoutText ->
-                            if (sessionTimeoutText.all { it.isDigit() }) { sessionTimeoutState = sessionTimeoutText }
+                            if (sessionTimeoutText.all { char -> char.isDigit() }) { sessionTimeoutState = sessionTimeoutText }
                         },
                         label = { Text(stringResource(R.string.settings_session_timeout_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -464,7 +489,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = maxLoginAttemptsState,
                         onValueChange = { maxLoginText ->
-                            if (maxLoginText.all { it.isDigit() }) { maxLoginAttemptsState = maxLoginText }
+                            if (maxLoginText.all { char -> char.isDigit() }) { maxLoginAttemptsState = maxLoginText }
                         },
                         label = { Text(stringResource(R.string.settings_max_login_label)) },
                         modifier = Modifier.fillMaxWidth()
@@ -492,7 +517,10 @@ fun SettingsScreen(
                         Text(text = stringResource(R.string.settings_ui_section), style = MaterialTheme.typography.titleMedium)
                     }
                     
-                    ExposedDropdownMenuBox(expanded = showThemeDropdownState, onExpandedChange = { showThemeDropdownState = it }) {
+                    ExposedDropdownMenuBox(
+                        expanded = showThemeDropdownState,
+                        onExpandedChange = { showThemeDropdownState = it }
+                    ) {
                         OutlinedTextField(
                             value = themeModeState,
                             onValueChange = { },
@@ -500,22 +528,31 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showThemeDropdownState) },
                             modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
                         )
-                        ExposedDropdownMenu(expanded = showThemeDropdownState, onDismissRequest = { showThemeDropdownState = false }) {
+                        ExposedDropdownMenu(
+                            expanded = showThemeDropdownState,
+                            onDismissRequest = { showThemeDropdownState = false }
+                        ) {
                             themeModesList.forEach { themeOptionItem ->
-                                DropdownMenuItem(text = { Text(themeOptionItem) }, onClick = {
-                                    themeModeState = themeOptionItem
-                                    settings.themeMode = themeOptionItem
-                                    viewModel.saveSetting(keyThemeStr, themeOptionItem, catUiStr)
-                                    showThemeDropdownState = false
-                                })
+                                DropdownMenuItem(
+                                    text = { Text(themeOptionItem) },
+                                    onClick = {
+                                        themeModeState = themeOptionItem
+                                        settings.themeMode = themeOptionItem
+                                        viewModel.saveSetting(keyThemeStr, themeOptionItem, catUiStr)
+                                        showThemeDropdownState = false
+                                    }
+                                )
                             }
                         }
                     }
                     
-                    ExposedDropdownMenuBox(expanded = showLanguageDropdownState, onExpandedChange = { showLanguageDropdownState = it }) {
+                    ExposedDropdownMenuBox(
+                        expanded = showLanguageDropdownState,
+                        onExpandedChange = { showLanguageDropdownState = it }
+                    ) {
                         OutlinedTextField(
                             value = languageState,
                             onValueChange = { },
@@ -523,17 +560,23 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showLanguageDropdownState) },
                             modifier = Modifier
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                                 .fillMaxWidth()
                         )
-                        ExposedDropdownMenu(expanded = showLanguageDropdownState, onDismissRequest = { showLanguageDropdownState = false }) {
+                        ExposedDropdownMenu(
+                            expanded = showLanguageDropdownState,
+                            onDismissRequest = { showLanguageDropdownState = false }
+                        ) {
                             languagesList.forEach { languageOptionItem ->
-                                DropdownMenuItem(text = { Text(languageOptionItem) }, onClick = {
-                                    languageState = languageOptionItem
-                                    settings.language = languageOptionItem
-                                    viewModel.saveSetting(keyLangStr, languageOptionItem, catUiStr)
-                                    showLanguageDropdownState = false
-                                })
+                                DropdownMenuItem(
+                                    text = { Text(languageOptionItem) },
+                                    onClick = {
+                                        languageState = languageOptionItem
+                                        settings.language = languageOptionItem
+                                        viewModel.saveSetting(keyLangStr, languageOptionItem, catUiStr)
+                                        showLanguageDropdownState = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -554,6 +597,10 @@ fun SettingsScreen(
                         Switch(
                             checked = useLocalDatabaseState,
                             onCheckedChange = { isLocalDbEnabled ->
+                                /**
+                                 * Toggles the usage of local database storage.
+                                 * @param isLocalDbEnabled Boolean state indicating if local SQLite/Room should be used.
+                                 */
                                 useLocalDatabaseState = isLocalDbEnabled
                                 settings.useLocalDatabase = isLocalDbEnabled
                                 viewModel.saveSetting(keyLocalDbStr, isLocalDbEnabled.toString(), catDatabaseStr)
@@ -751,6 +798,10 @@ fun SettingsScreen(
                         Switch(
                             checked = debugModeState,
                             onCheckedChange = { isDebugEnabled ->
+                                /**
+                                 * Toggles extended debugging features.
+                                 * @param isDebugEnabled Boolean state indicating if extended debugging features are active.
+                                 */
                                 debugModeState = isDebugEnabled
                                 settings.debugMode = isDebugEnabled
                                 viewModel.saveSetting(keyDebugStr, isDebugEnabled.toString(), catDebugStr)
@@ -762,6 +813,10 @@ fun SettingsScreen(
                         Switch(
                             checked = enableLoggingState,
                             onCheckedChange = { isLoggingEnabled ->
+                                /**
+                                 * Toggles application event logging.
+                                 * @param isLoggingEnabled Boolean state indicating if application logging is enabled.
+                                 */
                                 enableLoggingState = isLoggingEnabled
                                 settings.enableLogging = isLoggingEnabled
                                 viewModel.saveSetting(keyLoggingStr, isLoggingEnabled.toString(), catDebugStr)

@@ -33,7 +33,7 @@ import com.example.adoption_and_childcare.data.db.entities.UserEntity
 import com.example.adoption_and_childcare.data.model.UserRole
 import com.example.adoption_and_childcare.utils.AutoSaveManager
 import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import kotlinx.coroutines.launch
 
 /**
@@ -396,7 +396,7 @@ fun RegisterScreen(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOccupationDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     )
                     ExposedDropdownMenu(
                         expanded = showOccupationDropdown,

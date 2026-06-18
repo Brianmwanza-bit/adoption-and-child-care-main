@@ -10,7 +10,6 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -27,6 +26,13 @@ private val LightColorScheme = lightColorScheme(
     tertiary = Pink40
 )
 
+/**
+ * Main theme for the Adoption & Childcare application.
+ *
+ * @param darkTheme Whether to use the dark color scheme. Defaults to system settings.
+ * @param dynamicColor Whether to use dynamic color (Android 12+). Defaults to false.
+ * @param content The Composable content to be themed.
+ */
 @Composable
 fun AdoptionChildcareTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -47,7 +53,6 @@ fun AdoptionChildcareTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

@@ -7,16 +7,16 @@
     "start": "echo 'No build step. Open index.html directly.'",
     "dev": "cd backend && npm install && npm run dev",
     "dev:3306": "cd backend && npm install && npm run dev:3306",
-    "dev:3307": "cd backend && npm install && npm run dev:3307",
     "backend:start": "cd backend && npm start",
-    "backend:install": "cd backend && npm install"
+    "backend:install": "cd backend && npm install",
+    "seed": "cd backend && node seed.js"
   },
   "author": "Brian Mwanza",
   "license": "MIT",
   "devDependencies": {
     "cypress": "^15.16.0",
     "eslint": "^9.31.0",
-    "jest": "^30.0.4",
+    "jest": "^25.0.0",
     "jsdom": "^26.1.0",
     "nodemon": "^3.1.10",
     "supertest": "^7.1.3"

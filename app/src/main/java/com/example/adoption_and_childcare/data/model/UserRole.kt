@@ -2,7 +2,7 @@ package com.example.adoption_and_childcare.data.model
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 
 /**
  * Enum representing the different user roles in the system.
@@ -16,8 +16,8 @@ import com.yourdomain.adoptionchildcare.R
 enum class UserRole(val roleName: String, val labelResId: Int) {
     /** Administrator role with full system access. */
     ADMIN("Admin", R.string.role_admin),
-    /** Case worker role responsible for specific children/families. */
-    CASE_WORKER("Case Worker", R.string.role_case_worker),
+    /** Caseworker role responsible for specific children/families. */
+    CASE_WORKER("Caseworker", R.string.role_case_worker),
     /** Guardian or foster parent role with access to assigned child records. */
     GUARDIAN("Guardian", R.string.role_guardian),
     /** Social worker role for assessments and field work. */

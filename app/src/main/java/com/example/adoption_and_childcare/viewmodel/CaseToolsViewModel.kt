@@ -25,8 +25,13 @@ class CaseToolsViewModel @Inject constructor(
     private val actionItemDao: ActionItemDao,
     private val workerMessageDao: WorkerMessageDao,
     private val workloadTrackingDao: WorkloadTrackingDao,
-    private val dashboardPreferenceDao: DashboardPreferenceDao
+    private val dashboardPreferenceDao: DashboardPreferenceDao,
+    private val systemSettingDao: SystemSettingDao
 ) : ViewModel() {
+
+    /** Flow of system settings for lookups. */
+    val lookupSettings: StateFlow<List<SystemSettingEntity>> = systemSettingDao.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Risk Assessments
     val riskAssessments: StateFlow<List<RiskAssessmentEntity>> = riskAssessmentDao.observeAll()

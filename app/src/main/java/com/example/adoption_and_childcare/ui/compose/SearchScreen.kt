@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.viewmodel.SearchResult
 import com.example.adoption_and_childcare.viewmodel.SearchViewModel
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 
 /**
  * Screen displaying search results for children, families, staff, and other records.

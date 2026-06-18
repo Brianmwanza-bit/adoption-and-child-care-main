@@ -1,6 +1,7 @@
 package com.example.adoption_and_childcare.data.repository
 
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository interface for user-related data operations.
@@ -9,6 +10,7 @@ import com.example.adoption_and_childcare.data.db.entities.UserEntity
  * using the local Room database.
  */
 interface UserRepository {
+    fun observeAll(): Flow<List<UserEntity>>
     suspend fun findByEmail(email: String): UserEntity?
     suspend fun findByUsername(username: String): UserEntity?
     suspend fun insert(user: UserEntity)

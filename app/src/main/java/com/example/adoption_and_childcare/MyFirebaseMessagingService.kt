@@ -41,6 +41,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
+    @Deprecated("Overriding deprecated member")
     override fun onNewToken(token: String) {
         Log.d("FCM", "Refreshed token: $token")
         sendTokenToServer(token)

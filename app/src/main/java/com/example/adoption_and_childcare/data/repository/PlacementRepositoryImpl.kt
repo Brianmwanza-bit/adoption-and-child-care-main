@@ -87,9 +87,10 @@ class PlacementRepositoryImpl @Inject constructor(
             }
             
             val response = apiService.getPlacements(authHeader)
+            val body = response.body()
             
-            if (response.isSuccessful && response.body() != null) {
-                val placements = response.body()!!
+            if (response.isSuccessful && body != null) {
+                val placements = body
                 for (placement in placements) {
                     val existing = placementDao.findById(placement.placementId)
                     if (existing != null) {

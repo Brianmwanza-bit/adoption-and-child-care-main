@@ -1,8 +1,6 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,10 +17,12 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.*
 import com.example.adoption_and_childcare.data.repository.NotificationRepositoryImpl
@@ -36,8 +36,18 @@ import java.util.*
 
 // ==================== COMMON UTILS & BASE SCREENS ====================
 
+/**
+ * Returns the current date in yyyy-MM-dd format.
+ */
 private fun getCurrentDate(): String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
+/**
+ * A simple screen with a top bar and a back button.
+ *
+ * @param title The title to display in the top bar.
+ * @param onBack Callback when the back button is clicked.
+ * @param content The content of the screen, receiving padding from the Scaffold.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleBackScreen(title: String, onBack: () -> Unit, content: @Composable (PaddingValues) -> Unit) {
@@ -47,7 +57,7 @@ fun SimpleBackScreen(title: String, onBack: () -> Unit, content: @Composable (Pa
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc))
                     }
                 }
             )
@@ -57,6 +67,15 @@ fun SimpleBackScreen(title: String, onBack: () -> Unit, content: @Composable (Pa
     }
 }
 
+/**
+ * A screen that displays a list of data items with an add button.
+ *
+ * @param title The screen title.
+ * @param onBack Callback for back navigation.
+ * @param items The list of items to display.
+ * @param itemContent Composable to render each item.
+ * @param onAddClick Callback when the FAB is clicked.
+ */
 @Composable
 fun <T> DataListScreen(
     title: String,
@@ -69,7 +88,7 @@ fun <T> DataListScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (items.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No data available. Click + to add.")
+                    Text(stringResource(R.string.common_no_data))
                 }
             } else {
                 LazyColumn(
@@ -86,12 +105,20 @@ fun <T> DataListScreen(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.common_btn_add))
             }
         }
     }
 }
 
+/**
+ * A generic card component with an icon, title, and optional status.
+ *
+ * @param title The main text.
+ * @param subtitle The secondary text.
+ * @param status Optional status text.
+ * @param icon The icon to display.
+ */
 @Composable
 fun GenericCard(
     title: String,
@@ -120,6 +147,14 @@ fun GenericCard(
 
 // ==================== SHARED COMPONENT WRAPPERS ====================
 
+/**
+ * A statistical card displaying a count and a label.
+ *
+ * @param label The label for the statistic.
+ * @param count The numeric value to display.
+ * @param color The color theme for the card.
+ * @param modifier Modifier for layout.
+ */
 @Composable
 fun TaskStatCard(label: String, count: Int, color: Color, modifier: Modifier = Modifier) {
     Card(
@@ -159,44 +194,57 @@ fun WorkloadStatCard(label: String, count: Int, color: Color, modifier: Modifier
 
 // ==================== MAIN SCREENS ====================
 
+/**
+ * Screen for managing user tasks.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for tasks.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val tasks by viewModel.tasks.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterPending = stringResource(R.string.tasks_label_pending)
+    val filterInProgress = stringResource(R.string.tasks_label_in_progress)
+    val filterCompleted = stringResource(R.string.tasks_label_completed)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterPending, filterInProgress, filterCompleted)
     
     val filteredTasks = when (selectedFilter) {
-        "Pending" -> tasks.filter { it.status == "Pending" }
-        "In Progress" -> tasks.filter { it.status == "In Progress" }
-        "Completed" -> tasks.filter { it.status == "Completed" }
+        filterPending -> tasks.filter { it.status == "Pending" }
+        filterInProgress -> tasks.filter { it.status == "In Progress" }
+        filterCompleted -> tasks.filter { it.status == "Completed" }
         else -> tasks
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Tasks") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Task") } }
+                title = { Text(stringResource(R.string.tasks_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.tasks_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Add Task") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.tasks_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TaskStatCard("Pending", tasks.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
-                TaskStatCard("In Progress", tasks.count { it.status == "In Progress" }, Color(0xFF2196F3), Modifier.weight(1f))
-                TaskStatCard("Completed", tasks.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
+                TaskStatCard(filterPending, tasks.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
+                TaskStatCard(filterInProgress, tasks.count { it.status == "In Progress" }, Color(0xFF2196F3), Modifier.weight(1f))
+                TaskStatCard(filterCompleted, tasks.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Pending", "In Progress", "Completed").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Pending", "In Progress", "Completed").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -205,7 +253,7 @@ fun TasksScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltVie
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.TaskAlt, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No tasks found", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.tasks_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -236,44 +284,57 @@ fun TasksScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltVie
     }
 }
 
+/**
+ * Screen for managing action items.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for action items.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionItemsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val items by viewModel.actionItems.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterOpen = stringResource(R.string.action_items_label_open)
+    val filterInProgress = stringResource(R.string.tasks_label_in_progress)
+    val filterCompleted = stringResource(R.string.tasks_label_completed)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterOpen, filterInProgress, filterCompleted)
     
     val filteredItems = when (selectedFilter) {
-        "Open" -> items.filter { it.status == "Open" }
-        "In Progress" -> items.filter { it.status == "In Progress" }
-        "Completed" -> items.filter { it.status == "Completed" }
+        filterOpen -> items.filter { it.status == "Open" }
+        filterInProgress -> items.filter { it.status == "In Progress" }
+        filterCompleted -> items.filter { it.status == "Completed" }
         else -> items
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Action Items") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Action Item") } }
+                title = { Text(stringResource(R.string.action_items_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_items_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Add Action Item") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_items_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionItemStatCard("Open", items.count { it.status == "Open" }, Color(0xFFF44336), Modifier.weight(1f))
-                ActionItemStatCard("In Progress", items.count { it.status == "In Progress" }, Color(0xFFFF9800), Modifier.weight(1f))
-                ActionItemStatCard("Completed", items.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
+                ActionItemStatCard(filterOpen, items.count { it.status == "Open" }, Color(0xFFF44336), Modifier.weight(1f))
+                ActionItemStatCard(filterInProgress, items.count { it.status == "In Progress" }, Color(0xFFFF9800), Modifier.weight(1f))
+                ActionItemStatCard(filterCompleted, items.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Open", "In Progress", "Completed").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Open", "In Progress", "Completed").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -282,7 +343,7 @@ fun ActionItemsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = h
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Checklist, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No action items found", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.action_items_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -313,15 +374,26 @@ fun ActionItemsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = h
     }
 }
 
+/**
+ * Screen for displaying and adding permanency plans.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for permanency plans.
+ */
 @Composable
 fun PermanencyPlansScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val plans by viewModel.permanencyPlans.collectAsState()
     DataListScreen(
-        title = "Permanency Plans",
+        title = stringResource(R.string.permanency_plans_title),
         onBack = onBack,
         items = plans,
         itemContent = { item ->
-            GenericCard("Plan #${item.planNumber}", "Goal: ${item.primaryGoal}", item.status, Icons.Default.Map)
+            GenericCard(
+                stringResource(R.string.permanency_plans_plan_format, item.planNumber ?: ""),
+                stringResource(R.string.permanency_plans_goal_format, item.primaryGoal ?: ""),
+                item.status,
+                Icons.Default.Map
+            )
         },
         onAddClick = {
             viewModel.savePermanencyPlan(
@@ -343,43 +415,56 @@ fun PermanencyPlansScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel
     )
 }
 
+/**
+ * Screen for tracking case activities.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for case activities.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaseActivitiesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val activities by viewModel.caseActivities.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterHomeVisit = stringResource(R.string.activities_type_home_visit)
+    val filterCaseReview = stringResource(R.string.activities_type_case_review)
+    val filterCourtHearing = stringResource(R.string.activities_type_court_hearing)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterHomeVisit, filterCaseReview, filterCourtHearing)
     
     val filteredActivities = when (selectedFilter) {
-        "Home Visit" -> activities.filter { it.activityType == "Home Visit" }
-        "Case Review" -> activities.filter { it.activityType == "Case Review" }
-        "Court Hearing" -> activities.filter { it.activityType == "Court Hearing" }
+        filterHomeVisit -> activities.filter { it.activityType == "Home Visit" }
+        filterCaseReview -> activities.filter { it.activityType == "Case Review" }
+        filterCourtHearing -> activities.filter { it.activityType == "Court Hearing" }
         else -> activities
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Case Activities") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Activity") } }
+                title = { Text(stringResource(R.string.activities_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.activities_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Add Activity") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.activities_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActivityStatCard("Total", activities.size, Color(0xFF673AB7), Modifier.weight(1f))
-                ActivityStatCard("This Month", activities.count { it.activityDate?.startsWith(getCurrentDate().substring(0, 7)) == true }, Color(0xFF2196F3), Modifier.weight(1f))
+                ActivityStatCard(stringResource(R.string.activities_label_total), activities.size, Color(0xFF673AB7), Modifier.weight(1f))
+                ActivityStatCard(stringResource(R.string.activities_label_this_month), activities.count { it.activityDate?.startsWith(getCurrentDate().substring(0, 7)) == true }, Color(0xFF2196F3), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Home Visit", "Case Review", "Court Hearing").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Home Visit", "Case Review", "Court Hearing").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -388,7 +473,7 @@ fun CaseActivitiesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.History, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No activities recorded", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.activities_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -420,45 +505,59 @@ fun CaseActivitiesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel 
     }
 }
 
+/**
+ * Screen for managing case deadlines.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for deadlines.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaseDeadlinesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val deadlines by viewModel.deadlines.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterPending = stringResource(R.string.tasks_label_pending)
+    val filterInProgress = stringResource(R.string.tasks_label_in_progress)
+    val filterCompleted = stringResource(R.string.tasks_label_completed)
+    val filterOverdue = stringResource(R.string.deadlines_label_overdue)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterPending, filterInProgress, filterCompleted, filterOverdue)
     
     val filteredDeadlines = when (selectedFilter) {
-        "Pending" -> deadlines.filter { it.status == "Pending" }
-        "In Progress" -> deadlines.filter { it.status == "In Progress" }
-        "Completed" -> deadlines.filter { it.status == "Completed" }
-        "Overdue" -> deadlines.filter { it.priority == "High" && it.status != "Completed" }
+        filterPending -> deadlines.filter { it.status == "Pending" }
+        filterInProgress -> deadlines.filter { it.status == "In Progress" }
+        filterCompleted -> deadlines.filter { it.status == "Completed" }
+        filterOverdue -> deadlines.filter { it.priority == "High" && it.status != "Completed" }
         else -> deadlines
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Case Deadlines") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Deadline") } }
+                title = { Text(stringResource(R.string.deadlines_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.deadlines_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Add Deadline") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.deadlines_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                DeadlineStatCard("Pending", deadlines.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
-                DeadlineStatCard("High Priority", deadlines.count { it.priority == "High" }, Color(0xFFF44336), Modifier.weight(1f))
-                DeadlineStatCard("Completed", deadlines.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
+                DeadlineStatCard(filterPending, deadlines.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
+                DeadlineStatCard(stringResource(R.string.deadlines_label_high_priority), deadlines.count { it.priority == "High" }, Color(0xFFF44336), Modifier.weight(1f))
+                DeadlineStatCard(filterCompleted, deadlines.count { it.status == "Completed" }, Color(0xFF4CAF50), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Pending", "In Progress", "Completed", "Overdue").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Pending", "In Progress", "Completed", "Overdue").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -467,7 +566,7 @@ fun CaseDeadlinesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Schedule, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No deadlines found", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.deadlines_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -498,44 +597,57 @@ fun CaseDeadlinesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
     }
 }
 
+/**
+ * Screen for managing case approval requests.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for approvals.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaseApprovalsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val approvals by viewModel.approvals.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterPending = stringResource(R.string.tasks_label_pending)
+    val filterApproved = stringResource(R.string.approvals_label_approved)
+    val filterRejected = stringResource(R.string.approvals_label_rejected)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterPending, filterApproved, filterRejected)
     
     val filteredApprovals = when (selectedFilter) {
-        "Pending" -> approvals.filter { it.status == "Pending" }
-        "Approved" -> approvals.filter { it.status == "Approved" }
-        "Rejected" -> approvals.filter { it.status == "Rejected" }
+        filterPending -> approvals.filter { it.status == "Pending" }
+        filterApproved -> approvals.filter { it.status == "Approved" }
+        filterRejected -> approvals.filter { it.status == "Rejected" }
         else -> approvals
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Case Approvals") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Request Approval") } }
+                title = { Text(stringResource(R.string.approvals_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.approvals_request_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Request Approval") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.approvals_request_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ApprovalStatCard("Pending", approvals.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
-                ApprovalStatCard("Approved", approvals.count { it.status == "Approved" }, Color(0xFF4CAF50), Modifier.weight(1f))
-                ApprovalStatCard("Rejected", approvals.count { it.status == "Rejected" }, Color(0xFFF44336), Modifier.weight(1f))
+                ApprovalStatCard(filterPending, approvals.count { it.status == "Pending" }, Color(0xFFFF9800), Modifier.weight(1f))
+                ApprovalStatCard(filterApproved, approvals.count { it.status == "Approved" }, Color(0xFF4CAF50), Modifier.weight(1f))
+                ApprovalStatCard(filterRejected, approvals.count { it.status == "Rejected" }, Color(0xFFF44336), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Pending", "Approved", "Rejected").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Pending", "Approved", "Rejected").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -544,7 +656,7 @@ fun CaseApprovalsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No approval requests", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.approvals_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -577,6 +689,12 @@ fun CaseApprovalsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
     }
 }
 
+/**
+ * Screen for displaying urgency flags.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for urgency flags.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CaseUrgencyFlagsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
@@ -586,13 +704,13 @@ fun CaseUrgencyFlagsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMode
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Urgency Flags") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Flag") } }
+                title = { Text(stringResource(R.string.urgency_flags_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.urgency_flags_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = Color(0xFFF44336)) { Icon(Icons.Default.Warning, contentDescription = "Add Urgency Flag") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = Color(0xFFF44336)) { Icon(Icons.Default.Warning, contentDescription = stringResource(R.string.urgency_flags_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -602,23 +720,23 @@ fun CaseUrgencyFlagsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMode
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFF44336), modifier = Modifier.size(24.dp))
                         Column {
-                            Text(text = "$highRiskCount High Risk Case(s) Require Immediate Attention", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFFF44336))
-                            Text(text = "Review and address these flags urgently", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF44336))
+                            Text(text = stringResource(R.string.urgency_flags_banner_text, highRiskCount), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFFF44336))
+                            Text(text = stringResource(R.string.urgency_flags_banner_subtext), style = MaterialTheme.typography.bodySmall, color = Color(0xFFF44336))
                         }
                     }
                 }
             }
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                UrgencyStatCard("Total", flags.size, Color(0xFF673AB7), Modifier.weight(1f))
-                UrgencyStatCard("High Risk", highRiskCount, Color(0xFFF44336), Modifier.weight(1f))
-                UrgencyStatCard("Medium Risk", flags.count { it.riskLevel == "Medium" }, Color(0xFFFF9800), Modifier.weight(1f))
+                UrgencyStatCard(stringResource(R.string.urgency_flags_label_total), flags.size, Color(0xFF673AB7), Modifier.weight(1f))
+                UrgencyStatCard(stringResource(R.string.urgency_flags_label_high_risk), highRiskCount, Color(0xFFF44336), Modifier.weight(1f))
+                UrgencyStatCard(stringResource(R.string.urgency_flags_label_medium_risk), flags.count { it.riskLevel == "Medium" }, Color(0xFFFF9800), Modifier.weight(1f))
             }
             if (flags.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.PriorityHigh, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No urgency flags", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.urgency_flags_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -647,43 +765,55 @@ fun CaseUrgencyFlagsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMode
     }
 }
 
+/**
+ * Screen for tracking critical case dates.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for critical dates.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CriticalDatesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val dates by viewModel.criticalDates.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedFilter by remember { mutableStateOf("All") }
+    
+    val filterAll = stringResource(R.string.tasks_label_all)
+    val filterUpcoming = stringResource(R.string.critical_dates_label_upcoming)
+    val filterCompleted = stringResource(R.string.tasks_label_completed)
+    
+    var selectedFilter by remember { mutableStateOf(filterAll) }
+    val filters = listOf(filterAll, filterUpcoming, filterCompleted)
     
     val filteredDates = when (selectedFilter) {
-        "Upcoming" -> dates.filter { !it.isCompleted }
-        "Completed" -> dates.filter { it.isCompleted }
+        filterUpcoming -> dates.filter { !it.isCompleted }
+        filterCompleted -> dates.filter { it.isCompleted }
         else -> dates
     }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Critical Dates") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Date") } }
+                title = { Text(stringResource(R.string.critical_dates_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.critical_dates_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = "Add Date") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.critical_dates_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CriticalDateStatCard("Total", dates.size, Color(0xFF673AB7), Modifier.weight(1f))
-                CriticalDateStatCard("Upcoming", dates.count { !it.isCompleted }, Color(0xFFFF9800), Modifier.weight(1f))
-                CriticalDateStatCard("Completed", dates.count { it.isCompleted }, Color(0xFF4CAF50), Modifier.weight(1f))
+                CriticalDateStatCard(stringResource(R.string.urgency_flags_label_total), dates.size, Color(0xFF673AB7), Modifier.weight(1f))
+                CriticalDateStatCard(filterUpcoming, dates.count { !it.isCompleted }, Color(0xFFFF9800), Modifier.weight(1f))
+                CriticalDateStatCard(filterCompleted, dates.count { it.isCompleted }, Color(0xFF4CAF50), Modifier.weight(1f))
             }
             ScrollableTabRow(
-                selectedTabIndex = listOf("All", "Upcoming", "Completed").indexOf(selectedFilter).coerceAtLeast(0),
+                selectedTabIndex = filters.indexOf(selectedFilter).coerceAtLeast(0),
                 modifier = Modifier.fillMaxWidth(),
                 edgePadding = 16.dp
             ) {
-                listOf("All", "Upcoming", "Completed").forEach { filter ->
+                filters.forEach { filter ->
                     Tab(selected = selectedFilter == filter, onClick = { selectedFilter = filter }, text = { Text(filter) })
                 }
             }
@@ -692,7 +822,7 @@ fun CriticalDatesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Event, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No critical dates recorded", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.critical_dates_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -722,6 +852,12 @@ fun CriticalDatesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel =
     }
 }
 
+/**
+ * Screen providing a dashboard for caseworker workload tracking.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for workload data.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkloadDashboardScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
@@ -732,38 +868,43 @@ fun WorkloadDashboardScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMod
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Workload Dashboard") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add Entry") } }
+                title = { Text(stringResource(R.string.workload_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.workload_add_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.DonutLarge, contentDescription = "Add Workload Entry") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.DonutLarge, contentDescription = stringResource(R.string.workload_add_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Card(modifier = Modifier.fillMaxWidth().padding(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Today's Overview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.workload_today_overview), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(text = latestWorkload?.trackingDate ?: getCurrentDate(), style = MaterialTheme.typography.bodyMedium)
                 }
             }
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkloadStatCard("Active Cases", latestWorkload?.totalActiveCases ?: 0, Color(0xFF2196F3), Modifier.weight(1f))
-                    WorkloadStatCard("Pending Tasks", latestWorkload?.tasksPending ?: 0, Color(0xFFFF9800), Modifier.weight(1f))
+                    WorkloadStatCard(stringResource(R.string.workload_label_active_cases), latestWorkload?.totalActiveCases ?: 0, Color(0xFF2196F3), Modifier.weight(1f))
+                    WorkloadStatCard(stringResource(R.string.workload_label_pending_tasks), latestWorkload?.tasksPending ?: 0, Color(0xFFFF9800), Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkloadStatCard("Pending Approvals", latestWorkload?.approvalsPending ?: 0, Color(0xFF673AB7), Modifier.weight(1f))
-                    WorkloadStatCard("Overdue", latestWorkload?.deadlinesOverdue ?: 0, Color(0xFFF44336), Modifier.weight(1f))
+                    WorkloadStatCard(stringResource(R.string.workload_label_pending_approvals), latestWorkload?.approvalsPending ?: 0, Color(0xFF673AB7), Modifier.weight(1f))
+                    WorkloadStatCard(stringResource(R.string.workload_label_overdue), latestWorkload?.deadlinesOverdue ?: 0, Color(0xFFF44336), Modifier.weight(1f))
                 }
             }
             if (latestWorkload != null) {
                 Card(modifier = Modifier.fillMaxWidth().padding(16.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Detailed Breakdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
-                        listOf("Home Visits Scheduled" to latestWorkload.homeVisitsScheduled.toString(), "Home Visits Completed" to latestWorkload.homeVisitsCompleted.toString(), "Reports Submitted" to latestWorkload.reportsSubmitted.toString(), "Productivity Score" to "${latestWorkload.productivityScore}%").forEach { (label, value) ->
+                        Text(text = stringResource(R.string.workload_breakdown_header), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+                        listOf(
+                            stringResource(R.string.workload_label_visits_scheduled) to latestWorkload.homeVisitsScheduled.toString(),
+                            stringResource(R.string.workload_label_visits_completed) to latestWorkload.homeVisitsCompleted.toString(),
+                            stringResource(R.string.workload_label_reports_submitted) to latestWorkload.reportsSubmitted.toString(),
+                            stringResource(R.string.workload_label_productivity) to "${latestWorkload.productivityScore}%"
+                        ).forEach { (label, value) ->
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
                                 Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
@@ -795,15 +936,24 @@ fun WorkloadDashboardScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMod
     }
 }
 
+/**
+ * Screen for viewing messages related to cases.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for messages.
+ */
 @Composable
 fun WorkerMessagesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val messages by viewModel.workerMessages.collectAsState()
+    val readLabel = stringResource(R.string.worker_messages_label_read)
+    val newLabel = stringResource(R.string.worker_messages_label_new)
+    
     DataListScreen(
-        title = "Worker Messages",
+        title = stringResource(R.string.worker_messages_title),
         onBack = onBack,
         items = messages,
         itemContent = { item ->
-            GenericCard(item.title, item.content ?: "", if (item.isRead) "Read" else "New", Icons.AutoMirrored.Filled.Message)
+            GenericCard(item.title, item.content ?: "", if (item.isRead) readLabel else newLabel, Icons.AutoMirrored.Filled.Message)
         },
         onAddClick = {
             viewModel.saveWorkerMessage(
@@ -823,15 +973,26 @@ fun WorkerMessagesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel 
     )
 }
 
+/**
+ * Screen for viewing child-family placement compatibility results.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for compatibility records.
+ */
 @Composable
 fun PlacementCompatibilityScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val records by viewModel.compatibilityRecords.collectAsState()
     DataListScreen(
-        title = "Placement Compatibility",
+        title = stringResource(R.string.placement_compat_title),
         onBack = onBack,
         items = records,
         itemContent = { item ->
-            GenericCard("Score: ${item.compatibilityScore}", "Child: ${item.childId}, Family: ${item.familyId}", "Assessed: ${item.assessmentDate}", Icons.AutoMirrored.Filled.CompareArrows)
+            GenericCard(
+                stringResource(R.string.placement_compat_score_format, item.compatibilityScore ?: 0.0),
+                stringResource(R.string.placement_compat_child_family_format, item.childId, item.familyId),
+                stringResource(R.string.placement_compat_assessed_format, item.assessmentDate ?: ""),
+                Icons.AutoMirrored.Filled.CompareArrows
+            )
         },
         onAddClick = {
             viewModel.saveCompatibilityRecord(
@@ -857,23 +1018,29 @@ fun PlacementCompatibilityScreen(onBack: () -> Unit = {}, viewModel: CaseToolsVi
     )
 }
 
+/**
+ * Screen for configuring dashboard UI preferences.
+ *
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for preferences.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewModel = hiltViewModel()) {
     val prefs by viewModel.dashboardPreferences.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    val latestPrefs = prefs.maxByOrNull { it.userId ?: 0 }
+    val latestPrefs = prefs.maxByOrNull { it.userId }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard Preferences") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Settings, contentDescription = "Edit Preferences") } }
+                title = { Text(stringResource(R.string.dash_prefs_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.dash_prefs_edit_desc)) } }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Tune, contentDescription = "Configure Dashboard") }
+            FloatingActionButton(onClick = { showAddDialog = true }, containerColor = MaterialTheme.colorScheme.primary) { Icon(Icons.Default.Tune, contentDescription = stringResource(R.string.dash_prefs_config_desc)) }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -882,7 +1049,7 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Gray)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("No preferences configured", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+                        Text(stringResource(R.string.dash_prefs_no_found), style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
                     }
                 }
             } else {
@@ -890,20 +1057,20 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = "Layout Configuration", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
-                                PreferenceRow(label = "Layout Type", value = latestPrefs.layoutType ?: "Grid", icon = Icons.Default.Dashboard)
+                                Text(text = stringResource(R.string.dash_prefs_layout_header), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+                                PreferenceRow(label = stringResource(R.string.dash_prefs_label_layout_type), value = latestPrefs.layoutType ?: "Grid", icon = Icons.Default.Dashboard)
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                PreferenceRow(label = "Update Frequency", value = latestPrefs.updateFrequency ?: "Daily", icon = Icons.Default.Update)
+                                PreferenceRow(label = stringResource(R.string.dash_prefs_label_update_freq), value = latestPrefs.updateFrequency ?: "Daily", icon = Icons.Default.Update)
                             }
                         }
                     }
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = "Display Options", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+                                Text(text = stringResource(R.string.dash_prefs_display_header), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
                                 PreferenceToggleRow(
-                                    label = "Dark Mode", 
-                                    enabled = latestPrefs.darkMode ?: false, 
+                                    label = stringResource(R.string.dash_prefs_label_dark_mode), 
+                                    enabled = latestPrefs.darkMode, 
                                     icon = Icons.Default.DarkMode,
                                     onCheckedChange = { newValue ->
                                         viewModel.saveDashboardPreference(latestPrefs.copy(darkMode = newValue))
@@ -911,8 +1078,8 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
                                 )
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                 PreferenceToggleRow(
-                                    label = "Show Statistics", 
-                                    enabled = latestPrefs.showStats ?: true, 
+                                    label = stringResource(R.string.dash_prefs_label_show_stats), 
+                                    enabled = latestPrefs.showStats, 
                                     icon = Icons.Default.BarChart,
                                     onCheckedChange = { newValue ->
                                         viewModel.saveDashboardPreference(latestPrefs.copy(showStats = newValue))
@@ -920,8 +1087,8 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
                                 )
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                 PreferenceToggleRow(
-                                    label = "Show Quick Actions", 
-                                    enabled = latestPrefs.showQuickActions ?: true, 
+                                    label = stringResource(R.string.dash_prefs_label_show_actions), 
+                                    enabled = latestPrefs.showQuickActions, 
                                     icon = Icons.Default.Favorite,
                                     onCheckedChange = { newValue ->
                                         viewModel.saveDashboardPreference(latestPrefs.copy(showQuickActions = newValue))
@@ -929,8 +1096,8 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
                                 )
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                 PreferenceToggleRow(
-                                    label = "Show Recent Activity", 
-                                    enabled = latestPrefs.showRecentActivity ?: true, 
+                                    label = stringResource(R.string.dash_prefs_label_show_activity), 
+                                    enabled = latestPrefs.showRecentActivity,
                                     icon = Icons.Default.History,
                                     onCheckedChange = { newValue ->
                                         viewModel.saveDashboardPreference(latestPrefs.copy(showRecentActivity = newValue))
@@ -963,6 +1130,11 @@ fun DashboardPreferencesScreen(onBack: () -> Unit = {}, viewModel: CaseToolsView
     }
 }
 
+/**
+ * Screen for managing and viewing system notifications.
+ *
+ * @param onBack Callback for back navigation.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(onBack: () -> Unit = {}) {
@@ -994,13 +1166,17 @@ fun NotificationsScreen(onBack: () -> Unit = {}) {
     
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Notifications") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } })
+            TopAppBar(title = { Text(stringResource(R.string.notifications_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back_desc)) } })
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             if (isLoading) CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            else if (errorMessage != null) Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
-            else if (notifications.isEmpty()) Text("No notifications yet", modifier = Modifier.align(Alignment.Center))
+            else if (errorMessage != null) {
+                val error = errorMessage
+                if (error != null) {
+                    Text(stringResource(R.string.notifications_error_format, error), color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
+                }
+            } else if (notifications.isEmpty()) Text(stringResource(R.string.notifications_no_found), modifier = Modifier.align(Alignment.Center))
             else {
                 LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(notifications) { notification ->
@@ -1012,7 +1188,7 @@ fun NotificationsScreen(onBack: () -> Unit = {}) {
                 }
                                 if (!notification.isRead) {
                                     IconButton(onClick = { scope.launch { val token = authManager.getAuthToken() ?: ""; if (token.isNotEmpty()) repository.markAsRead(notification.notificationId, token) } }) {
-                                        Icon(Icons.Default.Check, contentDescription = "Mark as read", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.notifications_mark_read_desc), tint = MaterialTheme.colorScheme.primary)
                                     }
                                 }
                             }
@@ -1026,21 +1202,37 @@ fun NotificationsScreen(onBack: () -> Unit = {}) {
 
 // ==================== SHARED SCREEN COMPONENTS ====================
 
+/**
+ * A card representing a single task item.
+ *
+ * @param task The task entity.
+ * @param onStatusChange Callback when the status is updated.
+ */
 @Composable
 fun TaskCard(task: TaskEntity, onStatusChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val statusColor = when (task.status) { "Pending" -> Color(0xFFFF9800); "In Progress" -> Color(0xFF2196F3); "Completed" -> Color(0xFF4CAF50); else -> Color.Gray }
-    val priorityColor = when (task.priority) { "High" -> Color(0xFFF44336); "Medium" -> Color(0xFFFF9800); "Low" -> Color(0xFF4CAF50); else -> Color.Gray }
+    val statusColor = when (task.status) { 
+        "Pending" -> MaterialTheme.colorScheme.error
+        "In Progress" -> MaterialTheme.colorScheme.primary
+        "Completed" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
+    val priorityColor = when (task.priority) { 
+        "High" -> MaterialTheme.colorScheme.error
+        "Medium" -> MaterialTheme.colorScheme.secondary
+        "Low" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
     
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = task.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(text = task.description ?: "No description", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(text = task.description ?: stringResource(R.string.common_no_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
                 Box {
-                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Options") }
+                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.common_options_desc)) }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         listOf("Pending", "In Progress", "Completed").forEach { status ->
                             DropdownMenuItem(text = { Text(status) }, onClick = { onStatusChange(status); expanded = false })
@@ -1057,6 +1249,12 @@ fun TaskCard(task: TaskEntity, onStatusChange: (String) -> Unit) {
     }
 }
 
+/**
+ * Dialog for adding a new task.
+ *
+ * @param onDismiss Callback to dismiss the dialog.
+ * @param onTaskAdded Callback when a new task is provided.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskDialog(onDismiss: () -> Unit, onTaskAdded: (String, String, String, String) -> Unit) {
@@ -1065,22 +1263,33 @@ fun AddTaskDialog(onDismiss: () -> Unit, onTaskAdded: (String, String, String, S
     var priority by remember { mutableStateOf("Medium") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Task") },
+        title = { Text(stringResource(R.string.tasks_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.common_label_title)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.common_label_desc)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onTaskAdded(title, description, priority, getCurrentDate()) }, enabled = title.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onTaskAdded(title, description, priority, getCurrentDate()) }, enabled = title.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Card representing a case deadline.
+ *
+ * @param deadline The deadline entity.
+ * @param onStatusChange Callback for status updates.
+ */
 @Composable
 fun DeadlineCard(deadline: CaseDeadlineEntity, onStatusChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val statusColor = when (deadline.status) { "Pending" -> Color(0xFFFF9800); "In Progress" -> Color(0xFF2196F3); "Completed" -> Color(0xFF4CAF50); else -> Color.Gray }
+    val statusColor = when (deadline.status) { 
+        "Pending" -> MaterialTheme.colorScheme.error
+        "In Progress" -> MaterialTheme.colorScheme.primary
+        "Completed" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1089,7 +1298,7 @@ fun DeadlineCard(deadline: CaseDeadlineEntity, onStatusChange: (String) -> Unit)
                     Text(text = deadline.description ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
                 Box {
-                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Options") }
+                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.common_options_desc)) }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         listOf("Pending", "In Progress", "Completed").forEach { status ->
                             DropdownMenuItem(text = { Text(status) }, onClick = { onStatusChange(status); expanded = false })
@@ -1107,6 +1316,12 @@ fun DeadlineCard(deadline: CaseDeadlineEntity, onStatusChange: (String) -> Unit)
     }
 }
 
+/**
+ * Dialog for adding a new deadline.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onDeadlineAdded Callback when data is confirmed.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDeadlineDialog(onDismiss: () -> Unit, onDeadlineAdded: (String, String, String, String) -> Unit) {
@@ -1115,23 +1330,34 @@ fun AddDeadlineDialog(onDismiss: () -> Unit, onDeadlineAdded: (String, String, S
     var description by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Deadline") },
+        title = { Text(stringResource(R.string.deadlines_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = dueDate, onValueChange = { dueDate = it }, label = { Text("Due Date (YYYY-MM-DD)") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.common_label_title)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = dueDate, onValueChange = { dueDate = it }, label = { Text(stringResource(R.string.deadlines_due_date_field)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.common_label_desc)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onDeadlineAdded(title, dueDate, description, "Medium") }, enabled = title.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onDeadlineAdded(title, dueDate, description, "Medium") }, enabled = title.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Card representing a case approval request.
+ *
+ * @param approval The approval entity.
+ * @param onStatusChange Callback for status updates.
+ */
 @Composable
 fun ApprovalCard(approval: CaseApprovalEntity, onStatusChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val statusColor = when (approval.status) { "Pending" -> Color(0xFFFF9800); "Approved" -> Color(0xFF4CAF50); "Rejected" -> Color(0xFFF44336); else -> Color.Gray }
+    val statusColor = when (approval.status) { 
+        "Pending" -> MaterialTheme.colorScheme.error
+        "Approved" -> MaterialTheme.colorScheme.tertiary
+        "Rejected" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.outline
+    }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1140,7 +1366,7 @@ fun ApprovalCard(approval: CaseApprovalEntity, onStatusChange: (String) -> Unit)
                     Text(text = "Requested: ${approval.submittedDate}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
                 Box {
-                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Options") }
+                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.common_options_desc)) }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         listOf("Pending", "Approved", "Rejected").forEach { status ->
                             DropdownMenuItem(text = { Text(status) }, onClick = { onStatusChange(status); expanded = false })
@@ -1154,6 +1380,12 @@ fun ApprovalCard(approval: CaseApprovalEntity, onStatusChange: (String) -> Unit)
     }
 }
 
+/**
+ * Dialog for requesting a new case approval.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onApprovalAdded Callback when submitted.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddApprovalDialog(onDismiss: () -> Unit, onApprovalAdded: (String, String, String) -> Unit) {
@@ -1161,18 +1393,24 @@ fun AddApprovalDialog(onDismiss: () -> Unit, onApprovalAdded: (String, String, S
     var description by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Request Approval") },
+        title = { Text(stringResource(R.string.approvals_request_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = approvalType, onValueChange = { approvalType = it }, label = { Text("Approval Type") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = approvalType, onValueChange = { approvalType = it }, label = { Text(stringResource(R.string.approvals_field_type)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.common_label_desc)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onApprovalAdded(approvalType, "Medium", description) }, enabled = approvalType.isNotBlank()) { Text("Submit") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onApprovalAdded(approvalType, "Medium", description) }, enabled = approvalType.isNotBlank()) { Text(stringResource(R.string.common_btn_submit)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Card representing a critical case date.
+ *
+ * @param date The critical date entity.
+ * @param onToggleComplete Callback when checkbox is toggled.
+ */
 @Composable
 fun CriticalDateCard(date: CriticalDateEntity, onToggleComplete: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
@@ -1187,6 +1425,12 @@ fun CriticalDateCard(date: CriticalDateEntity, onToggleComplete: () -> Unit) {
     }
 }
 
+/**
+ * Dialog for adding a new critical case date.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onDateAdded Callback when added.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCriticalDateDialog(onDismiss: () -> Unit, onDateAdded: (String, String, String) -> Unit) {
@@ -1195,24 +1439,40 @@ fun AddCriticalDateDialog(onDismiss: () -> Unit, onDateAdded: (String, String, S
     var description by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Critical Date") },
+        title = { Text(stringResource(R.string.critical_dates_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = dateType, onValueChange = { dateType = it }, label = { Text("Date Type") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = eventDate, onValueChange = { eventDate = it }, label = { Text("Event Date (YYYY-MM-DD)") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = dateType, onValueChange = { dateType = it }, label = { Text(stringResource(R.string.critical_dates_field_type)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = eventDate, onValueChange = { eventDate = it }, label = { Text(stringResource(R.string.common_label_date)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text(stringResource(R.string.common_label_desc)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onDateAdded(dateType, eventDate, description) }, enabled = dateType.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onDateAdded(dateType, eventDate, description) }, enabled = dateType.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Card representing an action item.
+ *
+ * @param item The action item entity.
+ * @param onStatusChange Callback for status changes.
+ */
 @Composable
 fun ActionItemCard(item: ActionItemEntity, onStatusChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val statusColor = when (item.status) { "Open" -> Color(0xFFF44336); "In Progress" -> Color(0xFFFF9800); "Completed" -> Color(0xFF4CAF50); else -> Color.Gray }
-    val priorityColor = when (item.priority) { "High" -> Color(0xFFF44336); "Medium" -> Color(0xFFFF9800); "Low" -> Color(0xFF4CAF50); else -> Color.Gray }
+    val statusColor = when (item.status) { 
+        "Open" -> MaterialTheme.colorScheme.error
+        "In Progress" -> MaterialTheme.colorScheme.primary
+        "Completed" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
+    val priorityColor = when (item.priority) { 
+        "High" -> MaterialTheme.colorScheme.error
+        "Medium" -> MaterialTheme.colorScheme.secondary
+        "Low" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outline
+    }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1221,7 +1481,7 @@ fun ActionItemCard(item: ActionItemEntity, onStatusChange: (String) -> Unit) {
                     Text(text = "Due: ${item.dueDate ?: "No due date"}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
                 Box {
-                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Options") }
+                    IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.common_options_desc)) }
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         listOf("Open", "In Progress", "Completed").forEach { status ->
                             DropdownMenuItem(text = { Text(status) }, onClick = { onStatusChange(status); expanded = false })
@@ -1238,6 +1498,12 @@ fun ActionItemCard(item: ActionItemEntity, onStatusChange: (String) -> Unit) {
     }
 }
 
+/**
+ * Dialog for adding a new action item.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onItemAdded Callback when added.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddActionItemDialog(onDismiss: () -> Unit, onItemAdded: (String, String, String) -> Unit) {
@@ -1245,20 +1511,30 @@ fun AddActionItemDialog(onDismiss: () -> Unit, onItemAdded: (String, String, Str
     var priority by remember { mutableStateOf("Medium") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Action Item") },
+        title = { Text(stringResource(R.string.action_items_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.common_label_title)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onItemAdded(title, priority, getCurrentDate()) }, enabled = title.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onItemAdded(title, priority, getCurrentDate()) }, enabled = title.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Card representing a case activity in a timeline.
+ *
+ * @param activity The activity entity.
+ */
 @Composable
 fun ActivityTimelineCard(activity: CaseActivityEntity) {
-    val activityColor = when (activity.activityType) { "Home Visit" -> Color(0xFF4CAF50); "Case Review" -> Color(0xFF2196F3); "Court Hearing" -> Color(0xFFF44336); else -> Color(0xFF673AB7) }
+    val activityColor = when (activity.activityType) { 
+        "Home Visit" -> MaterialTheme.colorScheme.primary
+        "Case Review" -> MaterialTheme.colorScheme.secondary
+        "Court Hearing" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.tertiary
+    }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1280,6 +1556,12 @@ fun ActivityTimelineCard(activity: CaseActivityEntity) {
     }
 }
 
+/**
+ * Dialog for logging a new case activity.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onActivityAdded Callback when added.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddActivityDialog(onDismiss: () -> Unit, onActivityAdded: (String, String, String, String, String) -> Unit) {
@@ -1288,35 +1570,47 @@ fun AddActivityDialog(onDismiss: () -> Unit, onActivityAdded: (String, String, S
     var notes by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Log New Activity") },
+        title = { Text(stringResource(R.string.activities_log_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.common_label_title)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text(stringResource(R.string.common_label_notes)) }, modifier = Modifier.fillMaxWidth(), minLines = 3)
             }
         },
-        confirmButton = { TextButton(onClick = { onActivityAdded(title, activityType, getCurrentDate(), "10:00 AM", notes) }, enabled = title.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onActivityAdded(title, activityType, getCurrentDate(), "10:00 AM", notes) }, enabled = title.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
 // ==================== MISSING COMPONENT DEFINITIONS ====================
 
+/**
+ * Card representing an urgency flag.
+ *
+ * @param flag The urgency flag entity.
+ */
 @Composable
 fun UrgencyFlagCard(flag: CaseUrgencyFlagEntity) {
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = flag.flagType ?: "Urgency Flag", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Surface(shape = RoundedCornerShape(12.dp), color = if (flag.riskLevel == "High") Color(0xFFF44336).copy(alpha = 0.1f) else Color(0xFFFF9800).copy(alpha = 0.1f)) {
-                Text(text = flag.riskLevel ?: "Medium", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = if (flag.riskLevel == "High") Color(0xFFF44336) else Color(0xFFFF9800))
+            val riskColor = if (flag.riskLevel == "High") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+            Surface(shape = RoundedCornerShape(12.dp), color = riskColor.copy(alpha = 0.1f)) {
+                Text(text = flag.riskLevel ?: "Medium", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = riskColor)
             }
         }
     }
 }
 
+/**
+ * Dialog for adding a new urgency flag.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onFlagAdded Callback when added.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddUrgencyFlagDialog(onDismiss: () -> Unit, onFlagAdded: (String, String, String) -> Unit) {
@@ -1325,18 +1619,24 @@ fun AddUrgencyFlagDialog(onDismiss: () -> Unit, onFlagAdded: (String, String, St
     var risk by remember { mutableStateOf("High") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Urgency Flag") },
+        title = { Text(stringResource(R.string.urgency_flags_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = type, onValueChange = { type = it }, label = { Text("Flag Type") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = reason, onValueChange = { reason = it }, label = { Text("Reason") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = type, onValueChange = { type = it }, label = { Text(stringResource(R.string.urgency_flags_field_type)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = reason, onValueChange = { reason = it }, label = { Text(stringResource(R.string.common_label_reason)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onFlagAdded(type, reason, risk) }, enabled = type.isNotBlank()) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onFlagAdded(type, reason, risk) }, enabled = type.isNotBlank()) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Dialog for adding a new workload tracking entry.
+ *
+ * @param onDismiss Callback to dismiss.
+ * @param onWorkloadAdded Callback when entry is added.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddWorkloadDialog(onDismiss: () -> Unit, onWorkloadAdded: (String, Int, Int, Int, Int, String) -> Unit) {
@@ -1344,18 +1644,25 @@ fun AddWorkloadDialog(onDismiss: () -> Unit, onWorkloadAdded: (String, Int, Int,
     var cases by remember { mutableStateOf("5") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Workload Entry") },
+        title = { Text(stringResource(R.string.workload_add_dialog_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Date") }, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = cases, onValueChange = { cases = it }, label = { Text("Active Cases") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text(stringResource(R.string.common_label_date)) }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = cases, onValueChange = { cases = it }, label = { Text(stringResource(R.string.workload_label_active_cases)) }, modifier = Modifier.fillMaxWidth())
             }
         },
-        confirmButton = { TextButton(onClick = { onWorkloadAdded(date, cases.toIntOrNull() ?: 0, 0, 0, 0, "") }) { Text("Add") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onWorkloadAdded(date, cases.toIntOrNull() ?: 0, 0, 0, 0, "") }) { Text(stringResource(R.string.common_btn_add)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }
 
+/**
+ * Displays a single row representing a preference.
+ *
+ * @param label The preference label.
+ * @param value The current value.
+ * @param icon The icon to represent the preference.
+ */
 @Composable
 fun PreferenceRow(label: String, value: String, icon: ImageVector) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1366,6 +1673,14 @@ fun PreferenceRow(label: String, value: String, icon: ImageVector) {
     }
 }
 
+/**
+ * Displays a single row representing a toggleable preference.
+ *
+ * @param label The preference label.
+ * @param enabled Whether the preference is enabled.
+ * @param icon The icon for the preference.
+ * @param onCheckedChange Callback when the toggle is changed.
+ */
 @Composable
 fun PreferenceToggleRow(label: String, enabled: Boolean, icon: ImageVector, onCheckedChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1376,14 +1691,21 @@ fun PreferenceToggleRow(label: String, enabled: Boolean, icon: ImageVector, onCh
     }
 }
 
+/**
+ * Dialog for editing dashboard preferences.
+ *
+ * @param currentPrefs The current dashboard preferences entity.
+ * @param onDismiss Callback to dismiss.
+ * @param onPreferencesSaved Callback when preferences are updated.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPreferencesDialog(currentPrefs: DashboardPreferenceEntity?, onDismiss: () -> Unit, onPreferencesSaved: (String, Boolean, Boolean, Boolean, Boolean, String, Boolean) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Preferences") },
-        text = { Text("Preference configuration options here.") },
-        confirmButton = { TextButton(onClick = { onPreferencesSaved("Grid", false, true, true, true, "Daily", true) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        title = { Text(stringResource(R.string.dash_prefs_edit_desc)) },
+        text = { Text(stringResource(R.string.dash_prefs_dialog_text)) },
+        confirmButton = { TextButton(onClick = { onPreferencesSaved("Grid", false, true, true, true, "Daily", true) }) { Text(stringResource(R.string.common_btn_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_btn_cancel)) } }
     )
 }

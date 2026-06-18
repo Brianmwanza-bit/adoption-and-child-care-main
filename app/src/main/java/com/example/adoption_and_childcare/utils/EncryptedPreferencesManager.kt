@@ -13,6 +13,7 @@ import androidx.security.crypto.MasterKey
  * 
  * @property context Application context for SharedPreferences access.
  */
+@Suppress("DEPRECATION")
 class EncryptedPreferencesManager(private val context: Context) {
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

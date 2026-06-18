@@ -27,7 +27,7 @@ try {
 # Create .env file for backend
 $envContent = @"
 # Database Configuration
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=adoption_and_childcare_tracking_system_db
@@ -50,8 +50,13 @@ Write-Host "Created backend\.env file" -ForegroundColor Green
 
 # Test database connection
 Write-Host "Testing database connection..." -ForegroundColor Yellow
+$mysqlPath = "C:\xampp\mysql\bin\mysql.exe"
 try {
-    $testConnection = mysql -u root -e "SELECT 1;" 2>$null
+    if (Test-Path $mysqlPath) {
+        $testConnection = & $mysqlPath -u root -e "SELECT 1;" 2>$null
+    } else {
+        $testConnection = mysql -u root -e "SELECT 1;" 2>$null
+    }
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Database connection successful" -ForegroundColor Green
     } else {

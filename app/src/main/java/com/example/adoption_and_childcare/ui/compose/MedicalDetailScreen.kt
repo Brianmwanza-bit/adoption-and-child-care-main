@@ -1,11 +1,11 @@
 package com.example.adoption_and_childcare.ui.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,39 +13,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.adoption_and_childcare.data.db.AppDatabase
-import com.example.adoption_and_childcare.data.db.entities.MedicalRecordEntity
-import kotlinx.coroutines.flow.firstOrNull
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
+import com.example.adoption_and_childcare.viewmodel.MedicalViewModel
 
+/**
+ * Screen displaying detailed medical record information.
+ * 
+ * @param recordId The unique identifier of the medical record to display.
+ * @param onBack Callback for navigating back.
+ * @param viewModel ViewModel for handling medical record operations.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicalDetailScreen(
     recordId: Int,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: MedicalViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    var record by remember { mutableStateOf<MedicalRecordEntity?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(recordId) {
-        db.medicalRecordDao().observeById(recordId).collect {
-            record = it
-            isLoading = false
-        }
-    }
+    val records by viewModel.medicalRecords.collectAsState(initial = emptyList())
+    val record = records.find { it.recordId == recordId }
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Medical Record Details") },
+                title = { Text(stringResource(R.string.medical_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.search_back_desc))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -55,20 +54,20 @@ fun MedicalDetailScreen(
                 )
             )
         }
-    ) { padding ->
+    ) {
         if (isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            Box(Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFFF44336))
             }
         } else if (record == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Record not found")
+            Box(Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.medical_record_not_found))
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
+                    .padding(it)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -95,12 +94,12 @@ fun MedicalDetailScreen(
                         Spacer(Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "Record #${record!!.recordId}",
+                                text = stringResource(R.string.medical_record_id, record.recordId),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Child ID: ${record!!.childId}",
+                                text = stringResource(R.string.medical_child_id, record.childId),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color(0xFFF44336)
                             )
@@ -109,27 +108,37 @@ fun MedicalDetailScreen(
                 }
 
                 // Details Sections
-                DetailSection("Visit Information", Icons.Default.Event) {
-                    MedicalRecordDetailRow("Date", record!!.visitDate)
-                    record!!.doctorName?.let { MedicalRecordDetailRow("Doctor", it) }
-                    record!!.hospitalName?.let { MedicalRecordDetailRow("Hospital", it) }
-                }
-
-                DetailSection("Diagnosis & Treatment", Icons.Default.MedicalServices) {
-                    MedicalRecordDetailRow("Diagnosis", record!!.diagnosis ?: "N/A")
-                    MedicalRecordDetailRow("Treatment", record!!.treatment ?: "N/A")
-                    record!!.medications?.let { MedicalRecordDetailRow("Medications", it) }
-                }
-
-                if (record!!.isImmunization) {
-                    DetailSection("Immunization", Icons.Default.Vaccines) {
-                        MedicalRecordDetailRow("Type", record!!.immunizationType ?: "N/A")
+                DetailSection(stringResource(R.string.medical_visit_info), Icons.Default.Event) {
+                    MedicalRecordDetailRow(stringResource(R.string.medical_label_date), record.visitDate)
+                    val doctor = record.doctorName
+                    if (doctor != null) {
+                        MedicalRecordDetailRow(stringResource(R.string.medical_label_doctor), doctor)
+                    }
+                    val hospital = record.hospitalName
+                    if (hospital != null) {
+                        MedicalRecordDetailRow(stringResource(R.string.medical_label_hospital), hospital)
                     }
                 }
 
-                record!!.followUpDate?.let {
-                    DetailSection("Follow-up", Icons.Default.Update) {
-                        MedicalRecordDetailRow("Scheduled Date", it)
+                DetailSection(stringResource(R.string.medical_diagnosis_treatment), Icons.Default.MedicalServices) {
+                    MedicalRecordDetailRow(stringResource(R.string.medical_label_diagnosis), record.diagnosis ?: stringResource(R.string.search_na))
+                    MedicalRecordDetailRow(stringResource(R.string.medical_label_treatment), record.treatment ?: stringResource(R.string.search_na))
+                    val medications = record.medications
+                    if (medications != null) {
+                        MedicalRecordDetailRow(stringResource(R.string.medical_label_medications), medications)
+                    }
+                }
+
+                if (record.isImmunization) {
+                    DetailSection(stringResource(R.string.medical_immunization), Icons.Default.Vaccines) {
+                        MedicalRecordDetailRow(stringResource(R.string.medical_label_type), record.immunizationType ?: stringResource(R.string.search_na))
+                    }
+                }
+
+                val followUp = record.followUpDate
+                if (followUp != null) {
+                    DetailSection(stringResource(R.string.medical_follow_up), Icons.Default.Update) {
+                        MedicalRecordDetailRow(stringResource(R.string.medical_label_scheduled_date), followUp)
                     }
                 }
 
@@ -145,7 +154,7 @@ fun MedicalDetailScreen(
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Export PDF")
+                        Text(stringResource(R.string.medical_export_pdf))
                     }
                     OutlinedButton(
                         onClick = { /* Share */ },
@@ -153,7 +162,7 @@ fun MedicalDetailScreen(
                     ) {
                         Icon(Icons.Default.Share, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Share")
+                        Text(stringResource(R.string.medical_share))
                     }
                 }
             }
@@ -161,6 +170,13 @@ fun MedicalDetailScreen(
     }
 }
 
+/**
+ * A reusable section for medical record details.
+ *
+ * @param title The title of the section.
+ * @param icon The icon to display next to the title.
+ * @param content The composable content of the section.
+ */
 @Composable
 private fun DetailSection(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
     Card(
@@ -180,6 +196,12 @@ private fun DetailSection(title: String, icon: ImageVector, content: @Composable
     }
 }
 
+/**
+ * A reusable row for displaying a label and its corresponding value.
+ *
+ * @param label The label to display.
+ * @param value The value to display.
+ */
 @Composable
 private fun MedicalRecordDetailRow(label: String, value: String) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {

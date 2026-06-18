@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AdoptionApplicationRepositoryImpl @Inject constructor(
-    @ApplicationContext private val appContext: Context,
+    @param:ApplicationContext private val appContext: Context,
     private val applicationDao: AdoptionApplicationDao,
     private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
@@ -27,13 +27,13 @@ class AdoptionApplicationRepositoryImpl @Inject constructor(
 
     override suspend fun findById(id: Int): AdoptionApplicationEntity? = applicationDao.findById(id)
 
-    override suspend fun insert(application: AdoptionApplicationEntity): Long {
+    override suspend fun insert(application: AdoptionApplicationEntity, token: String): Long {
         // Insert with sync queue support
         applicationDao.insertWithSync(application, syncQueueDao)
         
         // Immediate background sync attempt
         try {
-            val authHeader = authManager.getAuthHeader()
+            val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
             if (authHeader != null) {
                 apiService.createAdoptionApplication(authHeader, application)
             }
@@ -42,20 +42,18 @@ class AdoptionApplicationRepositoryImpl @Inject constructor(
         }
         
         scheduleSync()
-        return application.applicationId?.toLong() ?: 0L
+        return application.applicationId.toLong()
     }
 
-    override suspend fun update(application: AdoptionApplicationEntity) {
+    override suspend fun update(application: AdoptionApplicationEntity, token: String) {
         // Update with sync queue support
         applicationDao.updateWithSync(application, syncQueueDao)
         
         // Immediate background sync attempt
         try {
-            val authHeader = authManager.getAuthHeader()
+            val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
             if (authHeader != null) {
-                application.applicationId?.let { 
-                    apiService.updateAdoptionApplication(authHeader, it, application) 
-                }
+                apiService.updateAdoptionApplication(authHeader, application.applicationId, application) 
             }
         } catch (e: Exception) {
             // Ignore
@@ -63,6 +61,12 @@ class AdoptionApplicationRepositoryImpl @Inject constructor(
         
         scheduleSync()
     }
+
+    override suspend fun delete(id: Int, token: String) {
+        deleteById(id)
+    }
+
+    override suspend fun count(): Int = applicationDao.count()
 
     override suspend fun deleteById(id: Int) {
         // Delete with sync queue support
@@ -86,10 +90,11 @@ class AdoptionApplicationRepositoryImpl @Inject constructor(
             val authHeader = authManager.getAuthHeader() ?: "Bearer $token"
             val response = apiService.getAdoptionApplications(authHeader)
             
-            if (response.isSuccessful && response.body() != null) {
-                val list = response.body()!!
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                val list = body
                 for (item in list) {
-                    val existing = applicationDao.findById(item.applicationId ?: 0)
+                    val existing = applicationDao.findById(item.applicationId)
                     if (existing != null) {
                         applicationDao.update(item)
                     } else {

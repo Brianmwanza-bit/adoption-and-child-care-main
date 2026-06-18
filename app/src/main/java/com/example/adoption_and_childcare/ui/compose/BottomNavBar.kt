@@ -30,9 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.adoption_and_childcare.viewmodel.SOSState
 import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.graphics.graphicsLayer
+import com.example.adoption_and_childcare.MainActivityConstants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -52,7 +54,7 @@ fun BottomNavBar(
     val sosState by sosViewModel.sosState.collectAsState()
 
     Column {
-        Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
         NavigationBar(
             containerColor = Color(0xFF1976D2), // Modern Blue Block
             tonalElevation = 12.dp,
@@ -101,7 +103,7 @@ fun BottomNavBar(
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
-                SOSButton(sosViewModel)
+                SOSButton(sosViewModel, navController)
             }
 
             // Alerts
@@ -154,7 +156,7 @@ fun BottomNavBar(
 }
 
 @Composable
-fun SOSButton(sosViewModel: SOSViewModel) {
+fun SOSButton(sosViewModel: SOSViewModel, navController: NavController) {
     var showConfirmDialog by remember { mutableStateOf(false) }
     var sosProgress by remember { mutableStateOf(0f) }
     val sosState by sosViewModel.sosState.collectAsState()
@@ -194,6 +196,9 @@ fun SOSButton(sosViewModel: SOSViewModel) {
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Red.copy(alpha = if (sosState == SOSState.ACTIVE) pulseOpacity else 1f))
                     .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                    .clickable { 
+                        navController.navigate(MainActivityConstants.SOS_EMERGENCY_ROUTE)
+                    }
                     .pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {

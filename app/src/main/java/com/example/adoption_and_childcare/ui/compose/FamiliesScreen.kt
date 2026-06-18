@@ -1,47 +1,51 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
-import com.example.adoption_and_childcare.data.repository.FamilyRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
-import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
+import com.example.adoption_and_childcare.viewmodel.FamiliesViewModel
 import kotlinx.coroutines.launch
 
+/**
+ * Screen for managing families in the system.
+ * 
+ * Provides features for listing all families, viewing profiles,
+ * and performing basic CRUD operations.
+ * 
+ * @param onBack Callback for navigating back.
+ * @param viewModel ViewModel for families management logic.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FamiliesScreen(onBack: () -> Unit = {}) {
+fun FamiliesScreen(
+    onBack: () -> Unit = {},
+    viewModel: FamiliesViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val familyRepository = remember { FamilyRepositoryImpl(db.familyDao(), db.syncQueueDao(), apiService, authManager) }
-    
-    var families by remember { mutableStateOf<List<FamilyEntity>>(emptyList()) }
+    val families by viewModel.families.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
     
     // Dialogs
     var showCreate by remember { mutableStateOf(false) }
@@ -58,25 +62,14 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
     var address by remember { mutableStateOf(TextFieldValue("")) }
     var city by remember { mutableStateOf(TextFieldValue("")) }
     var county by remember { mutableStateOf(TextFieldValue("")) }
-    var status by remember { mutableStateOf("Active") }
+    val statusActive = stringResource(R.string.status_active)
+    val statusInactive = stringResource(R.string.status_inactive)
+    val statusPending = stringResource(R.string.status_pending)
 
-    val statuses = listOf("Active", "Inactive", "Pending")
+    var status by remember { mutableStateOf(statusActive) }
+
+    val statuses = listOf(statusActive, statusInactive, statusPending)
     var showStatusDropdown by remember { mutableStateOf(false) }
-
-    // Load data from local DB
-    LaunchedEffect(Unit) {
-        db.familyDao().observeAll().collectLatest { list ->
-            families = list
-        }
-    }
-    
-    // Fetch from API on first load
-    LaunchedEffect(Unit) {
-        fetchFamiliesFromApi(familyRepository, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
-    }
 
     if (showDetails && selectedFamily != null) {
         FamilyHubScreen(
@@ -87,17 +80,17 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Families") },
+                    title = { Text(stringResource(R.string.families_title)) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.families_back_desc))
                         }
                     }
                 )
             },
             floatingActionButton = {
                 FloatingActionButton(onClick = { showCreate = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Family")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.families_add_desc))
                 }
             }
         ) { padding ->
@@ -115,13 +108,13 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.FamilyRestroom, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text("No families yet", style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.families_no_families), style = MaterialTheme.typography.bodyLarge)
                         }
                     }
                 } else {
                     families.forEachIndexed { index, family ->
                         FormRecordCard(
-                            title = "FAMILY RECORD #${family.familyId}",
+                            title = stringResource(R.string.families_item_id, family.familyId),
                             subtitle = family.primaryContactName,
                             pageNumber = index + 1,
                             onEdit = {
@@ -135,7 +128,7 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                                 address = TextFieldValue(family.address ?: "")
                                 city = TextFieldValue(family.city ?: "")
                                 county = TextFieldValue(family.county ?: "")
-                                status = family.status ?: "Active"
+                                status = family.status ?: statusActive
                             },
                             onDelete = {
                                 selectedFamily = family
@@ -146,14 +139,14 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                             },
                             headerIcon = Icons.Default.FamilyRestroom
                         ) {
-                            FormDetailRow(label = "Primary Contact", value = family.primaryContactName)
-                            FormDetailRow(label = "Phone", value = family.phone ?: "N/A")
-                            FormDetailRow(label = "Email", value = family.email ?: "N/A")
-                            FormDetailRow(label = "Location", value = listOfNotNull(family.city, family.county).joinToString(", ").ifBlank { "N/A" })
-                            FormDetailRow(label = "Status", value = family.status ?: "Active", valueColor = if (family.status == "Active") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            FormDetailRow(label = stringResource(R.string.families_label_primary_contact), value = family.primaryContactName)
+                            FormDetailRow(label = stringResource(R.string.families_label_phone), value = family.phone ?: stringResource(R.string.search_na))
+                            FormDetailRow(label = stringResource(R.string.families_label_email), value = family.email ?: stringResource(R.string.search_na))
+                            FormDetailRow(label = stringResource(R.string.families_label_location), value = listOfNotNull(family.city, family.county).joinToString(", ").ifBlank { stringResource(R.string.search_na) })
+                            FormDetailRow(label = stringResource(R.string.families_label_status), value = family.status ?: statusActive, valueColor = if (family.status == statusActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
                             
                             if (!family.secondaryContactName.isNullOrBlank()) {
-                                FormDetailRow(label = "Secondary Contact", value = family.secondaryContactName!!)
+                                FormDetailRow(label = stringResource(R.string.families_label_secondary_contact), value = family.secondaryContactName)
                             }
                         }
                     }
@@ -165,25 +158,25 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("Add Family") },
+            title = { Text(stringResource(R.string.families_add_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text("Primary contact name") }, singleLine = true)
-                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text("Secondary contact (optional)") }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email (optional)") }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") }, singleLine = true)
-                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text("National ID (optional)") }, singleLine = true)
-                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address (optional)") }, singleLine = true)
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("City (optional)") }, singleLine = true)
-                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text("County (optional)") }, singleLine = true)
+                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true)
+                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true)
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true)
+                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true)
+                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true)
+                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true)
+                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true)
                     ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
                         OutlinedTextField(
                             value = status,
                             onValueChange = { },
                             readOnly = true,
-                            label = { Text("Status") },
+                            label = { Text(stringResource(R.string.families_label_status)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
                             statuses.forEach { s ->
@@ -199,81 +192,8 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
             confirmButton = {
                 TextButton(onClick = {
                     if (primary.text.isNotBlank()) {
-                        scope.launch {
-                            db.familyDao().insertWithSync(
-                                FamilyEntity(
-                                    primaryContactName = primary.text,
-                                    secondaryContactName = secondary.text.ifBlank { null },
-                                    email = email.text.ifBlank { null },
-                                    phone = phone.text.ifBlank { null },
-                                    nationalIdNo = nationalId.text.ifBlank { null },
-                                    address = address.text.ifBlank { null },
-                                    city = city.text.ifBlank { null },
-                                    county = county.text.ifBlank { null },
-                                    status = status
-                                ),
-                                db.syncQueueDao()
-                            )
-                            showCreate = false
-                            primary = TextFieldValue("")
-                            secondary = TextFieldValue("")
-                            email = TextFieldValue("")
-                            phone = TextFieldValue("")
-                            nationalId = TextFieldValue("")
-                            address = TextFieldValue("")
-                            city = TextFieldValue("")
-                            county = TextFieldValue("")
-                            status = "Active"
-                        }
-                    }
-                }) { Text("Save") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("Cancel") }
-            }
-        )
-    }
-
-    if (showEditDialog && selectedFamily != null) {
-        AlertDialog(
-            onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit Family") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text("Primary contact name") }, singleLine = true)
-                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text("Secondary contact (optional)") }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email (optional)") }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") }, singleLine = true)
-                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text("National ID (optional)") }, singleLine = true)
-                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address (optional)") }, singleLine = true)
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("City (optional)") }, singleLine = true)
-                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text("County (optional)") }, singleLine = true)
-                    ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
-                        OutlinedTextField(
-                            value = status,
-                            onValueChange = { },
-                            readOnly = true,
-                            label = { Text("Status") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
-                            statuses.forEach { s ->
-                                DropdownMenuItem(text = { Text(s) }, onClick = {
-                                    status = s
-                                    showStatusDropdown = false
-                                })
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (primary.text.isNotBlank()) {
-                        scope.launch {
-                            val family = selectedFamily ?: return@launch
-                            val updated = family.copy(
+                        viewModel.insertFamily(
+                            FamilyEntity(
                                 primaryContactName = primary.text,
                                 secondaryContactName = secondary.text.ifBlank { null },
                                 email = email.text.ifBlank { null },
@@ -284,15 +204,83 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
                                 county = county.text.ifBlank { null },
                                 status = status
                             )
-                            db.familyDao().updateWithSync(updated, db.syncQueueDao())
-                            showEditDialog = false
-                            selectedFamily = null
-                        }
+                        )
+                        showCreate = false
+                        primary = TextFieldValue("")
+                        secondary = TextFieldValue("")
+                        email = TextFieldValue("")
+                        phone = TextFieldValue("")
+                        nationalId = TextFieldValue("")
+                        address = TextFieldValue("")
+                        city = TextFieldValue("")
+                        county = TextFieldValue("")
+                        status = statusActive
                     }
-                }) { Text("Update") }
+                }) { Text(stringResource(R.string.families_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false; selectedFamily = null }) { Text("Cancel") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.families_cancel)) }
+            }
+        )
+    }
+
+    if (showEditDialog && selectedFamily != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text(stringResource(R.string.families_edit_dialog_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true)
+                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true)
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true)
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true)
+                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true)
+                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true)
+                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true)
+                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true)
+                    ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
+                        OutlinedTextField(
+                            value = status,
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.families_label_status)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
+                            statuses.forEach { s ->
+                                DropdownMenuItem(text = { Text(s) }, onClick = {
+                                    status = s
+                                    showStatusDropdown = false
+                                })
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (primary.text.isNotBlank()) {
+                        val family = selectedFamily ?: return@TextButton
+                        val updated = family.copy(
+                            primaryContactName = primary.text,
+                            secondaryContactName = secondary.text.ifBlank { null },
+                            email = email.text.ifBlank { null },
+                            phone = phone.text.ifBlank { null },
+                            nationalIdNo = nationalId.text.ifBlank { null },
+                            address = address.text.ifBlank { null },
+                            city = city.text.ifBlank { null },
+                            county = county.text.ifBlank { null },
+                            status = status
+                        )
+                        viewModel.updateFamily(updated)
+                        showEditDialog = false
+                        selectedFamily = null
+                    }
+                }) { Text(stringResource(R.string.families_update)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false; selectedFamily = null }) { Text(stringResource(R.string.families_cancel)) }
             }
         )
     }
@@ -300,23 +288,21 @@ fun FamiliesScreen(onBack: () -> Unit = {}) {
     if (showDeleteDialog && selectedFamily != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false; selectedFamily = null },
-            title = { Text("Delete Family") },
-            text = { Text("Are you sure you want to delete ${selectedFamily?.primaryContactName ?: ""}?") },
+            title = { Text(stringResource(R.string.families_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.families_delete_confirm, selectedFamily?.primaryContactName ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch {
-                        selectedFamily?.let { family ->
-                            db.familyDao().deleteByIdWithSync(family.familyId, db.syncQueueDao())
-                        }
-                        showDeleteDialog = false
-                        selectedFamily = null
+                    selectedFamily?.let { family ->
+                        viewModel.deleteFamily(family.familyId)
                     }
+                    showDeleteDialog = false
+                    selectedFamily = null
                 }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.families_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; selectedFamily = null }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false; selectedFamily = null }) { Text(stringResource(R.string.families_cancel)) }
             }
         )
     }
@@ -328,10 +314,10 @@ fun FamilyDetailsScreen(family: FamilyEntity, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Family Profile") },
+                title = { Text(stringResource(R.string.families_profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.families_back_desc))
                     }
                 }
             )
@@ -364,68 +350,39 @@ fun FamilyDetailsScreen(family: FamilyEntity, onBack: () -> Unit) {
             )
             
             Text(
-                text = "Family ID: #${family.familyId}",
+                text = stringResource(R.string.families_id_format, family.familyId),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            DetailSection("Contact Information") {
-                DetailRow("Primary Contact", family.primaryContactName)
-                DetailRow("Secondary Contact", family.secondaryContactName ?: "N/A")
-                DetailRow("Phone", family.phone ?: "N/A")
-                DetailRow("Email", family.email ?: "N/A")
-                DetailRow("National ID", family.nationalIdNo ?: "N/A")
+            DetailSection(stringResource(R.string.families_section_contact)) {
+                DetailRow(stringResource(R.string.families_label_primary_contact), family.primaryContactName)
+                DetailRow(stringResource(R.string.families_label_secondary_contact), family.secondaryContactName ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_phone), family.phone ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_email), family.email ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_national_id), family.nationalIdNo ?: stringResource(R.string.search_na))
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            DetailSection("Address & Location") {
-                DetailRow("Address", family.address ?: "N/A")
-                DetailRow("City", family.city ?: "N/A")
-                DetailRow("County", family.county ?: "N/A")
-                DetailRow("Country", family.country ?: "N/A")
+            DetailSection(stringResource(R.string.families_section_address)) {
+                DetailRow(stringResource(R.string.families_label_address), family.address ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_city), family.city ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_county), family.county ?: stringResource(R.string.search_na))
+                DetailRow(stringResource(R.string.families_label_country), family.country ?: stringResource(R.string.search_na))
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            DetailSection("Status & Metadata") {
-                DetailRow("Status", family.status ?: "Active")
-                DetailRow("Sync Status", family.syncStatus)
-                DetailRow("Last Synced", family.lastSyncedAt?.toString() ?: "Never")
+            DetailSection(stringResource(R.string.families_section_status)) {
+                DetailRow(stringResource(R.string.families_label_status), family.status ?: stringResource(R.string.status_active))
+                DetailRow(stringResource(R.string.families_label_sync_status), family.syncStatus)
+                DetailRow(stringResource(R.string.families_label_last_synced), family.lastSyncedAt?.toString() ?: stringResource(R.string.families_never_synced))
             }
             
             Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
-
-/**
- * Helper function to fetch families from API and update local database.
- */
-private fun fetchFamiliesFromApi(
-    repository: FamilyRepositoryImpl,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoading: (Boolean, String?) -> Unit
-) {
-    scope.launch {
-        onLoading(true, null)
-        try {
-            // Get token from shared preferences (implement as needed)
-            val token = "" // TODO: Get actual auth token
-            if (token.isNotEmpty()) {
-                val result = repository.fetchFromApi(token)
-                if (result.isFailure) {
-                    onLoading(false, result.exceptionOrNull()?.message)
-                } else {
-                    onLoading(false, null)
-                }
-            } else {
-                onLoading(false, "No authentication token available")
-            }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch families: ${e.message}")
         }
     }
 }

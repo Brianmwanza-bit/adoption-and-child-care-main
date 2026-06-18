@@ -101,8 +101,9 @@ class DocumentRepositoryImpl @Inject constructor(
             }
             
             val response = apiService.getAllDocuments(authHeader)
-            if (response.isSuccessful && response.body() != null) {
-                val apiDocs = response.body()!!
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                val apiDocs = body
                 // Optionally update local DB with API data
                 // for (doc in apiDocs) documentDao.insert(doc)
                 Result.success(apiDocs)

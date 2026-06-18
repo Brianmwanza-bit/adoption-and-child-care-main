@@ -10,7 +10,7 @@ import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.network.RetrofitClient
 import com.example.adoption_and_childcare.network.SyncPushRequestItem
 import com.example.adoption_and_childcare.network.SyncPullResponse
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.room.withTransaction

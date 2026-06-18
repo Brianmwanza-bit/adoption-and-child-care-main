@@ -9,20 +9,17 @@ npm run dev
 ```
 
 This will automatically:
-1. Detect available MySQL port (3306 or 3307)
+1. Detect available MySQL port (3306)
 2. Check/import the database
 3. Set up environment variables
 4. Start the backend server
 
 ### Option 2: Specify MySQL Port
-If you have multiple XAMPP instances, specify the port:
+The system defaults to 3306:
 
 ```bash
 # Use port 3306
 npm run dev:3306
-
-# Use port 3307
-npm run dev:3307
 ```
 
 ### Option 3: Manual Backend Start
@@ -35,17 +32,15 @@ npm run dev
 ## Available npm Scripts
 
 ### From Root Directory
-- `npm run dev` - Starts the backend with automatic database setup on available port
+- `npm run dev` - Starts the backend with automatic database setup on port 3306
 - `npm run dev:3306` - Explicitly use XAMPP on port 3306
-- `npm run dev:3307` - Explicitly use XAMPP on port 3307
 - `npm run backend:start` - Just start the backend server (no DB setup)
 - `npm run backend:install` - Install backend dependencies
 
 ### From Backend Directory
 - `npm run start` - Start server (uses .env for configuration)
-- `npm run dev` - Start with database setup on port 3307
+- `npm run dev` - Start with database setup on port 3306
 - `npm run dev:3306` - Start with database setup on port 3306
-- `npm run dev:3307` - Start with database setup on port 3307
 
 ## Environment Configuration
 
@@ -53,7 +48,7 @@ The `.env` file in the `backend/` directory contains database connection setting
 
 ```env
 DB_HOST=localhost
-DB_PORT=3307
+DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=adoption_and_childcare_tracking_system_db
@@ -64,7 +59,7 @@ NODE_ENV=development
 ### Changing Configuration
 
 Edit `backend/.env` to change:
-- **DB_PORT**: MySQL port (3306 or 3307)
+- **DB_PORT**: MySQL port (3306)
 - **DB_PASSWORD**: MySQL password (if set)
 - **JWT_SECRET**: JWT signing secret for authentication
 
@@ -72,7 +67,7 @@ Edit `backend/.env` to change:
 
 ### Automatic Import
 When you run `npm run dev`, the system will:
-1. Check if MySQL is running on the specified port
+1. Check if MySQL is running on port 3306
 2. Verify if the database exists
 3. Automatically import the SQL dump if needed
 
@@ -81,26 +76,25 @@ If automatic import fails, manually import the database:
 
 ```bash
 # Using PowerShell
-mysql -h localhost -P 3307 -u root < database/adoption_and_childcare_tracking_system_db.sql
+mysql -h localhost -P 3306 -u root < database/adoption_and_childcare_tracking_system_db.sql
 
 # Or use the import helper script
 .\database\import-db.ps1
 ```
 
-## Multiple XAMPP Instances
+## XAMPP Instance
 
-The system automatically detects available XAMPP instances:
+The system uses the standard XAMPP port:
 
 ```
-Port 3306: MySQL Instance 1 (XAMPP 1)
-Port 3307: MySQL Instance 2 (XAMPP 2)
+Port 3306: MySQL Instance (XAMPP)
 ```
 
-The dev startup script will use the available port or the one you specify.
+The dev startup script will use port 3306.
 
-To check which ports are active:
+To check if the port is active:
 ```powershell
-netstat -ano | findstr ":330" | findstr "LISTENING"
+netstat -ano | findstr ":3306" | findstr "LISTENING"
 ```
 
 ## Backend Server Details
@@ -111,7 +105,7 @@ When the server starts, you'll see:
 Adoption & Child Care - Dev Environment
 ========================================
 
-✓ MySQL is running on port 3307
+✓ MySQL is running on port 3306
 ✓ .env file created
 ✓ Database exists
 ✓ Dependencies ready
@@ -139,20 +133,17 @@ Once the server is running:
 
 ### MySQL Connection Failed
 ```
-✗ MySQL not found on port 3307
-
-Available ports:
-  Port: 3306
+✗ MySQL not found on port 3306
 ```
 
 **Solution**: 
 - Ensure XAMPP MySQL is running
-- Use `npm run dev:3306` if MySQL is on port 3306
+- Run the repair steps if MySQL fails to start due to corruption
 
 ### Database Import Fails
 - Ensure MySQL root user has no password (or update DB_PASSWORD in .env)
 - Check that the SQL file exists at `database/adoption_and_childcare_tracking_system_db.sql`
-- Manually import using: `mysql -h localhost -P 3307 -u root < database/adoption_and_childcare_tracking_system_db.sql`
+- Manually import using: `mysql -h localhost -P 3306 -u root < database/adoption_and_childcare_tracking_system_db.sql`
 
 ### Dependencies Missing
 ```

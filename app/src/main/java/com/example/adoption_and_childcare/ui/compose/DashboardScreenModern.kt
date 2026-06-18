@@ -23,28 +23,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import com.example.adoption_and_childcare.viewmodel.DashboardViewModel
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
 import com.example.adoption_and_childcare.viewmodel.CaseToolsViewModel
 import com.example.adoption_and_childcare.MainActivityConstants
 import com.example.adoption_and_childcare.canAccessRoute
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
-private const val PERCENT_OVERDUE = 0.15
 private const val PERCENT_AT_RISK = 0.2
 
 /**
  * Data class representing a modern action item on the dashboard.
- *
- * @property id Unique identifier for the action item.
- * @property title Title of the action item.
- * @property priority Priority level (e.g., "urgent", "high", "normal").
- * @property dueDate When the item is due.
- * @property assignee Person assigned to the item.
- * @property relatedEntity The entity or module this item relates to.
  */
 data class ActionItemModern(
     val id: String,
@@ -60,14 +52,16 @@ data class ActionItemModern(
  *
  * @param userRole The role of the current user.
  * @param onNavigate Callback for navigation to different routes.
+ * @param dashboardViewModel ViewModel for managing dashboard state and data.
  * @param notificationsViewModel ViewModel for managing notifications.
- * @param caseToolsViewModel ViewModel for managing case-specific tools and dashboard preferences.
+ * @param caseToolsViewModel ViewModel for managing case-specific tools.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreenModern(
     userRole: String = stringResource(R.string.dashboard_guest),
     onNavigate: (String) -> Unit = {},
+    dashboardViewModel: DashboardViewModel = hiltViewModel(),
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     caseToolsViewModel: CaseToolsViewModel = hiltViewModel()
 ) {
@@ -79,66 +73,43 @@ fun DashboardScreenModern(
     val dashboardPrefs by caseToolsViewModel.dashboardPreferences.collectAsState()
     val latestPrefs = dashboardPrefs.lastOrNull()
 
-    // Data states
-    var childrenCount by remember { mutableIntStateOf(0) }
-    var familiesCount by remember { mutableIntStateOf(0) }
-    var adoptionAppsCount by remember { mutableIntStateOf(0) }
-    var placementsCount by remember { mutableIntStateOf(0) }
-    var overdueTasks by remember { mutableIntStateOf(0) }
-    var atRiskCount by remember { mutableIntStateOf(0) }
-    
-    var dynamicActionItems by remember { mutableStateOf<List<ActionItemModern>>(emptyList()) }
-    var dynamicUpdates by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Observe data from DashboardViewModel
+    val childrenCount by dashboardViewModel.childCount.collectAsState()
+    val familiesCount by dashboardViewModel.familyCount.collectAsState()
+    val adoptionAppsCount by dashboardViewModel.applicationCount.collectAsState()
+    val placementsCount by dashboardViewModel.placementCount.collectAsState()
+    val overdueTasks by dashboardViewModel.overdueTasksCount.collectAsState()
+    val recentActivities by dashboardViewModel.recentActivities.collectAsState()
+    val pendingTasks by dashboardViewModel.pendingTasks.collectAsState()
 
-    val db = remember { AppDatabase.getInstance(context) }
+    val atRiskCount = (placementsCount * PERCENT_AT_RISK).toInt()
+
+    val routeReports = stringResource(R.string.route_reports)
+    val routeAuditLogs = stringResource(R.string.route_audit_logs)
+    val taskDefault = stringResource(R.string.dashboard_task_default)
+    val priorityNormal = stringResource(R.string.dashboard_priority_normal_val)
+    val noDate = stringResource(R.string.dashboard_no_date)
+    val staffAssignee = stringResource(R.string.dashboard_staff_assignee)
+    val tasksEntity = stringResource(R.string.dashboard_foster_tasks_entity)
 
     LaunchedEffect(Unit) {
+        dashboardViewModel.refreshData()
         notificationsViewModel.loadNotifications()
-        
-        withContext(Dispatchers.IO) {
-            val c = db.childDao().count()
-            val f = db.familyDao().count()
-            val aa = db.adoptionApplicationDao().count()
-            val p = db.placementDao().count()
-            withContext(Dispatchers.Main) {
-                childrenCount = c
-                familiesCount = f
-                adoptionAppsCount = aa
-                placementsCount = p
-                overdueTasks = (c * PERCENT_OVERDUE).toInt()
-                atRiskCount = (p * PERCENT_AT_RISK).toInt()
-            }
-        }
     }
 
-    // Observe tasks for dynamic items
-    LaunchedEffect(Unit) {
-        db.fosterTaskDao().observeAll().collectLatest { tasksList ->
-            val taskDefault = context.getString(R.string.dashboard_task_default)
-            val priorityNormal = context.getString(R.string.dashboard_priority_normal)
-            val noDate = context.getString(R.string.dashboard_no_date)
-            val staffAssignee = context.getString(R.string.dashboard_staff_assignee)
-            val fosterTasksEntity = context.getString(R.string.dashboard_foster_tasks_entity)
-
-            dynamicActionItems = tasksList.take(3).map { task ->
-                ActionItemModern(
-                    id = task.taskId.toString(),
-                    title = task.description ?: taskDefault,
-                    priority = task.status?.lowercase() ?: priorityNormal,
-                    dueDate = task.dueDate ?: noDate,
-                    assignee = staffAssignee,
-                    relatedEntity = fosterTasksEntity
-                )
-            }
-        }
+    val dynamicActionItems = pendingTasks.map { task ->
+        ActionItemModern(
+            id = task.taskId.toString(),
+            title = task.description ?: taskDefault,
+            priority = task.status?.lowercase() ?: priorityNormal,
+            dueDate = task.dueDate ?: noDate,
+            assignee = staffAssignee,
+            relatedEntity = tasksEntity
+        )
     }
 
-    LaunchedEffect(Unit) {
-        db.auditLogDao().observeAll().collectLatest { auditLogs ->
-            dynamicUpdates = auditLogs.take(4).map { log ->
-                context.getString(R.string.dashboard_audit_update_format, log.action, log.tableName, log.recordId)
-            }
-        }
+    val dynamicUpdates = recentActivities.map { log ->
+        stringResource(R.string.dashboard_audit_update_format, log.action, log.tableName, log.recordId)
     }
 
     Scaffold { paddingValues ->
@@ -192,7 +163,7 @@ fun DashboardScreenModern(
                 item {
                     if (overdueTasks > 0) {
                         OverdueTasksSectionModern(count = overdueTasks) {
-                            onNavigate(context.getString(R.string.route_reports))
+                            onNavigate(routeReports)
                         }
                     }
                 }
@@ -212,7 +183,7 @@ fun DashboardScreenModern(
                     item {
                         RecentUpdatesSectionModern(
                             updates = dynamicUpdates,
-                            onViewAll = { onNavigate(context.getString(R.string.route_audit_logs)) }
+                            onViewAll = { onNavigate(routeAuditLogs) }
                         )
                     }
                 }
@@ -246,7 +217,11 @@ fun DashboardScreenModern(
  */
 @Composable
 fun CaseToolsGridModern(userRole: String, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+    val adminRole = stringResource(R.string.role_admin_val)
+    val supervisorRole = stringResource(R.string.role_supervisor_val)
+    val caseWorkerRole = stringResource(R.string.role_case_worker_val)
+    val socialWorkerRole = stringResource(R.string.role_social_worker_val)
+    val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allTools = listOf(
         Triple(R.string.dashboard_label_risk_assessments, R.string.dashboard_desc_risk_assessments, Triple(Icons.Default.Shield, Color(0xFFE91E63), MainActivityConstants.RISK_ASSESSMENTS_ROUTE)),
@@ -265,7 +240,7 @@ fun CaseToolsGridModern(userRole: String, onNavigate: (String) -> Unit) {
         Triple(R.string.dashboard_label_foster_training_alt, R.string.dashboard_desc_foster_training_alt, Triple(Icons.Default.School, Color(0xFF3F51B5), MainActivityConstants.FOSTER_TRAINING_ROUTE))
     )
 
-    val filteredTools = allTools.filter { canAccessRoute(it.third.third, userRole) }
+    val filteredTools = allTools.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
 
     if (filteredTools.isNotEmpty()) {
         Column(
@@ -444,7 +419,11 @@ fun KeyMetricsSectionModern(
     adoptionAppsCount: Int,
     onNavigate: (String) -> Unit
 ) {
-    val context = LocalContext.current
+    val adminRole = stringResource(R.string.role_admin_val)
+    val supervisorRole = stringResource(R.string.role_supervisor_val)
+    val caseWorkerRole = stringResource(R.string.role_case_worker_val)
+    val socialWorkerRole = stringResource(R.string.role_social_worker_val)
+    val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allMetrics = listOf(
         Triple(R.string.dashboard_metric_children, childrenCount, Triple(Icons.Default.ChildCare, Color(0xFF4CAF50), MainActivityConstants.CHILDREN_LIST_ROUTE)),
@@ -453,7 +432,7 @@ fun KeyMetricsSectionModern(
         Triple(R.string.dashboard_metric_applications, adoptionAppsCount, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ADOPTION_APPS_ROUTE))
     )
 
-    val filteredMetrics = allMetrics.filter { canAccessRoute(it.third.third, userRole) }
+    val filteredMetrics = allMetrics.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
 
     if (filteredMetrics.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -590,7 +569,7 @@ fun ActionItemsSectionModern(
     items: List<ActionItemModern>,
     onNavigate: (String) -> Unit
 ) {
-    val context = LocalContext.current
+    val routeReports = stringResource(R.string.route_reports)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -606,7 +585,7 @@ fun ActionItemsSectionModern(
                 stringResource(R.string.dashboard_view_all),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFF9C27B0),
-                modifier = Modifier.clickable { onNavigate(context.getString(R.string.route_reports)) }
+                modifier = Modifier.clickable { onNavigate(routeReports) }
             )
         }
         if (items.isEmpty()) {
@@ -732,7 +711,12 @@ fun RecentUpdatesSectionModern(updates: List<String>, onViewAll: () -> Unit) {
  */
 @Composable
 fun QuickAccessModulesModern(userRole: String, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+    val adminRole = stringResource(R.string.role_admin_val)
+    val supervisorRole = stringResource(R.string.role_supervisor_val)
+    val caseWorkerRole = stringResource(R.string.role_case_worker_val)
+    val socialWorkerRole = stringResource(R.string.role_social_worker_val)
+    val guardianRole = stringResource(R.string.role_guardian_val)
+
     val allButtons = listOf(
         Triple(R.string.dashboard_module_documents, Icons.Default.Description, Pair(Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
         Triple(R.string.dashboard_module_medical, Icons.Default.LocalHospital, Pair(Color(0xFFF44336), MainActivityConstants.MEDICAL_ROUTE)),
@@ -740,7 +724,7 @@ fun QuickAccessModulesModern(userRole: String, onNavigate: (String) -> Unit) {
         Triple(R.string.dashboard_module_finance, Icons.Default.AttachMoney, Pair(Color(0xFF4CAF50), MainActivityConstants.FINANCE_ROUTE))
     )
 
-    val filteredButtons = allButtons.filter { canAccessRoute(it.third.second, userRole) }
+    val filteredButtons = allButtons.filter { canAccessRoute(it.third.second, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
 
     if (filteredButtons.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -780,7 +764,11 @@ fun QuickAccessModulesModern(userRole: String, onNavigate: (String) -> Unit) {
  */
 @Composable
 fun AllScreensGridModern(userRole: String, onNavigate: (String) -> Unit) {
-    val context = LocalContext.current
+    val adminRole = stringResource(R.string.role_admin_val)
+    val supervisorRole = stringResource(R.string.role_supervisor_val)
+    val caseWorkerRole = stringResource(R.string.role_case_worker_val)
+    val socialWorkerRole = stringResource(R.string.role_social_worker_val)
+    val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allScreens = listOf(
         Triple(R.string.dashboard_label_analytics, R.string.dashboard_desc_analytics, Triple(Icons.Default.Analytics, Color(0xFF673AB7), MainActivityConstants.ANALYTICS_ROUTE)),
@@ -804,7 +792,7 @@ fun AllScreensGridModern(userRole: String, onNavigate: (String) -> Unit) {
         Triple(R.string.dashboard_label_donors, R.string.dashboard_desc_donors, Triple(Icons.Default.VolunteerActivism, Color(0xFF4CAF50), MainActivityConstants.DONOR_FUNDING_ROUTE)),
         Triple(R.string.dashboard_label_budgets, R.string.dashboard_desc_budgets, Triple(Icons.Default.AccountBalance, Color(0xFF607D8B), MainActivityConstants.BUDGET_ALLOCATIONS_ROUTE)),
         Triple(R.string.dashboard_label_counties_alt, R.string.dashboard_desc_counties_alt, Triple(Icons.Default.LocationCity, Color(0xFF3F51B5), MainActivityConstants.COUNTIES_ROUTE)),
-        Triple(R.string.dashboard_label_county_offices, R.string.dashboard_desc_county_offices, Triple(Icons.Default.Apartment, Color(0xFF795548), MainActivityConstants.COUNTIES_ROUTE)), // Mapped to COUNTIES_ROUTE for now
+        Triple(R.string.dashboard_label_county_offices, R.string.dashboard_desc_county_offices, Triple(Icons.Default.Apartment, Color(0xFF795548), MainActivityConstants.COUNTY_OFFICES_ROUTE)),
         Triple(R.string.dashboard_label_reports_alt, R.string.dashboard_desc_reports_alt, Triple(Icons.Default.PictureAsPdf, Color(0xFFE91E63), MainActivityConstants.REPORTS_ROUTE)),
         Triple(R.string.dashboard_label_emergency, R.string.dashboard_desc_emergency, Triple(Icons.Default.Sos, Color(0xFFF44336), MainActivityConstants.EMERGENCY_EVENTS_ROUTE)),
         Triple(R.string.dashboard_label_doc_storage, R.string.dashboard_desc_doc_storage, Triple(Icons.Default.CloudUpload, Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
@@ -813,7 +801,7 @@ fun AllScreensGridModern(userRole: String, onNavigate: (String) -> Unit) {
         Triple(R.string.dashboard_label_worker_loc, R.string.dashboard_desc_worker_loc, Triple(Icons.Default.LocationOn, Color(0xFF4CAF50), MainActivityConstants.WORKER_LOCATIONS_ROUTE))
     )
 
-    val filteredScreens = allScreens.filter { canAccessRoute(it.third.third, userRole) }
+    val filteredScreens = allScreens.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
 
     if (filteredScreens.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

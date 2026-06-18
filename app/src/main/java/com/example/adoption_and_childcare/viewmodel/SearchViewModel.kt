@@ -226,7 +226,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         study.familyId,
                         study.result,
                         study.startedAt,
-                        study.socialWorkerId?.toString()
+                        study.socialWorkerId.toString()
                     ))
                 }
 

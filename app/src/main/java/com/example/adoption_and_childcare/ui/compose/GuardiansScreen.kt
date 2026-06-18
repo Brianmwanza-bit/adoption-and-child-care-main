@@ -7,114 +7,135 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.GuardianEntity
-import com.example.adoption_and_childcare.data.repository.GuardianRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
 import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
+import com.example.adoption_and_childcare.viewmodel.GuardiansViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Screen for managing guardians of children.
- *
- * @param onBack Callback invoked when the user navigates back.
+ * Screen for managing guardians.
+ * 
+ * @param onBack Callback for navigating back.
+ * @param viewModel ViewModel for business logic.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GuardiansScreen(onBack: () -> Unit = {}) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { GuardianRepositoryImpl(db.guardianDao(), db.syncQueueDao(), apiService, authManager) }
+fun GuardiansScreen(
+    onBack: () -> Unit = {},
+    viewModel: GuardiansViewModel = hiltViewModel()
+) {
+    val guardians by viewModel.guardians.collectAsState(initial = emptyList())
+    val children by viewModel.children.collectAsState(initial = emptyList())
     
-    var guardians by remember { mutableStateOf<List<GuardianEntity>>(emptyList()) }
-    val scope = rememberCoroutineScope()
-    
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
     
     var showCreate by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
+    var selectedGuardian by remember { mutableStateOf<GuardianEntity?>(null) }
 
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var firstName by remember { mutableStateOf(TextFieldValue("")) }
     var lastName by remember { mutableStateOf(TextFieldValue("")) }
     var relationship by remember { mutableStateOf(TextFieldValue("")) }
     var phone by remember { mutableStateOf(TextFieldValue("")) }
 
-    // Load from local DB
-    LaunchedEffect(Unit) {
-        db.guardianDao().observeAll().collectLatest { list ->
-            guardians = list
-        }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchFromApi(repository, authManager, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Guardians") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    val currentGuardian = selectedGuardian
+    if (showDetails && currentGuardian != null) {
+        GuardianDetailScreen(
+            guardian = currentGuardian,
+            child = children.find { it.childId == currentGuardian.childId },
+            onBack = { showDetails = false; selectedGuardian = null }
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.guardians_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.guardians_back_desc))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.refreshFromApi() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.guardians_refresh_desc))
+                        }
                     }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = { showCreate = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.guardians_add_desc))
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Guardian")
             }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            if (guardians.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No guardians found", style = MaterialTheme.typography.bodyLarge)
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+            ) {
+                // Guardian Summary
+                if (guardians.isNotEmpty()) {
+                    GuardianSummaryCard(guardians)
+                    Spacer(Modifier.height(16.dp))
                 }
-            } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(guardians) { guardian ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+
+                if (guardians.isEmpty() && !isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.SupervisorAccount, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(stringResource(R.string.guardians_no_found), style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(guardians) { guardian ->
+                            FormRecordCard(
+                                title = stringResource(R.string.guardians_record_id, guardian.guardianId),
+                                subtitle = "${guardian.firstName} ${guardian.lastName}",
+                                pageNumber = 1,
+                                onEdit = {
+                                    selectedGuardian = guardian
+                                    showEditDialog = true
+                                    selectedChildId = guardian.childId
+                                    firstName = TextFieldValue(guardian.firstName)
+                                    lastName = TextFieldValue(guardian.lastName)
+                                    relationship = TextFieldValue(guardian.relationship)
+                                    phone = TextFieldValue(guardian.phone ?: "")
+                                },
+                                onDelete = {
+                                    viewModel.deleteGuardian(guardian.guardianId)
+                                },
+                                headerIcon = Icons.Default.SupervisorAccount,
+                                onClick = {
+                                    selectedGuardian = guardian
+                                    showDetails = true
+                                }
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("${guardian.firstName} ${guardian.lastName}", style = MaterialTheme.typography.titleMedium)
-                                    Text("Child ID: ${guardian.childId}", style = MaterialTheme.typography.bodySmall)
-                                    Text("Relationship: ${guardian.relationship}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                                    guardian.phone?.let { Text("Phone: $it", style = MaterialTheme.typography.bodySmall) }
+                                FormDetailRow(label = stringResource(R.string.guardians_label_child_id), value = guardian.childId.toString())
+                                val child = children.find { it.childId == guardian.childId }
+                                if (child != null) {
+                                    FormDetailRow(label = stringResource(R.string.guardians_label_child_name), value = "${child.firstName} ${child.lastName}")
                                 }
-                                IconButton(onClick = {
-                                    scope.launch {
-                                        db.guardianDao().deleteById(guardian.guardianId)
-                                    }
-                                }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
-                                }
+                                FormDetailRow(label = stringResource(R.string.guardians_label_relationship), value = guardian.relationship, valueColor = MaterialTheme.colorScheme.primary)
+                                FormDetailRow(label = stringResource(R.string.guardians_label_phone), value = guardian.phone ?: stringResource(R.string.guardians_not_set))
                             }
                         }
                     }
@@ -126,47 +147,117 @@ fun GuardiansScreen(onBack: () -> Unit = {}) {
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("Add Guardian") },
+            title = { Text(stringResource(R.string.guardians_add_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") })
-                    OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("First Name") })
-                    OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Last Name") })
-                    OutlinedTextField(value = relationship, onValueChange = { relationship = it }, label = { Text("Relationship") })
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") })
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId }
+                    )
+                    OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text(stringResource(R.string.guardians_field_first_name)) })
+                    OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text(stringResource(R.string.guardians_field_last_name)) })
+                    OutlinedTextField(value = relationship, onValueChange = { relationship = it }, label = { Text(stringResource(R.string.guardians_label_relationship)) })
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.guardians_label_phone)) })
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val cid = childId.text.toIntOrNull()
+                    val cid = selectedChildId
                     if (cid != null && firstName.text.isNotBlank() && lastName.text.isNotBlank()) {
-                        scope.launch {
-                            db.guardianDao().insert(
-                                GuardianEntity(
-                                    childId = cid,
-                                    firstName = firstName.text,
-                                    lastName = lastName.text,
-                                    relationship = relationship.text,
-                                    phone = phone.text.ifBlank { null }
-                                )
+                        viewModel.insertGuardian(
+                            GuardianEntity(
+                                childId = cid,
+                                firstName = firstName.text,
+                                lastName = lastName.text,
+                                relationship = relationship.text,
+                                phone = phone.text.ifBlank { null }
                             )
-                            showCreate = false
-                        }
+                        )
+                        showCreate = false
+                        selectedChildId = null
+                        firstName = TextFieldValue("")
+                        lastName = TextFieldValue("")
+                        relationship = TextFieldValue("")
+                        phone = TextFieldValue("")
                     }
-                }) { Text("Save") }
+                }) { Text(stringResource(R.string.guardians_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("Cancel") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.guardians_cancel)) }
             }
         )
+    }
+
+    if (showEditDialog && selectedGuardian != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text(stringResource(R.string.guardians_edit_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId },
+                        label = stringResource(R.string.guardians_child_readonly)
+                    )
+                    OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text(stringResource(R.string.guardians_field_first_name)) })
+                    OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text(stringResource(R.string.guardians_field_last_name)) })
+                    OutlinedTextField(value = relationship, onValueChange = { relationship = it }, label = { Text(stringResource(R.string.guardians_label_relationship)) })
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.guardians_label_phone)) })
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (firstName.text.isNotBlank() && lastName.text.isNotBlank()) {
+                        val current = selectedGuardian ?: return@TextButton
+                        val updated = current.copy(
+                            firstName = firstName.text,
+                            lastName = lastName.text,
+                            relationship = relationship.text,
+                            phone = phone.text.ifBlank { null }
+                        )
+                        viewModel.updateGuardian(updated)
+                        showEditDialog = false
+                        selectedGuardian = null
+                        selectedChildId = null
+                    }
+                }) { Text(stringResource(R.string.guardians_update)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false; selectedGuardian = null }) { Text(stringResource(R.string.guardians_cancel)) }
+            }
+        )
+    }
+}
+
+@Composable
+fun GuardianSummaryCard(guardians: List<GuardianEntity>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f))
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(stringResource(R.string.guardians_summary_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.guardians_total_registered))
+                Text("${guardians.size}", fontWeight = FontWeight.Bold)
+            }
+            val uniqueChildren = guardians.map { it.childId }.distinct().size
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(stringResource(R.string.guardians_children_covered))
+                Text("$uniqueChildren", fontWeight = FontWeight.Medium)
+            }
+        }
     }
 }
 
 /**
  * Helper function to fetch guardians from API.
  */
-private fun fetchFromApi(
-    repository: GuardianRepositoryImpl,
+fun fetchFromApi(
+    repository: com.example.adoption_and_childcare.data.repository.GuardianRepositoryImpl,
     authManager: AuthManager,
     scope: kotlinx.coroutines.CoroutineScope,
     onLoading: (Boolean, String?) -> Unit
@@ -183,10 +274,10 @@ private fun fetchFromApi(
                     onLoading(false, null)
                 }
             } else {
-                onLoading(false, "No authentication token available")
+                onLoading(false, null)
             }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch guardians: ${e.message}")
+        } catch (_: Exception) {
+            onLoading(false, null)
         }
     }
 }

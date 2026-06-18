@@ -65,6 +65,14 @@ data class ChildEntity(
     @ColumnInfo(name = "created_by") val createdBy: Int? = null,
     @ColumnInfo(name = "assigned_case_worker") val assignedCaseWorker: Int? = null,
     
+    // Extensive Details
+    @ColumnInfo(name = "place_of_birth") val placeOfBirth: String? = null,
+    @ColumnInfo(name = "trauma_notes") val traumaNotes: String? = null,
+    @ColumnInfo(name = "allergies") val allergies: String? = null,
+    @ColumnInfo(name = "blood_type") val bloodType: String? = null,
+    @ColumnInfo(name = "primary_physician") val primaryPhysician: String? = null,
+    @ColumnInfo(name = "special_needs") val specialNeeds: String? = null,
+    
     // Sync Metadata
     @ColumnInfo(name = "remote_id") val remoteId: String? = null,
     @ColumnInfo(name = "sync_status") val syncStatus: String = "PENDING", // PENDING, SYNCED, ERROR

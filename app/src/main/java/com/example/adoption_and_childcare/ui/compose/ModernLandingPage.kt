@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,11 +21,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.viewmodel.DashboardViewModel
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -35,24 +39,26 @@ fun ModernLandingPagePreview() {
 }
 
 /**
- * PROPOSED DESIGN FOR HUMAN APPROVAL
- * This is a modern, high-conversion landing page structure.
- * Features:
- * 1. Hero Section with Entrance Animations
- * 2. Glassmorphic Feature Cards
- * 3. Testimonial / Impact Section
- * 4. Sticky CTA (Call to Action)
+ * Modern, high-conversion landing page structure.
+ * 
+ * @param onGetStarted Callback for "Get Started" button.
+ * @param onLogin Callback for "Login" button.
+ * @param hasLoggedInBefore Whether the user has previously logged in.
+ * @param viewModel ViewModel for dashboard data.
  */
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModernLandingPage(
     onGetStarted: () -> Unit,
     onLogin: () -> Unit,
-    hasLoggedInBefore: Boolean = false
+    hasLoggedInBefore: Boolean = false,
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     var isVisible by remember { mutableStateOf(false) }
+    
+    val metrics by viewModel.metrics.collectAsState()
+    val settings by viewModel.settings.collectAsState()
 
     LaunchedEffect(Unit) {
         isVisible = true
@@ -68,21 +74,17 @@ fun ModernLandingPage(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(scrollState)
-                .background(Color(0xFFF8F9FA))
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // 1. HERO SECTION
             HeroSection(isVisible, onLogin, hasLoggedInBefore)
 
-            // 2. IMPACT STATS
-            ImpactStatsSection()
+            ImpactStatsSection(metrics)
 
-            // 3. KEY FEATURES
-            FeaturesSection()
+            FeaturesSection(settings.filter { it.category == "Features" })
 
-            // 4. TESTIMONIALS / QUOTE
-            QuoteSection()
+            QuoteSection(settings.filter { it.category == "Testimonials" })
 
-            Spacer(modifier = Modifier.height(100.dp)) // Padding for sticky bottom bar
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
@@ -96,22 +98,10 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
             .clip(RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp))
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF4CAF50), Color(0xFF2E7D32))
+                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
                 )
             )
     ) {
-        // Decorative Background Element using ContentScale
-        /* 
-        Image(
-            painter = painterResource(id = R.drawable.hero_pattern), 
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds,
-            alpha = 0.1f
-        )
-        */
-
-        // Decorative Circles
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 color = Color.White.copy(alpha = 0.05f),
@@ -138,7 +128,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.app_logo),
-                        contentDescription = "App Logo",
+                        contentDescription = stringResource(R.string.app_name),
                         modifier = Modifier.size(100.dp),
                         contentScale = ContentScale.Crop
                     )
@@ -148,7 +138,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = if (hasLoggedInBefore) "Welcome Back to\nYour Portal" else "Building Families,\nNurturing Dreams",
+                text = if (hasLoggedInBefore) stringResource(R.string.landing_welcome_back) else stringResource(R.string.landing_headline),
                 style = MaterialTheme.typography.displaySmall,
                 color = Color.White,
                 fontWeight = FontWeight.ExtraBold,
@@ -159,7 +149,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = if (hasLoggedInBefore) "Sign in to access your dashboard and manage your cases seamlessly." else "The all-in-one platform for modern adoption management and child welfare tracking.",
+                text = if (hasLoggedInBefore) stringResource(R.string.landing_signin_desc) else stringResource(R.string.landing_hero_desc),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.White.copy(alpha = 0.85f),
                 textAlign = TextAlign.Center,
@@ -171,7 +161,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
 
                 TextButton(onClick = onLogin) {
                     Text(
-                        "Already have an account? Sign In",
+                        stringResource(R.string.landing_already_account),
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
@@ -183,7 +173,7 @@ fun HeroSection(isVisible: Boolean, onLogin: () -> Unit, hasLoggedInBefore: Bool
 }
 
 @Composable
-fun ImpactStatsSection() {
+fun ImpactStatsSection(metrics: List<com.example.adoption_and_childcare.data.db.entities.DashboardMetricEntity>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,9 +181,19 @@ fun ImpactStatsSection() {
             .offset(y = (-30).dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        StatCard("1,200+", "Children Placed", Modifier.weight(1f))
-        StatCard("450+", "Active Families", Modifier.weight(1f))
-        StatCard("98%", "Success Rate", Modifier.weight(1f))
+        if (metrics.isEmpty()) {
+            StatCard(stringResource(R.string.landing_stat_children), stringResource(R.string.landing_stat_children_label), Modifier.weight(1f))
+            StatCard(stringResource(R.string.landing_stat_families), stringResource(R.string.landing_stat_families_label), Modifier.weight(1f))
+            StatCard(stringResource(R.string.landing_stat_success), stringResource(R.string.landing_stat_success_label), Modifier.weight(1f))
+        } else {
+            metrics.take(3).forEach { metric ->
+                val displayValue = when (metric.metricName) {
+                    "success_rate" -> "${metric.metricValue.toInt()}%"
+                    else -> String.format("%,d+", metric.metricValue.toInt())
+                }
+                StatCard(displayValue, metric.metricLabel ?: "", Modifier.weight(1f))
+            }
+        }
     }
 }
 
@@ -201,7 +201,7 @@ fun ImpactStatsSection() {
 fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.height(100.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -210,26 +210,38 @@ fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(value, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50), fontSize = 18.sp)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray, textAlign = TextAlign.Center)
+            Text(value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }
 
 @Composable
-fun FeaturesSection() {
-    val features = listOf(
-        FeatureData(Icons.Default.Speed, "Real-time Tracking", "Monitor case progress and milestones instantly."),
-        FeatureData(Icons.Default.Lock, "Secure Documents", "Military-grade encryption for all sensitive records."),
-        FeatureData(Icons.Default.Groups, "Family Matching", "Smart algorithms to find the perfect home for every child.")
-    )
+fun FeaturesSection(featureSettings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>) {
+    val features = if (featureSettings.isEmpty()) {
+        listOf(
+            FeatureData(Icons.Default.Speed, stringResource(R.string.landing_feature_realtime_title), stringResource(R.string.landing_feature_realtime_desc)),
+            FeatureData(Icons.Default.Lock, stringResource(R.string.landing_feature_secure_title), stringResource(R.string.landing_feature_secure_desc)),
+            FeatureData(Icons.Default.Groups, stringResource(R.string.landing_feature_matching_title), stringResource(R.string.landing_feature_matching_desc))
+        )
+    } else {
+        featureSettings.map { setting ->
+            val (icon, title) = when (setting.settingKey) {
+                "feature_real_time" -> Icons.Default.Speed to stringResource(R.string.landing_feature_realtime_title)
+                "feature_secure_docs" -> Icons.Default.Lock to stringResource(R.string.landing_feature_secure_title)
+                "feature_family_match" -> Icons.Default.Groups to stringResource(R.string.landing_feature_matching_title)
+                else -> Icons.Default.Star to setting.settingKey
+            }
+            FeatureData(icon, title, setting.settingValue ?: "")
+        }
+    }
 
     Column(modifier = Modifier.padding(vertical = 24.dp)) {
         Text(
-            text = "Everything you need",
+            text = stringResource(R.string.landing_features_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A),
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -255,9 +267,9 @@ fun GlassmorphicFeatureCard(feature: FeatureData) {
             .height(180.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, Color(0xFFEEEEEE)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -268,13 +280,13 @@ fun GlassmorphicFeatureCard(feature: FeatureData) {
         ) {
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF4CAF50).copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
                     feature.icon,
                     contentDescription = null,
-                    tint = Color(0xFF4CAF50),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(12.dp)
                 )
             }
@@ -282,52 +294,36 @@ fun GlassmorphicFeatureCard(feature: FeatureData) {
             Column {
                 Text(feature.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(feature.desc, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(feature.desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
 @Composable
-fun FeatureRow(icon: ImageVector, title: String, desc: String) {
-    Row(
-        modifier = Modifier.padding(vertical = 12.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = Color(0xFFE8F5E9),
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(icon, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.padding(12.dp))
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(desc, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-        }
-    }
-}
+fun QuoteSection(testimonialSettings: List<com.example.adoption_and_childcare.data.db.entities.SystemSettingEntity>) {
+    val quote = testimonialSettings.find { it.settingKey == "testimonial_quote" }?.settingValue
+        ?: stringResource(R.string.landing_testimonial_quote)
+    val author = testimonialSettings.find { it.settingKey == "testimonial_author" }?.settingValue
+        ?: stringResource(R.string.landing_testimonial_author)
 
-@Composable
-fun QuoteSection() {
     Card(
         modifier = Modifier.padding(24.dp).fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2196F3).copy(alpha = 0.05f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.1f)),
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color(0xFF2196F3).copy(alpha = 0.1f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.FormatQuote, contentDescription = null, tint = Color(0xFF2196F3), modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.FormatQuote, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
             Text(
-                text = "\"This platform transformed how we manage our case load. We've seen a 30% increase in placement speed.\"",
+                text = "\"$quote\"",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("— Sarah Jenkins, Senior Case Manager", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text("— $author", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -336,7 +332,7 @@ fun QuoteSection() {
 fun BottomStickyCTA(onGetStarted: () -> Unit, hasLoggedInBefore: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 16.dp
     ) {
         Row(
@@ -344,18 +340,18 @@ fun BottomStickyCTA(onGetStarted: () -> Unit, hasLoggedInBefore: Boolean) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(if (hasLoggedInBefore) "Access your portal" else "Ready to start?", fontWeight = FontWeight.Bold)
-                Text(if (hasLoggedInBefore) "Manage cases and track progress" else "Join 500+ agencies worldwide", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(if (hasLoggedInBefore) stringResource(R.string.landing_access_portal) else stringResource(R.string.landing_ready_title), fontWeight = FontWeight.Bold)
+                Text(if (hasLoggedInBefore) stringResource(R.string.landing_manage_cases) else stringResource(R.string.landing_ready_desc), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Button(
                 onClick = onGetStarted,
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text(if (hasLoggedInBefore) "Go to Dashboard" else "Get Started", fontWeight = FontWeight.Bold)
+                Text(if (hasLoggedInBefore) stringResource(R.string.landing_go_dashboard) else stringResource(R.string.landing_get_started), fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
-                    if (hasLoggedInBefore) Icons.Default.Dashboard else Icons.Default.ArrowForward,
+                    if (hasLoggedInBefore) Icons.Default.Dashboard else Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )

@@ -158,113 +158,119 @@ import com.example.adoption_and_childcare.data.db.entities.*
         GlobalDocumentStorageEntity::class,
         InterCountyTransferEntity::class,
         WorkerLocationTrackingEntity::class,
+        FamilyMeetingEntity::class,
+        ChildDevelopmentMetricEntity::class,
+        StaffResourceEntity::class,
     ],
-    version = 18,
+    version = 21,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
-abstract class AppDatabase : RoomDatabase() {
+abstract class AppDatabase : RoomDatabase(), BaseAppDatabase {
     /** @return The DAO for interacting with users. */
-    abstract fun userDao(): UserDao
+    override abstract fun userDao(): UserDao
     /** @return The DAO for interacting with children. */
-    abstract fun childDao(): ChildDao
+    override abstract fun childDao(): ChildDao
     /** @return The DAO for interacting with documents. */
-    abstract fun documentDao(): DocumentDao
+    override abstract fun documentDao(): DocumentDao
     /** @return The DAO for interacting with placements. */
-    abstract fun placementDao(): PlacementDao
+    override abstract fun placementDao(): PlacementDao
     /** @return The DAO for interacting with families. */
-    abstract fun familyDao(): FamilyDao
+    override abstract fun familyDao(): FamilyDao
     /** @return The DAO for interacting with adoption applications. */
-    abstract fun adoptionApplicationDao(): AdoptionApplicationDao
+    override abstract fun adoptionApplicationDao(): AdoptionApplicationDao
     /** @return The DAO for interacting with home studies. */
-    abstract fun homeStudyDao(): HomeStudyDao
+    override abstract fun homeStudyDao(): HomeStudyDao
     /** @return The DAO for interacting with case reports. */
-    abstract fun caseReportDao(): CaseReportDao
+    override abstract fun caseReportDao(): CaseReportDao
     /** @return The DAO for interacting with education records. */
-    abstract fun educationRecordDao(): EducationRecordDao
+    override abstract fun educationRecordDao(): EducationRecordDao
     /** @return The DAO for interacting with medical records. */
-    abstract fun medicalRecordDao(): MedicalRecordDao
+    override abstract fun medicalRecordDao(): MedicalRecordDao
     /** @return The DAO for interacting with money records. */
-    abstract fun moneyRecordDao(): MoneyRecordDao
+    override abstract fun moneyRecordDao(): MoneyRecordDao
     /** @return The DAO for interacting with audit logs. */
-    abstract fun auditLogDao(): AuditLogDao
+    override abstract fun auditLogDao(): AuditLogDao
     /** @return The DAO for interacting with court cases. */
-    abstract fun courtCaseDao(): CourtCaseDao
+    override abstract fun courtCaseDao(): CourtCaseDao
     /** @return The DAO for interacting with guardians. */
-    abstract fun guardianDao(): GuardianDao
+    override abstract fun guardianDao(): GuardianDao
     /** @return The DAO for interacting with permissions. */
-    abstract fun permissionDao(): PermissionDao
+    override abstract fun permissionDao(): PermissionDao
     /** @return The DAO for interacting with user permissions. */
-    abstract fun userPermissionDao(): UserPermissionDao
+    override abstract fun userPermissionDao(): UserPermissionDao
     /** @return The DAO for interacting with notifications. */
-    abstract fun notificationDao(): NotificationDao
+    override abstract fun notificationDao(): NotificationDao
     /** @return The DAO for interacting with the sync queue. */
-    abstract fun syncQueueDao(): SyncQueueDao
+    override abstract fun syncQueueDao(): SyncQueueDao
     /** @return The DAO for interacting with SOS locations. */
-    abstract fun sosLocationDao(): SOSLocationDao
+    override abstract fun sosLocationDao(): SOSLocationDao
     /** @return The DAO for interacting with background checks. */
-    abstract fun backgroundCheckDao(): BackgroundCheckDao
+    override abstract fun backgroundCheckDao(): BackgroundCheckDao
     /** @return The DAO for interacting with foster tasks. */
-    abstract fun fosterTaskDao(): FosterTaskDao
+    override abstract fun fosterTaskDao(): FosterTaskDao
     /** @return The DAO for interacting with foster matches. */
-    abstract fun fosterMatchDao(): FosterMatchDao
+    override abstract fun fosterMatchDao(): FosterMatchDao
     /** @return The DAO for interacting with system settings. */
-    abstract fun systemSettingDao(): SystemSettingDao
+    override abstract fun systemSettingDao(): SystemSettingDao
     /** @return The DAO for interacting with tasks. */
-    abstract fun taskDao(): TaskDao
+    override abstract fun taskDao(): TaskDao
     /** @return The DAO for interacting with action items. */
-    abstract fun actionItemDao(): ActionItemDao
+    override abstract fun actionItemDao(): ActionItemDao
     /** @return The DAO for interacting with dashboard metrics. */
-    abstract fun dashboardMetricDao(): DashboardMetricDao
+    override abstract fun dashboardMetricDao(): DashboardMetricDao
     /** @return The DAO for interacting with dashboard preferences. */
-    abstract fun dashboardPreferenceDao(): DashboardPreferenceDao
+    override abstract fun dashboardPreferenceDao(): DashboardPreferenceDao
     /** @return The DAO for interacting with critical dates. */
-    abstract fun criticalDateDao(): CriticalDateDao
+    override abstract fun criticalDateDao(): CriticalDateDao
     /** @return The DAO for interacting with worker messages. */
-    abstract fun workerMessageDao(): WorkerMessageDao
+    override abstract fun workerMessageDao(): WorkerMessageDao
     /** @return The DAO for interacting with risk assessments. */
-    abstract fun riskAssessmentDao(): RiskAssessmentDao
+    override abstract fun riskAssessmentDao(): RiskAssessmentDao
     /** @return The DAO for interacting with permanency plans. */
-    abstract fun permanencyPlanDao(): PermanencyPlanDao
+    override abstract fun permanencyPlanDao(): PermanencyPlanDao
     /** @return The DAO for interacting with caseloads. */
-    abstract fun caseloadDao(): CaseloadDao
+    override abstract fun caseloadDao(): CaseloadDao
     /** @return The DAO for interacting with case urgency flags. */
-    abstract fun caseUrgencyFlagDao(): CaseUrgencyFlagDao
+    override abstract fun caseUrgencyFlagDao(): CaseUrgencyFlagDao
     /** @return The DAO for interacting with case activities. */
-    abstract fun caseActivityDao(): CaseActivityDao
+    override abstract fun caseActivityDao(): CaseActivityDao
     /** @return The DAO for interacting with case deadlines. */
-    abstract fun caseDeadlineDao(): CaseDeadlineDao
+    override abstract fun caseDeadlineDao(): CaseDeadlineDao
     /** @return The DAO for interacting with case approvals. */
-    abstract fun caseApprovalDao(): CaseApprovalDao
+    override abstract fun caseApprovalDao(): CaseApprovalDao
     /** @return The DAO for interacting with placement compatibility. */
-    abstract fun placementCompatibilityDao(): PlacementCompatibilityDao
+    override abstract fun placementCompatibilityDao(): PlacementCompatibilityDao
     /** @return The DAO for interacting with workload tracking. */
-    abstract fun workloadTrackingDao(): WorkloadTrackingDao
-    abstract fun childBehaviorAssessmentDao(): ChildBehaviorAssessmentDao
-    abstract fun childWelfareIncidentDao(): ChildWelfareIncidentDao
-    abstract fun vaccinationRecordDao(): VaccinationRecordDao
-    abstract fun siblingDao(): SiblingDao
-    abstract fun consentRecordDao(): ConsentRecordDao
-    abstract fun childServicesReferralDao(): ChildServicesReferralDao
-    abstract fun investigationDao(): InvestigationDao
-    abstract fun servicePlanDao(): ServicePlanDao
-    abstract fun servicePlanGoalDao(): ServicePlanGoalDao
-    abstract fun visitationScheduleDao(): VisitationScheduleDao
-    abstract fun referralDao(): ReferralDao
-    abstract fun aftercarePlanDao(): AftercarePlanDao
-    abstract fun organizationPartnerDao(): OrganizationPartnerDao
-    abstract fun serviceProviderDao(): ServiceProviderDao
-    abstract fun donorFundingDao(): DonorFundingDao
-    abstract fun budgetAllocationDao(): BudgetAllocationDao
-    abstract fun countyDao(): CountyDao
-    abstract fun countyOfficeDao(): CountyOfficeDao
-    abstract fun placementDisruptionDao(): PlacementDisruptionDao
-    abstract fun fosterFamilyTrainingDao(): FosterFamilyTrainingDao
-    abstract fun reportGeneratedDao(): ReportGeneratedDao
-    abstract fun emergencyEventDao(): EmergencyEventDao
-    abstract fun globalDocumentStorageDao(): GlobalDocumentStorageDao
-    abstract fun interCountyTransferDao(): InterCountyTransferDao
-    abstract fun workerLocationTrackingDao(): WorkerLocationTrackingDao
+    override abstract fun workloadTrackingDao(): WorkloadTrackingDao
+    override abstract fun childBehaviorAssessmentDao(): ChildBehaviorAssessmentDao
+    override abstract fun childWelfareIncidentDao(): ChildWelfareIncidentDao
+    override abstract fun vaccinationRecordDao(): VaccinationRecordDao
+    override abstract fun siblingDao(): SiblingDao
+    override abstract fun consentRecordDao(): ConsentRecordDao
+    override abstract fun childServicesReferralDao(): ChildServicesReferralDao
+    override abstract fun investigationDao(): InvestigationDao
+    override abstract fun servicePlanDao(): ServicePlanDao
+    override abstract fun servicePlanGoalDao(): ServicePlanGoalDao
+    override abstract fun visitationScheduleDao(): VisitationScheduleDao
+    override abstract fun referralDao(): ReferralDao
+    override abstract fun aftercarePlanDao(): AftercarePlanDao
+    override abstract fun organizationPartnerDao(): OrganizationPartnerDao
+    override abstract fun serviceProviderDao(): ServiceProviderDao
+    override abstract fun donorFundingDao(): DonorFundingDao
+    override abstract fun budgetAllocationDao(): BudgetAllocationDao
+    override abstract fun countyDao(): CountyDao
+    override abstract fun countyOfficeDao(): CountyOfficeDao
+    override abstract fun placementDisruptionDao(): PlacementDisruptionDao
+    override abstract fun fosterFamilyTrainingDao(): FosterFamilyTrainingDao
+    override abstract fun reportGeneratedDao(): ReportGeneratedDao
+    override abstract fun emergencyEventDao(): EmergencyEventDao
+    override abstract fun globalDocumentStorageDao(): GlobalDocumentStorageDao
+    override abstract fun interCountyTransferDao(): InterCountyTransferDao
+    override abstract fun workerLocationTrackingDao(): WorkerLocationTrackingDao
+    override abstract fun familyMeetingDao(): FamilyMeetingDao
+    override abstract fun childDevelopmentMetricDao(): ChildDevelopmentMetricDao
+    override abstract fun staffResourceDao(): StaffResourceDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -674,6 +680,9 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `global_document_storage` (`document_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `document_name` TEXT NOT NULL, `document_category` TEXT, `document_type` TEXT, `file_path` TEXT, `file_size` INTEGER, `mime_type` TEXT, `uploaded_by` INTEGER, `is_public` INTEGER NOT NULL DEFAULT 0, `description` TEXT, `version` INTEGER DEFAULT 1, `uploaded_at` TEXT)")
                 db.execSQL("CREATE TABLE IF NOT EXISTS `inter_county_transfers` (`transfer_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `from_county` TEXT, `to_county` TEXT, `transfer_date` TEXT NOT NULL, `reason` TEXT, `authorized_by` INTEGER, `receiving_officer` INTEGER, `documents_transferred` INTEGER NOT NULL DEFAULT 0, `transfer_status` TEXT, `notes` TEXT, `created_at` TEXT)")
                 db.execSQL("CREATE TABLE IF NOT EXISTS `worker_location_tracking` (`tracking_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `accuracy` REAL, `tracking_time` TEXT NOT NULL, `activity_type` TEXT, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `family_meetings` (`meeting_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `family_id` INTEGER NOT NULL, `meeting_date` TEXT NOT NULL, `topic` TEXT, `outcome` TEXT, `caseworker_id` INTEGER, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `child_development_metrics` (`metric_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `measurement_date` TEXT NOT NULL, `weight_kg` REAL, `height_cm` REAL, `head_circumference_cm` REAL, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `staff_resources` (`resource_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` INTEGER NOT NULL, `resource_name` TEXT NOT NULL, `resource_type` TEXT, `serial_number` TEXT, `assigned_date` TEXT, `status` TEXT, `created_at` TEXT)")
             }
         }
 
@@ -683,6 +692,49 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `users` ADD COLUMN `remote_id` TEXT")
                 db.execSQL("ALTER TABLE `users` ADD COLUMN `sync_status` TEXT NOT NULL DEFAULT 'PENDING'")
                 db.execSQL("ALTER TABLE `users` ADD COLUMN `last_synced_at` INTEGER")
+            }
+        }
+
+        /** Migration from v16 to v17: Stability version bump. */
+        val MIGRATION_16_17: Migration = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v17 to v18: Stability version bump. */
+        val MIGRATION_17_18: Migration = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v18 to v19: Stability version bump. */
+        val MIGRATION_18_19: Migration = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {}
+        }
+
+        /** Migration from v19 to v20: Fix missing tables from previous updates. */
+        val MIGRATION_19_20: Migration = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `family_meetings` (`meeting_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `family_id` INTEGER NOT NULL, `meeting_date` TEXT NOT NULL, `topic` TEXT, `outcome` TEXT, `caseworker_id` INTEGER, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `child_development_metrics` (`metric_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `child_id` INTEGER NOT NULL, `measurement_date` TEXT NOT NULL, `weight_kg` REAL, `height_cm` REAL, `head_circumference_cm` REAL, `notes` TEXT, `created_at` TEXT)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `staff_resources` (`resource_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_id` INTEGER NOT NULL, `resource_name` TEXT NOT NULL, `resource_type` TEXT, `serial_number` TEXT, `assigned_date` TEXT, `status` TEXT, `created_at` TEXT)")
+            }
+        }
+
+        /** Migration from v20 to v21: Adds extensive fields to children and families. */
+        val MIGRATION_20_21: Migration = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Children
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `place_of_birth` TEXT")
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `trauma_notes` TEXT")
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `allergies` TEXT")
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `blood_type` TEXT")
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `primary_physician` TEXT")
+                db.execSQL("ALTER TABLE `children` ADD COLUMN `special_needs` TEXT")
+                // Families
+                db.execSQL("ALTER TABLE `families` ADD COLUMN `license_number` TEXT")
+                db.execSQL("ALTER TABLE `families` ADD COLUMN `license_issue_date` TEXT")
+                db.execSQL("ALTER TABLE `families` ADD COLUMN `license_expiration_date` TEXT")
+                db.execSQL("ALTER TABLE `families` ADD COLUMN `license_status` TEXT")
+                db.execSQL("ALTER TABLE `families` ADD COLUMN `sub_county` TEXT")
             }
         }
 
@@ -705,7 +757,12 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_12_13,
                     MIGRATION_13_14,
                     MIGRATION_14_15,
-                    MIGRATION_15_16
+                    MIGRATION_15_16,
+                    MIGRATION_16_17,
+                    MIGRATION_17_18,
+                    MIGRATION_18_19,
+                    MIGRATION_19_20,
+                    MIGRATION_20_21
                 )
                 .fallbackToDestructiveMigration(true)
                 .build()

@@ -1,137 +1,161 @@
 package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import com.example.adoption_and_childcare.R
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
-import com.example.adoption_and_childcare.data.repository.CaseReportRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
-import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.example.adoption_and_childcare.viewmodel.CaseReportsViewModel
 
+/**
+ * Screen for managing and viewing case reports.
+ * 
+ * Provides features for listing all reports, adding new ones,
+ * and performing basic CRUD operations.
+ * 
+ * @param onBack Callback for navigating to the previous screen.
+ * @param viewModel ViewModel for handling case reports business logic.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CaseReportsScreen(onBack: () -> Unit = {}) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { CaseReportRepositoryImpl(db.caseReportDao(), db.syncQueueDao(), apiService, authManager) }
-    var reports by remember { mutableStateOf<List<CaseReportEntity>>(emptyList()) }
-    val scope = rememberCoroutineScope()
-    
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    
+fun CaseReportsScreen(
+    onBack: () -> Unit = {},
+    viewModel: CaseReportsViewModel = hiltViewModel()
+) {
+    val reports by viewModel.reports.collectAsState(initial = emptyList())
+    val children by viewModel.children.collectAsState(initial = emptyList())
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
+
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
     var selectedReport by remember { mutableStateOf<CaseReportEntity?>(null) }
     
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var userId by remember { mutableStateOf(TextFieldValue("")) }
     var date by remember { mutableStateOf(TextFieldValue("")) }
     var title by remember { mutableStateOf(TextFieldValue("")) }
     var content by remember { mutableStateOf(TextFieldValue("")) }
 
-    LaunchedEffect(Unit) {
-        db.caseReportDao().observeAll().collectLatest { list -> reports = list }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchCaseReportsFromApi(repository, authManager, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Case Reports") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+    val currentReport = selectedReport
+    if (showDetails && currentReport != null) {
+        CaseReportDetailScreen(
+            reportId = currentReport.reportId,
+            onBack = { showDetails = false; selectedReport = null }
+        )
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.reports_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.reports_back_desc))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.refreshFromApi() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.reports_refresh_desc))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = { showCreate = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.reports_add_desc))
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Report")
             }
-        }
-    ) { padding ->
-        val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (reports.isEmpty()) {
-                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No reports yet", style = MaterialTheme.typography.bodyLarge)
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (reports.isEmpty() && !isLoading) {
+                    Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(stringResource(R.string.reports_no_reports), style = MaterialTheme.typography.bodyLarge)
+                        }
                     }
-                }
-            } else {
-                reports.forEachIndexed { index, r ->
-                    FormRecordCard(
-                        title = "CASE REPORT #${r.reportId}",
-                        subtitle = r.reportTitle,
-                        pageNumber = index + 1,
-                        onEdit = {
-                            selectedReport = r
-                            showEditDialog = true
-                            childId = TextFieldValue(r.childId.toString())
-                            userId = TextFieldValue(r.userId.toString())
-                            date = TextFieldValue(r.reportDate)
-                            title = TextFieldValue(r.reportTitle)
-                            content = TextFieldValue(r.content)
-                        },
-                        onDelete = {
-                            selectedReport = r
-                            showDeleteDialog = true
-                        },
-                        onDownloadPdf = {
-                            // TODO: Implement PDF Generation
-                        },
-                        headerIcon = Icons.Default.Assessment
-                    ) {
-                        FormDetailRow(label = "Child ID", value = r.childId.toString())
-                        FormDetailRow(label = "Author ID", value = r.userId.toString())
-                        FormDetailRow(label = "Report Date", value = r.reportDate)
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Content",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Text(
-                            text = r.content,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                } else {
+                    for ((index, r) in reports.withIndex()) {
+                        FormRecordCard(
+                            title = stringResource(R.string.reports_report_id, r.reportId),
+                            subtitle = r.reportTitle,
+                            pageNumber = index + 1,
+                            onEdit = {
+                                selectedReport = r
+                                showEditDialog = true
+                                selectedChildId = r.childId
+                                userId = TextFieldValue(r.userId.toString())
+                                date = TextFieldValue(r.reportDate)
+                                title = TextFieldValue(r.reportTitle)
+                                content = TextFieldValue(r.content)
+                            },
+                            onDelete = {
+                                selectedReport = r
+                                showDeleteDialog = true
+                            },
+                            onDownloadPdf = {
+                                // Implement PDF Generation
+                            },
+                            headerIcon = Icons.Default.Assessment,
+                            onClick = {
+                                selectedReport = r
+                                showDetails = true
+                            }
+                        ) {
+                            FormDetailRow(label = stringResource(R.string.reports_label_child_id), value = r.childId.toString())
+                            var child: com.example.adoption_and_childcare.data.db.entities.ChildEntity? = null
+                            for (c in children) {
+                                if (c.childId == r.childId) {
+                                    child = c
+                                    break
+                                }
+                            }
+                            if (child != null) {
+                                FormDetailRow(label = stringResource(R.string.reports_label_child_name), value = "${child.firstName} ${child.lastName}")
+                            }
+                            FormDetailRow(label = stringResource(R.string.reports_label_author_id), value = r.userId.toString())
+                            FormDetailRow(label = stringResource(R.string.reports_label_report_date), value = r.reportDate)
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.reports_label_content),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            Text(
+                                text = r.content,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -141,44 +165,45 @@ fun CaseReportsScreen(onBack: () -> Unit = {}) {
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("Add Case Report") },
+            title = { Text(stringResource(R.string.reports_add_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true)
-                    OutlinedTextField(value = userId, onValueChange = { userId = it }, label = { Text("User ID") }, singleLine = true)
-                    OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Report date (YYYY-MM-DD)") }, singleLine = true)
-                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, singleLine = true)
-                    OutlinedTextField(value = content, onValueChange = { content = it }, label = { Text("Content") })
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId }
+                    )
+                    OutlinedTextField(value = userId, onValueChange = { userId = it }, label = { Text(stringResource(R.string.reports_field_user_id)) }, singleLine = true)
+                    OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text(stringResource(R.string.reports_field_date)) }, singleLine = true)
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.reports_field_title)) }, singleLine = true)
+                    OutlinedTextField(value = content, onValueChange = { content = it }, label = { Text(stringResource(R.string.reports_field_content)) })
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val cid = childId.text.toIntOrNull()
+                    val cid = selectedChildId
                     val uid = userId.text.toIntOrNull()
                     if (cid != null && uid != null && date.text.isNotBlank() && title.text.isNotBlank() && content.text.isNotBlank()) {
-                        scope.launch {
-                            db.caseReportDao().insertWithSync(
-                                CaseReportEntity(
-                                    childId = cid,
-                                    userId = uid,
-                                    reportDate = date.text,
-                                    reportTitle = title.text,
-                                    content = content.text
-                                ),
-                                db.syncQueueDao()
+                        viewModel.insertReport(
+                            CaseReportEntity(
+                                childId = cid,
+                                userId = uid,
+                                reportDate = date.text,
+                                reportTitle = title.text,
+                                content = content.text
                             )
-                            showCreate = false
-                            childId = TextFieldValue("")
-                            userId = TextFieldValue("")
-                            date = TextFieldValue("")
-                            title = TextFieldValue("")
-                            content = TextFieldValue("")
-                        }
+                        )
+                        showCreate = false
+                        selectedChildId = null
+                        userId = TextFieldValue("")
+                        date = TextFieldValue("")
+                        title = TextFieldValue("")
+                        content = TextFieldValue("")
                     }
-                }) { Text("Save") }
+                }) { Text(stringResource(R.string.reports_save)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("Cancel") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.reports_cancel)) }
             }
         )
     }
@@ -186,34 +211,43 @@ fun CaseReportsScreen(onBack: () -> Unit = {}) {
     if (showEditDialog && selectedReport != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit Case Report") },
+            title = { Text(stringResource(R.string.reports_edit_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true, enabled = false)
-                    OutlinedTextField(value = userId, onValueChange = { userId = it }, label = { Text("User ID") }, singleLine = true, enabled = false)
-                    OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Report date") }, singleLine = true)
-                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, singleLine = true)
-                    OutlinedTextField(value = content, onValueChange = { content = it }, label = { Text("Content") })
+                    SearchableChildSelector(
+                        children = children,
+                        selectedChildId = selectedChildId,
+                        onChildSelected = { selectedChildId = it.childId },
+                        label = stringResource(R.string.reports_field_child_readonly)
+                    )
+                    OutlinedTextField(value = userId, onValueChange = { userId = it }, label = { Text(stringResource(R.string.reports_field_user_id)) }, singleLine = true, enabled = false)
+                    OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text(stringResource(R.string.reports_field_date_edit)) }, singleLine = true)
+                    OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.reports_field_title)) }, singleLine = true)
+                    OutlinedTextField(value = content, onValueChange = { content = it }, label = { Text(stringResource(R.string.reports_field_content)) })
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (title.text.isNotBlank() && content.text.isNotBlank()) {
-                        scope.launch {
-                            val updated = selectedReport!!.copy(
+                    val cid = selectedChildId
+                    val reportToUpdate = selectedReport
+                    if (reportToUpdate != null) {
+                        if (title.text.isNotBlank() && content.text.isNotBlank() && cid != null) {
+                            val updated = reportToUpdate.copy(
+                                childId = cid,
                                 reportDate = date.text,
                                 reportTitle = title.text,
                                 content = content.text
                             )
-                            db.caseReportDao().updateWithSync(updated, db.syncQueueDao())
+                            viewModel.updateReport(updated)
                             showEditDialog = false
                             selectedReport = null
+                            selectedChildId = null
                         }
                     }
-                }) { Text("Update") }
+                }) { Text(stringResource(R.string.reports_update)) }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false; selectedReport = null }) { Text("Cancel") }
+                TextButton(onClick = { showEditDialog = false; selectedReport = null; selectedChildId = null }) { Text(stringResource(R.string.reports_cancel)) }
             }
         )
     }
@@ -221,49 +255,27 @@ fun CaseReportsScreen(onBack: () -> Unit = {}) {
     if (showDeleteDialog && selectedReport != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false; selectedReport = null },
-            title = { Text("Delete Case Report") },
-            text = { Text("Are you sure you want to delete '${selectedReport!!.reportTitle}'?") },
+            title = { Text(stringResource(R.string.reports_delete_dialog_title)) },
+            text = { 
+                val reportToDelete = selectedReport
+                if (reportToDelete != null) {
+                    Text(stringResource(R.string.reports_delete_confirm, reportToDelete.reportTitle))
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch {
-                        db.caseReportDao().deleteByIdWithSync(selectedReport!!.reportId, db.syncQueueDao())
-                        showDeleteDialog = false
-                        selectedReport = null
+                    val reportToDelete = selectedReport
+                    if (reportToDelete != null) {
+                        viewModel.deleteReport(reportToDelete.reportId)
                     }
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                    showDeleteDialog = false
+                    selectedReport = null
+                }) { Text(stringResource(R.string.reports_delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false; selectedReport = null }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false; selectedReport = null }) { Text(stringResource(R.string.reports_cancel)) }
             }
         )
     }
 }
 
-/**
- * Helper function to fetch case reports from API.
- */
-private fun fetchCaseReportsFromApi(
-    repository: CaseReportRepositoryImpl,
-    authManager: AuthManager,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoading: (Boolean, String?) -> Unit
-) {
-    scope.launch {
-        onLoading(true, null)
-        try {
-            val token = authManager.getAuthToken() ?: ""
-            if (token.isNotEmpty()) {
-                val result = repository.fetchFromApi(token)
-                if (result.isFailure) {
-                    onLoading(false, result.exceptionOrNull()?.message)
-                } else {
-                    onLoading(false, null)
-                }
-            } else {
-                onLoading(false, "No authentication token available")
-            }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch case reports: ${e.message}")
-        }
-    }
-}

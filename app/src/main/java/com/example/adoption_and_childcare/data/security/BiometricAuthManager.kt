@@ -6,7 +6,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.example.adoption_and_childcare.utils.EncryptedPreferencesManager
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow

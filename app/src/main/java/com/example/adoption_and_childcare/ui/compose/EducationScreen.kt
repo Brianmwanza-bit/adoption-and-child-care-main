@@ -1,142 +1,166 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.example.adoption_and_childcare.data.db.AppDatabase
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
-import com.example.adoption_and_childcare.data.repository.EducationRecordRepositoryImpl
-import com.example.adoption_and_childcare.network.RetrofitClient
-import com.example.adoption_and_childcare.utils.AuthManager
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.example.adoption_and_childcare.viewmodel.EducationViewModel
 
+private const val TAG = "EducationScreen"
+
+/**
+ * Screen for managing and viewing education records for children.
+ *
+ * @param onBack Callback to navigate back to the previous screen.
+ * @param viewModel The ViewModel handling education record data and logic.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EducationScreen(onBack: () -> Unit = {}) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getInstance(context) }
-    val authManager = remember { AuthManager(context) }
-    val apiService = remember { RetrofitClient.getDynamicApiService(context) }
-    val repository = remember { EducationRecordRepositoryImpl(db.educationRecordDao(), db.syncQueueDao(), apiService, authManager) }
-    
-    var records by remember { mutableStateOf<List<EducationRecordEntity>>(emptyList()) }
+fun EducationScreen(
+    onBack: () -> Unit = {},
+    viewModel: EducationViewModel = hiltViewModel()
+) {
+    val records by viewModel.educationRecords.collectAsState(initial = emptyList())
+    val children by viewModel.children.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     
-    // UI State
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // UI State from ViewModel
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
     
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
     var selectedRecord by remember { mutableStateOf<EducationRecordEntity?>(null) }
     
-    var childId by remember { mutableStateOf(TextFieldValue("")) }
+    var selectedChildId by remember { mutableStateOf<Int?>(null) }
     var school by remember { mutableStateOf(TextFieldValue("")) }
     var grade by remember { mutableStateOf(TextFieldValue("")) }
     var enrollmentDate by remember { mutableStateOf(TextFieldValue("")) }
     var performance by remember { mutableStateOf(TextFieldValue("")) }
 
-    // Load from local DB
-    LaunchedEffect(Unit) {
-        db.educationRecordDao().observeAll().collectLatest { list -> records = list }
-    }
-    
-    // Fetch from API
-    LaunchedEffect(Unit) {
-        fetchFromApi(repository, scope) { loading, error ->
-            isLoading = loading
-            errorMessage = error
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Education Records") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+    if (showDetails && selectedRecord != null) {
+        EducationDetailScreen(
+            recordId = selectedRecord?.recordId ?: 0,
+            onBack = { showDetails = false; selectedRecord = null }
+        )
+    } else {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.edu_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.edu_back_desc))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.refreshFromApi() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.edu_refresh_desc))
+                        }
                     }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = { showCreate = true }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.edu_add_desc))
                 }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showCreate = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Education Record")
             }
-        }
-    ) { padding ->
-        val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (records.isEmpty()) {
-                Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("No education records yet", style = MaterialTheme.typography.bodyLarge)
-                    }
+        ) { paddingValues ->
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (records.isNotEmpty()) {
+                    EducationSummaryCard(records)
                 }
-            } else {
-                records.forEachIndexed { index, e ->
-                    FormRecordCard(
-                        title = "EDUCATION RECORD #${e.recordId}",
-                        subtitle = "School: ${e.schoolName}",
-                        pageNumber = index + 1,
-                        onEdit = {
-                            selectedRecord = e
-                            showEditDialog = true
-                            childId = TextFieldValue(e.childId.toString())
-                            school = TextFieldValue(e.schoolName)
-                            grade = TextFieldValue(e.grade ?: "")
-                            enrollmentDate = TextFieldValue(e.enrollmentDate ?: "")
-                            performance = TextFieldValue(e.performance ?: "")
-                        },
-                        onDelete = {
-                            selectedRecord = e
-                            showDeleteDialog = true
-                        },
-                        onDownloadPdf = {
-                            // TODO: Implement PDF Generation
-                        },
-                        headerIcon = Icons.Default.School
-                    ) {
-                        FormDetailRow(label = "Child ID", value = e.childId.toString())
-                        FormDetailRow(label = "Grade", value = e.grade ?: "N/A")
-                        FormDetailRow(label = "Enrollment Date", value = e.enrollmentDate ?: "N/A")
-                        FormDetailRow(label = "Exit Date", value = e.exitDate ?: "Still Enrolled")
-                        
-                        if (!e.performance.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Performance",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            Text(
-                                text = e.performance!!,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
+
+                if (records.isEmpty() && !isLoading) {
+                    Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(stringResource(R.string.edu_no_records), style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                } else {
+                    records.forEachIndexed { index, e ->
+                        FormRecordCard(
+                            title = stringResource(R.string.edu_record_header, e.recordId),
+                            subtitle = stringResource(R.string.edu_school_subtitle, e.schoolName),
+                            pageNumber = index + 1,
+                            onEdit = {
+                                selectedRecord = e
+                                showEditDialog = true
+                                selectedChildId = e.childId
+                                school = TextFieldValue(e.schoolName)
+                                grade = TextFieldValue(e.grade ?: "")
+                                enrollmentDate = TextFieldValue(e.enrollmentDate ?: "")
+                                performance = TextFieldValue(e.performance ?: "")
+                            },
+                            onDelete = {
+                                selectedRecord = e
+                                showDeleteDialog = true
+                            },
+                            onDownloadPdf = {
+                                Log.d(TAG, "Generating Education PDF for #${e.recordId}")
+                            },
+                            headerIcon = Icons.Default.School,
+                            onClick = {
+                                selectedRecord = e
+                                showDetails = true
+                            }
+                        ) {
+                            FormDetailRow(label = stringResource(R.string.edu_label_child_id), value = e.childId.toString())
+                            val child = children.find { it.childId == e.childId }
+                            if (child != null) {
+                                FormDetailRow(label = stringResource(R.string.edu_label_child_name), value = "${child.firstName} ${child.lastName}")
+                            }
+                            FormDetailRow(label = stringResource(R.string.edu_label_grade), value = e.grade ?: stringResource(R.string.search_na))
+                            FormDetailRow(label = stringResource(R.string.edu_label_enrollment_date), value = e.enrollmentDate ?: stringResource(R.string.search_na))
+                            FormDetailRow(label = stringResource(R.string.edu_label_exit_date), value = e.exitDate ?: stringResource(R.string.edu_label_still_enrolled))
+                            
+                            if (!e.performance.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(R.string.edu_label_performance),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                Text(
+                                    text = e.performance,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -145,43 +169,44 @@ fun EducationScreen(onBack: () -> Unit = {}) {
             if (showCreate) {
                 AlertDialog(
                     onDismissRequest = { showCreate = false },
-                    title = { Text("Add Education Record") },
+                    title = { Text(stringResource(R.string.edu_add_desc)) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true)
-                            OutlinedTextField(value = school, onValueChange = { school = it }, label = { Text("School name") }, singleLine = true)
-                            OutlinedTextField(value = grade, onValueChange = { grade = it }, label = { Text("Grade") }, singleLine = true)
-                            OutlinedTextField(value = enrollmentDate, onValueChange = { enrollmentDate = it }, label = { Text("Enrollment Date (YYYY-MM-DD)") }, singleLine = true)
-                            OutlinedTextField(value = performance, onValueChange = { performance = it }, label = { Text("Performance (optional)") }, singleLine = true)
+                            SearchableChildSelector(
+                                children = children,
+                                selectedChildId = selectedChildId,
+                                onChildSelected = { selectedChildId = it.childId }
+                            )
+                            OutlinedTextField(value = school, onValueChange = { school = it }, label = { Text(stringResource(R.string.edu_field_school_name)) }, singleLine = true)
+                            OutlinedTextField(value = grade, onValueChange = { grade = it }, label = { Text(stringResource(R.string.edu_field_grade)) }, singleLine = true)
+                            OutlinedTextField(value = enrollmentDate, onValueChange = { enrollmentDate = it }, label = { Text(stringResource(R.string.edu_field_enrollment_hint)) }, singleLine = true)
+                            OutlinedTextField(value = performance, onValueChange = { performance = it }, label = { Text(stringResource(R.string.edu_field_performance_hint)) }, singleLine = true)
                         }
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            val cid = childId.text.toIntOrNull()
+                            val cid = selectedChildId
                             if (cid != null && school.text.isNotBlank()) {
-                                scope.launch {
-                                    db.educationRecordDao().insertWithSync(
-                                        EducationRecordEntity(
-                                            childId = cid,
-                                            schoolName = school.text,
-                                            grade = grade.text.ifBlank { null },
-                                            enrollmentDate = enrollmentDate.text.ifBlank { null },
-                                            performance = performance.text.ifBlank { null }
-                                        ),
-                                        db.syncQueueDao()
+                                viewModel.insertEducationRecord(
+                                    EducationRecordEntity(
+                                        childId = cid,
+                                        schoolName = school.text,
+                                        grade = grade.text.ifBlank { null },
+                                        enrollmentDate = enrollmentDate.text.ifBlank { null },
+                                        performance = performance.text.ifBlank { null }
                                     )
-                                    showCreate = false
-                                    childId = TextFieldValue("")
-                                    school = TextFieldValue("")
-                                    grade = TextFieldValue("")
-                                    enrollmentDate = TextFieldValue("")
-                                    performance = TextFieldValue("")
-                                }
+                                )
+                                showCreate = false
+                                selectedChildId = null
+                                school = TextFieldValue("")
+                                grade = TextFieldValue("")
+                                enrollmentDate = TextFieldValue("")
+                                performance = TextFieldValue("")
                             }
-                        }) { Text("Save") }
+                        }) { Text(stringResource(R.string.edu_save)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showCreate = false }) { Text("Cancel") }
+                        TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.edu_cancel)) }
                     }
                 )
             }
@@ -189,35 +214,43 @@ fun EducationScreen(onBack: () -> Unit = {}) {
             if (showEditDialog && selectedRecord != null) {
                 AlertDialog(
                     onDismissRequest = { showEditDialog = false },
-                    title = { Text("Edit Education Record") },
+                    title = { Text(stringResource(R.string.edu_edit_title)) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(value = childId, onValueChange = { childId = it }, label = { Text("Child ID") }, singleLine = true, enabled = false)
-                            OutlinedTextField(value = school, onValueChange = { school = it }, label = { Text("School name") }, singleLine = true)
-                            OutlinedTextField(value = grade, onValueChange = { grade = it }, label = { Text("Grade") }, singleLine = true)
-                            OutlinedTextField(value = enrollmentDate, onValueChange = { enrollmentDate = it }, label = { Text("Enrollment Date") }, singleLine = true)
-                            OutlinedTextField(value = performance, onValueChange = { performance = it }, label = { Text("Performance") }, singleLine = true)
+                            SearchableChildSelector(
+                                children = children,
+                                selectedChildId = selectedChildId,
+                                onChildSelected = { selectedChildId = it.childId },
+                                label = stringResource(R.string.search_child_label)
+                            )
+                            OutlinedTextField(value = school, onValueChange = { school = it }, label = { Text(stringResource(R.string.edu_field_school_name)) }, singleLine = true)
+                            OutlinedTextField(value = grade, onValueChange = { grade = it }, label = { Text(stringResource(R.string.edu_field_grade)) }, singleLine = true)
+                            OutlinedTextField(value = enrollmentDate, onValueChange = { enrollmentDate = it }, label = { Text(stringResource(R.string.edu_label_enrollment_date)) }, singleLine = true)
+                            OutlinedTextField(value = performance, onValueChange = { performance = it }, label = { Text(stringResource(R.string.edu_label_performance)) }, singleLine = true)
                         }
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            if (school.text.isNotBlank()) {
-                                scope.launch {
-                                    val updated = selectedRecord!!.copy(
+                            val cid = selectedChildId
+                            if (cid != null && school.text.isNotBlank()) {
+                                selectedRecord?.let { current ->
+                                    val updated = current.copy(
+                                        childId = cid,
                                         schoolName = school.text,
                                         grade = grade.text.ifBlank { null },
                                         enrollmentDate = enrollmentDate.text.ifBlank { null },
                                         performance = performance.text.ifBlank { null }
                                     )
-                                    db.educationRecordDao().updateWithSync(updated, db.syncQueueDao())
-                                    showEditDialog = false
-                                    selectedRecord = null
+                                    viewModel.updateEducationRecord(updated)
                                 }
+                                showEditDialog = false
+                                selectedRecord = null
+                                selectedChildId = null
                             }
-                        }) { Text("Update") }
+                        }) { Text(stringResource(R.string.edu_update)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showEditDialog = false; selectedRecord = null }) { Text("Cancel") }
+                        TextButton(onClick = { showEditDialog = false; selectedRecord = null }) { Text(stringResource(R.string.edu_cancel)) }
                     }
                 )
             }
@@ -225,50 +258,25 @@ fun EducationScreen(onBack: () -> Unit = {}) {
             if (showDeleteDialog && selectedRecord != null) {
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false; selectedRecord = null },
-                    title = { Text("Delete Education Record") },
-                    text = { Text("Are you sure you want to delete the record for ${selectedRecord!!.schoolName}?") },
+                    title = { Text(stringResource(R.string.edu_delete_title)) },
+                    text = { 
+                        val name = selectedRecord?.schoolName ?: ""
+                        Text(stringResource(R.string.edu_delete_confirm, name)) 
+                    },
                     confirmButton = {
                         TextButton(onClick = {
-                            scope.launch {
-                                db.educationRecordDao().deleteByIdWithSync(selectedRecord!!.recordId, db.syncQueueDao())
-                                showDeleteDialog = false
-                                selectedRecord = null
+                            selectedRecord?.let {
+                                viewModel.deleteEducationRecord(it.recordId)
                             }
-                        }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                            showDeleteDialog = false
+                            selectedRecord = null
+                        }) { Text(stringResource(R.string.edu_delete), color = MaterialTheme.colorScheme.error) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDeleteDialog = false; selectedRecord = null }) { Text("Cancel") }
+                        TextButton(onClick = { showDeleteDialog = false; selectedRecord = null }) { Text(stringResource(R.string.edu_cancel)) }
                     }
                 )
             }
-        }
-    }
-}
-
-/**
- * Helper function to fetch education records from API.
- */
-private fun fetchFromApi(
-    repository: EducationRecordRepositoryImpl,
-    scope: kotlinx.coroutines.CoroutineScope,
-    onLoading: (Boolean, String?) -> Unit
-) {
-    scope.launch {
-        onLoading(true, null)
-        try {
-            val token = "" // TODO: Get actual auth token
-            if (token.isNotEmpty()) {
-                val result = repository.fetchFromApi(token)
-                if (result.isFailure) {
-                    onLoading(false, result.exceptionOrNull()?.message)
-                } else {
-                    onLoading(false, null)
-                }
-            } else {
-                onLoading(false, "No authentication token available")
-            }
-        } catch (e: Exception) {
-            onLoading(false, "Failed to fetch education records: ${e.message}")
         }
     }
 }

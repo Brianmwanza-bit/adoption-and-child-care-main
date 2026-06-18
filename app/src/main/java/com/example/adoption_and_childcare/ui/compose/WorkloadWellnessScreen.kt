@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.adoption_and_childcare.data.db.entities.WorkloadTrackingEntity
 import com.example.adoption_and_childcare.viewmodel.CaseToolsViewModel
@@ -74,7 +74,7 @@ fun WorkloadWellnessScreen(onBack: () -> Unit, viewModel: CaseToolsViewModel = h
                             color = Color(0xFF512DA8)
                         )
                         Text(
-                            stringResource(R.string.workload_wellness_capacity_used), 
+                            stringResource(R.string.workload_wellness_capacity_used),
                             style = MaterialTheme.typography.bodySmall, 
                             color = Color(0xFF512DA8)
                         )

@@ -1,10 +1,12 @@
 package com.example.adoption_and_childcare.data.repository
 
+import android.content.Context
 import com.example.adoption_and_childcare.data.db.dao.ChildDao
 import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.ChildEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,11 +26,12 @@ import javax.inject.Singleton
  */
 @Singleton
 class ChildRepositoryImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val childDao: ChildDao,
     private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
-) : ChildRepository {
+) : BaseSyncRepository(context), ChildRepository {
 
     override fun observeAll(): Flow<List<ChildEntity>> {
         return childDao.observeAll()
@@ -53,6 +56,7 @@ class ChildRepositoryImpl @Inject constructor(
                 // Ignore failure here; the record is in the sync queue
             }
             
+            scheduleSync()
             Result.success(child.childId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
@@ -74,6 +78,7 @@ class ChildRepositoryImpl @Inject constructor(
                 // Ignore failure
             }
             
+            scheduleSync()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -95,6 +100,7 @@ class ChildRepositoryImpl @Inject constructor(
                 // Ignore failure
             }
             
+            scheduleSync()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -110,8 +116,9 @@ class ChildRepositoryImpl @Inject constructor(
             
             val response = apiService.getChildren(authHeader)
             
-            if (response.isSuccessful && response.body() != null) {
-                val children = response.body()!!
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                val children = body
                 
                 // Update local database with fetched data
                 for (child in children) {

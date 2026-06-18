@@ -1,10 +1,12 @@
 package com.example.adoption_and_childcare.data.repository
 
+import android.content.Context
 import com.example.adoption_and_childcare.data.db.dao.FamilyDao
 import com.example.adoption_and_childcare.data.db.dao.SyncQueueDao
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 import com.example.adoption_and_childcare.network.ApiService
 import com.example.adoption_and_childcare.utils.AuthManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,11 +26,12 @@ import javax.inject.Singleton
  */
 @Singleton
 class FamilyRepositoryImpl @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val familyDao: FamilyDao,
     private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
     private val authManager: AuthManager
-) : FamilyRepository {
+) : BaseSyncRepository(context), FamilyRepository {
 
     override fun observeAll(): Flow<List<FamilyEntity>> {
         return familyDao.observeAll()
@@ -53,6 +56,7 @@ class FamilyRepositoryImpl @Inject constructor(
                 // Ignore failure; sync queue will handle it
             }
             
+            scheduleSync()
             Result.success(entity.familyId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
@@ -74,6 +78,7 @@ class FamilyRepositoryImpl @Inject constructor(
                 // Ignore failure
             }
             
+            scheduleSync()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -95,6 +100,7 @@ class FamilyRepositoryImpl @Inject constructor(
                 // Ignore failure
             }
             
+            scheduleSync()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -105,9 +111,10 @@ class FamilyRepositoryImpl @Inject constructor(
         return try {
             val authHeader = "Bearer $token"
             val response = apiService.getFamilies(authHeader)
+            val body = response.body()
             
-            if (response.isSuccessful && response.body() != null) {
-                val families = response.body()!!
+            if (response.isSuccessful && body != null) {
+                val families = body
                 
                 // Update local database with fetched data
                 for (family in families) {

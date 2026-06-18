@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 
 /**
  * Header for the navigation drawer displaying user profile information.

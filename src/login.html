@@ -4,277 +4,269 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Adoption & Child Care System</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-color: #2196F3;
+            --background-color: #2196F3;
+            --card-radius: 20px;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #43a047 100%);
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-        .auth-container {
+
+        .auth-card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 50px 40px;
-            max-width: 420px;
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 32px;
             width: 100%;
-        }
-        .auth-header {
+            max-width: 360px;
             text-align: center;
-            margin-bottom: 35px;
         }
-        .auth-header .icon {
-            font-size: 56px;
-            margin-bottom: 15px;
+
+        .auth-header {
+            margin-bottom: 24px;
         }
-        .auth-header h1 {
-            color: #1b5e20;
-            font-size: 26px;
+
+        .auth-header .material-icons {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .auth-card h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            font-weight: bold;
             margin-bottom: 8px;
         }
-        .auth-header p {
-            color: #666;
-            font-size: 14px;
-        }
+
         .form-group {
-            margin-bottom: 22px;
+            position: relative;
+            margin-bottom: 16px;
+            text-align: left;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
+
+        .input-wrapper .material-icons {
+            position: absolute;
+            left: 12px;
+            color: #666;
+            font-size: 20px;
+        }
+
         .form-group input {
             width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-        .form-group input:focus {
+            padding: 12px 12px 12px 44px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
             outline: none;
-            border-color: #2e7d32;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
         }
-        .form-group input::placeholder {
-            color: #aaa;
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            border-width: 2px;
         }
+
         .btn-primary {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            height: 50px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 25px;
             font-size: 16px;
-            font-weight: 700;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
+            margin-top: 8px;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #0d3b13, #1b5e20);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(27, 94, 32, 0.3);
-        }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
         .auth-footer {
             text-align: center;
-            margin-top: 28px;
-            padding-top: 25px;
-            border-top: 1px solid #eee;
+            margin-top: 24px;
         }
-        .auth-footer a {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 600;
+
+        .auth-footer button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
         }
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
+
         .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            color: var(--error-color);
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 12px;
             display: none;
-            border-left: 4px solid #c62828;
         }
+
         .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            color: var(--success-color);
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 12px;
             display: none;
-            border-left: 4px solid #2e7d32;
         }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             border-top-color: white;
-            animation: spin 0.8s ease-in-out infinite;
-            margin-right: 8px;
+            animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .password-wrapper {
-            position: relative;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #888;
-            font-size: 14px;
-        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .db-status {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 12px;
+            margin-top: 16px;
+            font-size: 10px;
             color: #999;
         }
-        .db-status .online { color: #2e7d32; }
-        .db-status .offline { color: #c62828; }
+        .db-status .online { color: var(--success-color); }
+        .db-status .offline { color: var(--error-color); }
     </style>
 </head>
 <body>
-    <div class="auth-container">
+    <div class="auth-card">
         <div class="auth-header">
-            <div class="icon">&#x1F3E0;</div>
-            <h1>Welcome Back</h1>
-            <p>Sign in to Adoption & Child Care System</p>
+            <span class="material-icons">lock</span>
+            <h1>Login</h1>
         </div>
 
-        <div class="error-message" id="errorMessage"></div>
-        <div class="success-message" id="successMessage"></div>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
 
         <form id="loginForm" onsubmit="handleLogin(event)">
+            <!-- Email/Username -->
             <div class="form-group">
-                <label for="email">Email or Username</label>
-                <input type="text" id="email" placeholder="Enter your email or username" required autocomplete="username">
+                <div class="input-wrapper">
+                    <span class="material-icons">email</span>
+                    <input type="text" id="email" placeholder="Email or Username" required autocomplete="username">
+                </div>
             </div>
 
+            <!-- Password -->
             <div class="form-group">
-                <label for="password">Password</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
-                    <button type="button" class="password-toggle" onclick="togglePassword()">&#x1F441;</button>
+                <div class="input-wrapper">
+                    <span class="material-icons">vpn_key</span>
+                    <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
                 </div>
             </div>
 
             <button type="submit" class="btn-primary" id="loginBtn">
-                Sign In
+                <span id="btnText">Login</span>
+                <div id="btnLoading" class="loading-spinner" style="display: none;"></div>
             </button>
         </form>
 
         <div class="auth-footer">
-            <p>Don't have an account? <a href="/register.html">Create Account</a></p>
+            <button onclick="window.location.href='/register.html'">Don't have an account? Register</button>
         </div>
 
         <div class="db-status" id="dbStatus">
-            Checking server status...
+            Server Status: Checking...
         </div>
     </div>
 
     <script src="/js/api-service.js"></script>
     <script>
-        // Redirect if already logged in
         if (apiService.isAuthenticated()) {
             window.location.href = '/dashboard.html';
         }
 
-        // Check server status
         async function checkServerStatus() {
             try {
-                const response = await fetch(`${apiService.baseURL}/admin-db-status`);
-                const data = await response.json();
+                const data = await apiService.getDatabaseStatus();
                 const statusEl = document.getElementById('dbStatus');
                 if (data.success) {
-                    statusEl.innerHTML = 'Server: <span class="online">Connected</span>';
+                    statusEl.innerHTML = 'Server Status: <span class="online">Online</span>';
                 } else {
-                    statusEl.innerHTML = 'Server: <span class="offline">Database Error</span>';
+                    statusEl.innerHTML = 'Server Status: <span class="offline">DB Error</span>';
                 }
             } catch (e) {
-                document.getElementById('dbStatus').innerHTML = 'Server: <span class="offline">Offline</span>';
+                document.getElementById('dbStatus').innerHTML = 'Server Status: <span class="offline">Offline</span>';
             }
         }
         checkServerStatus();
 
-        function togglePassword() {
-            const pwd = document.getElementById('password');
-            pwd.type = pwd.type === 'password' ? 'text' : 'password';
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
-        }
-
-        function showSuccess(msg) {
-            const el = document.getElementById('successMessage');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
         async function handleLogin(e) {
             e.preventDefault();
+
             const btn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoading = document.getElementById('btnLoading');
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMessage');
+
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
             if (!email || !password) {
-                showError('Please enter both email and password.');
+                errorEl.textContent = "Please enter both credentials.";
+                errorEl.style.display = 'block';
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Signing in...';
-            document.getElementById('errorMessage').style.display = 'none';
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'block';
 
             try {
                 const response = await apiService.login(email, password);
                 if (response.success) {
-                    showSuccess('Login successful! Redirecting...');
+                    successEl.textContent = "Login successful! Redirecting...";
+                    successEl.style.display = 'block';
                     setTimeout(() => {
                         window.location.href = '/dashboard.html';
                     }, 800);
                 } else {
-                    showError(response.error?.message || 'Login failed. Please try again.');
+                    errorEl.textContent = response.error?.message || "Invalid credentials.";
+                    errorEl.style.display = 'block';
                     btn.disabled = false;
-                    btn.innerHTML = 'Sign In';
+                    btnText.style.display = 'block';
+                    btnLoading.style.display = 'none';
                 }
             } catch (err) {
-                showError(err.message || 'Cannot connect to server. Make sure the backend is running.');
+                errorEl.textContent = err.message || "Connection error.";
+                errorEl.style.display = 'block';
                 btn.disabled = false;
-                btn.innerHTML = 'Sign In';
+                btnText.style.display = 'block';
+                btnLoading.style.display = 'none';
             }
         }
     </script>

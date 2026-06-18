@@ -19,7 +19,7 @@ class AppSettings(context: Context) {
     // For Emulator: Use http://10.0.2.2:50000/ (auto-mapped from localhost)
     // For Physical Device: Use your machine's IP (e.g., http://192.168.x.x:50000/)
     var apiBaseUrl: String
-        get() = prefs.getString(KEY_API_BASE_URL, "http://10.0.2.2:50000/") ?: "http://10.0.2.2:50000/"
+        get() = prefs.getString(KEY_API_BASE_URL, com.example.adoption_and_childcare.BuildConfig.BASE_URL) ?: com.example.adoption_and_childcare.BuildConfig.BASE_URL
         set(value) { prefs.edit().putString(KEY_API_BASE_URL, value).apply() }
 
     var apiTimeout: Int

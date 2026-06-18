@@ -16,13 +16,20 @@ import dagger.assisted.AssistedInject
 class SyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val syncManager: SyncManager
+    private val syncManager: SyncManager,
+    private val firestoreSyncManager: FirestoreSyncManager
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         return try {
             Log.d("SyncWorker", "Starting background sync...")
+            
+            // 1. Existing Retrofit Sync
             val result = syncManager.sync()
+            
+            // 2. New Firestore Batch Sync
+            firestoreSyncManager.pushChangesInBatch()
+
             when (result) {
                 is SyncResult.Success -> {
                     Log.d("SyncWorker", "Sync successful: Pushed ${result.pushed}, Pulled ${result.pulled}")

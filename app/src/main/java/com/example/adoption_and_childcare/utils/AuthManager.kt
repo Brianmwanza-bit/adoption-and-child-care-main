@@ -15,7 +15,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class AuthManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     private val sessionManager: SessionManager by lazy { SessionManager(context) }
     

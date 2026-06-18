@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.yourdomain.adoptionchildcare.R
+import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.entities.FosterTaskEntity
 import com.example.adoption_and_childcare.data.repository.FosterTaskRepositoryImpl
@@ -254,7 +254,7 @@ fun FosterTasksScreen(onBack: () -> Unit = {}) {
                             readOnly = true,
                             label = { Text(stringResource(R.string.foster_tasks_status_field)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(
                             expanded = showStatusDropdown,

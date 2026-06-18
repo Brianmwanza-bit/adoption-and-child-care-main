@@ -43,6 +43,15 @@ data class FamilyEntity(
     @ColumnInfo(name = "state") val state: String? = null,
     @ColumnInfo(name = "country") val country: String? = null,
     @ColumnInfo(name = "status") val status: String? = "Active",
+    
+    // Extensive Details
+    @ColumnInfo(name = "license_number") val licenseNumber: String? = null,
+    @ColumnInfo(name = "license_issue_date") val licenseIssueDate: String? = null,
+    @ColumnInfo(name = "license_expiration_date") val licenseExpirationDate: String? = null,
+    @ColumnInfo(name = "license_status") val licenseStatus: String? = null,
+    @ColumnInfo(name = "sub_county") val subCounty: String? = null,
+    @ColumnInfo(name = "latitude") val latitude: Double? = null,
+    @ColumnInfo(name = "longitude") val longitude: Double? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null,
 

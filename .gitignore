@@ -27,8 +27,9 @@ proguard/
 
 # Gradle
 .gradle/
-gradle/
-wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradle/libs.versions.toml
 daemon/
 caches/
 native/

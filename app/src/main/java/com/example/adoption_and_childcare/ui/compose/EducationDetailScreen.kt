@@ -17,13 +17,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.EducationRecordEntity
 import com.example.adoption_and_childcare.viewmodel.EducationViewModel
 
 /**
  * Screen displaying detailed education record information.
+ *
+ * @param recordId The ID of the education record to display.
+ * @param onBack Callback to navigate back to the previous screen.
+ * @param viewModel The ViewModel handling education record data and logic.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,9 +37,9 @@ fun EducationDetailScreen(
     onBack: () -> Unit,
     viewModel: EducationViewModel = hiltViewModel()
 ) {
-    val records by viewModel.educationRecords.collectAsState(initial = emptyList())
+    val records by viewModel.educationRecords.collectAsStateWithLifecycle(initialValue = emptyList())
     val record = records.find { it.recordId == recordId }
-    val isLoading by viewModel.isLoading.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle(initialValue = false)
 
     Scaffold(
         topBar = {
@@ -53,6 +58,7 @@ fun EducationDetailScreen(
             )
         }
     ) { padding ->
+        /** @param padding The padding values provided by the Scaffold. */
         if (isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color(0xFF3F51B5))
@@ -108,6 +114,13 @@ fun EducationDetailScreen(
     }
 }
 
+/**
+ * A section in the education detail screen.
+ *
+ * @param title The title of the section.
+ * @param icon The icon to display next to the title.
+ * @param content The composable content of the section.
+ */
 @Composable
 private fun DetailSectionEdu(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
@@ -123,6 +136,12 @@ private fun DetailSectionEdu(title: String, icon: ImageVector, content: @Composa
     }
 }
 
+/**
+ * A row displaying a label and value in the detail screen.
+ *
+ * @param label The label of the row.
+ * @param value The value of the row.
+ */
 @Composable
 private fun EduDetailRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {

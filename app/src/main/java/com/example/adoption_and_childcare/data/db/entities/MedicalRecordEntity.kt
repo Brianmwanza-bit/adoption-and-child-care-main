@@ -28,24 +28,24 @@ import androidx.room.PrimaryKey
  * @property createdBy User ID of the creator.
  */
 @Entity(tableName = MedicalRecordEntity.TABLE_NAME)
-data class MedicalRecordEntity(
+public data class MedicalRecordEntity(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = COLUMN_RECORD_ID) val recordId: Int = 0,
-    @ColumnInfo(name = COLUMN_CHILD_ID) val childId: Int,
-    @ColumnInfo(name = COLUMN_VISIT_DATE) val visitDate: String,
-    @ColumnInfo(name = COLUMN_DOCTOR_NAME) val doctorName: String? = null,
-    @ColumnInfo(name = COLUMN_HOSPITAL_NAME) val hospitalName: String? = null,
-    @ColumnInfo(name = COLUMN_DIAGNOSIS) val diagnosis: String? = null,
-    @ColumnInfo(name = COLUMN_TREATMENT) val treatment: String? = null,
-    @ColumnInfo(name = COLUMN_MEDICATIONS) val medications: String? = null,
-    @ColumnInfo(name = COLUMN_FOLLOW_UP_DATE) val followUpDate: String? = null,
-    @ColumnInfo(name = COLUMN_IS_IMMUNIZATION) val isImmunization: Boolean = false,
-    @ColumnInfo(name = COLUMN_IMMUNIZATION_TYPE) val immunizationType: String? = null,
-    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_DATA, typeAffinity = ColumnInfo.BLOB) val medicalReportData: ByteArray? = null,
-    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_MIME_TYPE) val medicalReportMimeType: String? = null,
-    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_SIZE) val medicalReportSize: Int? = null,
-    @ColumnInfo(name = COLUMN_CREATED_AT) val createdAt: String? = null,
-    @ColumnInfo(name = COLUMN_CREATED_BY) val createdBy: Int? = null
+    @ColumnInfo(name = COLUMN_RECORD_ID) public val recordId: Int = 0,
+    @ColumnInfo(name = COLUMN_CHILD_ID) public val childId: Int,
+    @ColumnInfo(name = COLUMN_VISIT_DATE) public val visitDate: String,
+    @ColumnInfo(name = COLUMN_DOCTOR_NAME) public val doctorName: String? = null,
+    @ColumnInfo(name = COLUMN_HOSPITAL_NAME) public val hospitalName: String? = null,
+    @ColumnInfo(name = COLUMN_DIAGNOSIS) public val diagnosis: String? = null,
+    @ColumnInfo(name = COLUMN_TREATMENT) public val treatment: String? = null,
+    @ColumnInfo(name = COLUMN_MEDICATIONS) public val medications: String? = null,
+    @ColumnInfo(name = COLUMN_FOLLOW_UP_DATE) public val followUpDate: String? = null,
+    @ColumnInfo(name = COLUMN_IS_IMMUNIZATION) public val isImmunization: Boolean = false,
+    @ColumnInfo(name = COLUMN_IMMUNIZATION_TYPE) public val immunizationType: String? = null,
+    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_DATA, typeAffinity = ColumnInfo.BLOB) public val medicalReportData: ByteArray? = null,
+    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_MIME_TYPE) public val medicalReportMimeType: String? = null,
+    @ColumnInfo(name = COLUMN_MEDICAL_REPORT_SIZE) public val medicalReportSize: Int? = null,
+    @ColumnInfo(name = COLUMN_CREATED_AT) public val createdAt: String? = null,
+    @ColumnInfo(name = COLUMN_CREATED_BY) public val createdBy: Int? = null
 ) {
     /**
      * Compares this medical record entity with another object for equality.
@@ -107,25 +107,42 @@ data class MedicalRecordEntity(
         return result
     }
 
-    companion object {
+    public companion object {
         /** Name of the database table for medical records. */
-        const val TABLE_NAME = "medical_records"
+        @Suppress("HardcodedStringLiteral")
+        public const val TABLE_NAME: String = "medical_records"
         
-        const val COLUMN_RECORD_ID = "record_id"
-        const val COLUMN_CHILD_ID = "child_id"
-        const val COLUMN_VISIT_DATE = "visit_date"
-        const val COLUMN_DOCTOR_NAME = "doctor_name"
-        const val COLUMN_HOSPITAL_NAME = "hospital_name"
-        const val COLUMN_DIAGNOSIS = "diagnosis"
-        const val COLUMN_TREATMENT = "treatment"
-        const val COLUMN_MEDICATIONS = "medications"
-        const val COLUMN_FOLLOW_UP_DATE = "follow_up_date"
-        const val COLUMN_IS_IMMUNIZATION = "is_immunization"
-        const val COLUMN_IMMUNIZATION_TYPE = "immunization_type"
-        const val COLUMN_MEDICAL_REPORT_DATA = "medical_report_data"
-        const val COLUMN_MEDICAL_REPORT_MIME_TYPE = "medical_report_mime_type"
-        const val COLUMN_MEDICAL_REPORT_SIZE = "medical_report_size"
-        const val COLUMN_CREATED_AT = "created_at"
-        const val COLUMN_CREATED_BY = "created_by"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_RECORD_ID: String = "record_id"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CHILD_ID: String = "child_id"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_VISIT_DATE: String = "visit_date"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_DOCTOR_NAME: String = "doctor_name"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_HOSPITAL_NAME: String = "hospital_name"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_DIAGNOSIS: String = "diagnosis"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_TREATMENT: String = "treatment"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_MEDICATIONS: String = "medications"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_FOLLOW_UP_DATE: String = "follow_up_date"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_IS_IMMUNIZATION: String = "is_immunization"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_IMMUNIZATION_TYPE: String = "immunization_type"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_MEDICAL_REPORT_DATA: String = "medical_report_data"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_MEDICAL_REPORT_MIME_TYPE: String = "medical_report_mime_type"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_MEDICAL_REPORT_SIZE: String = "medical_report_size"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CREATED_AT: String = "created_at"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CREATED_BY: String = "created_by"
     }
 }

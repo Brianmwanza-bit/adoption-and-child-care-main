@@ -19,6 +19,7 @@ import javax.inject.Singleton
  * - CRUD operations that sync with the backend API via a sync queue
  * - Offline-first architecture with automatic synchronization
  * 
+ * @property context Application context for system-level operations.
  * @property childDao Local database DAO for child operations.
  * @property syncQueueDao DAO for managing the local sync queue.
  * @property apiService Retrofit API service for backend communication.
@@ -33,48 +34,73 @@ class ChildRepositoryImpl @Inject constructor(
     private val authManager: AuthManager
 ) : BaseSyncRepository(context), ChildRepository {
 
+    /**
+     * Returns a Flow that emits the list of all children in the local database.
+     * 
+     * @return Flow containing the list of child entities.
+     */
     override fun observeAll(): Flow<List<ChildEntity>> {
         return childDao.observeAll()
     }
 
+    /**
+     * Finds a specific child by their unique identifier.
+     * 
+     * @param id The unique identifier of the child.
+     * @return The child entity if found, null otherwise.
+     */
     override suspend fun findById(id: Int): ChildEntity? {
         return childDao.findById(id)
     }
 
-    override suspend fun insert(child: ChildEntity, token: String): Result<Long> {
+    /**
+     * Inserts a new child into the local database and schedules a sync with the API.
+     * 
+     * @param entity The child entity to insert.
+     * @param token Authentication token (legacy/interface requirement).
+     * @return Result containing the new child ID on success, or an exception on failure.
+     */
+    override suspend fun insert(entity: ChildEntity, token: String): Result<Long> {
         return try {
             // Insert with sync queue support
-            childDao.insertWithSync(child, syncQueueDao)
+            childDao.insertWithSync(entity, syncQueueDao)
             
             // Immediate sync attempt (optional, SyncWorker will also handle it)
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    apiService.createChild(authHeader, child)
+                    apiService.createChild(authHeader, entity)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore failure here; the record is in the sync queue
             }
             
             scheduleSync()
-            Result.success(child.childId.toLong())
+            Result.success(entity.childId.toLong())
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun update(child: ChildEntity, token: String): Result<Unit> {
+    /**
+     * Updates an existing child record and schedules a sync with the API.
+     * 
+     * @param entity The updated child entity.
+     * @param token Authentication token (legacy/interface requirement).
+     * @return Result indicating success or failure.
+     */
+    override suspend fun update(entity: ChildEntity, token: String): Result<Unit> {
         return try {
             // Update with sync queue support
-            childDao.updateWithSync(child, syncQueueDao)
+            childDao.updateWithSync(entity, syncQueueDao)
             
             // Immediate sync attempt
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    apiService.updateChild(authHeader, child.childId, child)
+                    apiService.updateChild(authHeader, entity.childId, entity)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore failure
             }
             
@@ -85,6 +111,13 @@ class ChildRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Deletes a child record by ID and schedules a sync with the API.
+     * 
+     * @param id The ID of the child to delete.
+     * @param token Authentication token (legacy/interface requirement).
+     * @return Result indicating success or failure.
+     */
     override suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
             // Delete with sync queue support
@@ -96,7 +129,7 @@ class ChildRepositoryImpl @Inject constructor(
                 if (authHeader != null) {
                     apiService.deleteChild(authHeader, id)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore failure
             }
             
@@ -107,6 +140,12 @@ class ChildRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Fetches all child records from the remote API and updates the local database.
+     * 
+     * @param token Authentication token (legacy/interface requirement).
+     * @return Result containing the list of fetched children on success.
+     */
     override suspend fun fetchFromApi(token: String): Result<List<ChildEntity>> {
         return try {
             val authHeader = authManager.getAuthHeader()
@@ -139,23 +178,49 @@ class ChildRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Returns the total count of children in the local database.
+     * 
+     * @return The number of children.
+     */
     override suspend fun count(): Int {
         return childDao.count()
     }
 
+    /**
+     * Searches for children by name using a partial match.
+     * 
+     * @param query The search query string.
+     * @return Flow containing the list of matching children.
+     */
     override fun searchByName(query: String): Flow<List<ChildEntity>> {
         return childDao.searchByName("%$query%")
     }
 
-    // Simple insert/update/delete without API sync (for offline mode)
+    /**
+     * Inserts a child record into the local database only.
+     * 
+     * @param child The child entity to insert.
+     * @return The row ID of the newly inserted child.
+     */
     suspend fun insertLocal(child: ChildEntity): Long {
         return childDao.insert(child)
     }
 
+    /**
+     * Updates a child record in the local database only.
+     * 
+     * @param child The child entity to update.
+     */
     suspend fun updateLocal(child: ChildEntity) {
         childDao.update(child)
     }
 
+    /**
+     * Deletes a child record from the local database only.
+     * 
+     * @param id The ID of the child to delete.
+     */
     suspend fun deleteLocal(id: Int) {
         childDao.deleteById(id)
     }

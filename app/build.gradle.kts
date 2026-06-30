@@ -1,6 +1,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -65,10 +66,7 @@ hilt {
 }
 
 ksp {
-    val disableValidation = true
-    val projectTypeApp = "APP"
-    arg("hilt.disableAndroidSuperclassValidation", disableValidation.toString())
-    arg("hilt.projectType", projectTypeApp)
+    // Suppress Hilt/KSP warnings
 }
 
 tasks.withType<JavaCompile>().configureEach {

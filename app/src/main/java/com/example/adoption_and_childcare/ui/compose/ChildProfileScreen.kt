@@ -4,8 +4,10 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,7 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.*
@@ -28,6 +31,10 @@ import com.example.adoption_and_childcare.viewmodel.ChildProfileViewModel
 
 /**
  * High-detail "Child 360° Profile" screen.
+ * 
+ * @param child The child entity to display.
+ * @param onBack Callback for back navigation.
+ * @param viewModel ViewModel for managing child profile state.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,11 +52,11 @@ fun ChildProfileScreen(
         stringResource(R.string.profile_docs)
     )
 
-    val medicalRecords by viewModel.medicalRecords.collectAsState()
-    val educationRecords by viewModel.educationRecords.collectAsState()
-    val documents by viewModel.documents.collectAsState()
-    val siblingLinks by viewModel.siblings.collectAsState()
-    val siblingChildren by viewModel.siblingChildren.collectAsState()
+    val medicalRecords by viewModel.medicalRecords.collectAsStateWithLifecycle(initialValue = emptyList())
+    val educationRecords by viewModel.educationRecords.collectAsStateWithLifecycle(initialValue = emptyList())
+    val documents by viewModel.documents.collectAsStateWithLifecycle(initialValue = emptyList())
+    val siblingLinks by viewModel.siblings.collectAsStateWithLifecycle(initialValue = emptyList())
+    val siblingChildren by viewModel.siblingChildren.collectAsStateWithLifecycle(initialValue = emptyList())
 
     LaunchedEffect(child.childId) {
         viewModel.loadData(child.childId)
@@ -65,8 +72,8 @@ fun ChildProfileScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* Export */ }) { Icon(Icons.Default.PictureAsPdf, contentDescription = "Export") }
-                    IconButton(onClick = { /* Share */ }) { Icon(Icons.Default.Share, contentDescription = "Share") }
+                    IconButton(onClick = { /* Export */ }) { Icon(Icons.Default.PictureAsPdf, contentDescription = stringResource(R.string.child_profile_export)) }
+                    IconButton(onClick = { /* Share */ }) { Icon(Icons.Default.Share, contentDescription = stringResource(R.string.child_profile_share)) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF4CAF50),
@@ -76,8 +83,8 @@ fun ChildProfileScreen(
                 )
             )
         }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+    ) { scaffoldPadding: PaddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues = scaffoldPadding)) {
             ProfileHeader(child)
 
             PrimaryScrollableTabRow(
@@ -86,11 +93,11 @@ fun ChildProfileScreen(
                 contentColor = Color(0xFF4CAF50),
                 edgePadding = 16.dp
             ) {
-                tabs.forEachIndexed { index, title ->
+                for ((index, tabTitle) in tabs.withIndex()) {
                     Tab(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        text = { Text(title, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) }
+                        text = { Text(tabTitle, fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal) }
                     )
                 }
             }
@@ -108,6 +115,11 @@ fun ChildProfileScreen(
     }
 }
 
+/**
+ * Header component displaying child's basic identity information.
+ * 
+ * @param child The child entity.
+ */
 @Composable
 private fun ProfileHeader(child: ChildEntity) {
     Card(
@@ -121,7 +133,7 @@ private fun ProfileHeader(child: ChildEntity) {
                 contentAlignment = Alignment.Center
             ) {
                 if (child.photoUrl != null) {
-                    AsyncImage(model = child.photoUrl, contentDescription = "Profile Photo", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    AsyncImage(model = child.photoUrl, contentDescription = stringResource(R.string.child_profile_photo_desc), modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 } else {
                     Icon(Icons.Default.ChildCare, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color(0xFF4CAF50))
                 }
@@ -129,51 +141,56 @@ private fun ProfileHeader(child: ChildEntity) {
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "${child.firstName} ${child.lastName}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(text = "Case #${child.caseNumber ?: "UNASSIGNED"}", color = Color(0xFF4CAF50))
-                Badge(containerColor = if (child.currentStatus == "Active") Color(0xFFE8F5E9) else Color(0xFFFFEBEE)) {
-                    Text(child.currentStatus ?: "Active", color = if (child.currentStatus == "Active") Color(0xFF2E7D32) else Color(0xFFC62828))
+                Text(text = stringResource(R.string.child_case_number_format, child.caseNumber ?: stringResource(R.string.child_unassigned)), color = Color(0xFF4CAF50))
+                Badge(containerColor = if (child.currentStatus == stringResource(R.string.status_active)) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)) {
+                    Text(child.currentStatus ?: stringResource(R.string.status_active), color = if (child.currentStatus == stringResource(R.string.status_active)) Color(0xFF2E7D32) else Color(0xFFC62828))
                 }
             }
         }
     }
 }
 
+/**
+ * Summary tab displaying vitals, location, and legal status.
+ * 
+ * @param child The child entity.
+ */
 @Composable
 private fun SummaryTab(child: ChildEntity) {
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (!child.traumaNotes.isNullOrBlank() || !child.allergies.isNullOrBlank()) {
             AlertCard(
-                title = "CRITICAL ALERTS",
+                title = stringResource(R.string.alert_critical_title),
                 items = listOfNotNull(
-                    child.traumaNotes?.let { "Trauma: $it" },
-                    child.allergies?.let { "Allergy: $it" }
+                    child.traumaNotes?.let { stringResource(R.string.alert_trauma_format, it) },
+                    child.allergies?.let { stringResource(R.string.alert_allergy_format, it) }
                 ),
                 color = Color(0xFFE91E63)
             )
         }
 
         DetailSectionModern(stringResource(R.string.profile_vitals), Icons.Default.Badge) {
-            DetailRowModern("Full Name", "${child.firstName} ${child.middleName ?: ""} ${child.lastName}")
-            DetailRowModern("DOB", child.dateOfBirth ?: "Not Specified")
-            DetailRowModern("Gender", child.gender ?: "Not Specified")
-            DetailRowModern("Nationality", child.nationality ?: "Not Specified")
-            DetailRowModern("Blood Type", child.bloodType ?: "Not Specified")
-            DetailRowModern("Birth Cert #", child.birthCertificateNo ?: "N/A")
-            DetailRowModern("Primary Physician", child.primaryPhysician ?: "Not Assigned")
+            DetailRowModern(stringResource(R.string.label_full_name), "${child.firstName} ${child.middleName ?: ""} ${child.lastName}")
+            DetailRowModern(stringResource(R.string.label_dob), child.dateOfBirth ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_gender), child.gender ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_nationality), child.nationality ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_blood_type), child.bloodType ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_birth_cert), child.birthCertificateNo ?: stringResource(R.string.search_na))
+            DetailRowModern(stringResource(R.string.label_primary_physician), child.primaryPhysician ?: stringResource(R.string.label_not_assigned))
         }
 
         DetailSectionModern(stringResource(R.string.profile_location), Icons.Default.LocationOn) {
-            DetailRowModern("Current County", child.currentCounty ?: "Not Specified")
-            DetailRowModern("Place of Birth", child.placeOfBirth ?: "Not Specified")
-            DetailRowModern("County of Origin", child.county ?: "Not Specified")
+            DetailRowModern(stringResource(R.string.label_current_county), child.currentCounty ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_place_of_birth), child.placeOfBirth ?: stringResource(R.string.label_not_specified))
+            DetailRowModern(stringResource(R.string.label_county_of_origin), child.county ?: stringResource(R.string.label_not_specified))
         }
 
         // Emancipation Info
         if (child.isEmancipated) {
             DetailSectionModern(stringResource(R.string.detail_legal_status), Icons.Default.Gavel) {
-                DetailRowModern("Status", "EMANCIPATED")
-                DetailRowModern("Date", child.emancipationDate ?: "N/A")
-                DetailRowModern("Reason", child.emancipationReason ?: "Not provided")
+                DetailRowModern(stringResource(R.string.placements_label_status), stringResource(R.string.label_emancipated))
+                DetailRowModern(stringResource(R.string.common_label_date), child.emancipationDate ?: stringResource(R.string.search_na))
+                DetailRowModern(stringResource(R.string.common_label_reason), child.emancipationReason ?: stringResource(R.string.label_not_provided))
             }
         }
 
@@ -185,45 +202,57 @@ private fun SummaryTab(child: ChildEntity) {
     }
 }
 
+/**
+ * Siblings tab displaying sibling connectivity and known siblings list.
+ * 
+ * @param child The current child entity.
+ * @param links List of sibling relationship links.
+ * @param children List of sibling child entities.
+ */
 @Composable
 private fun SiblingsTab(child: ChildEntity, links: List<SiblingEntity>, children: List<ChildEntity>) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.profile_siblings_map), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Card(modifier = Modifier.fillMaxWidth().height(200.dp), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                SiblingTreeMap(childName = child.firstName, siblingsCount = children.size)
+                SiblingTreeMap(siblingsCount = children.size)
             }
         }
         Text(stringResource(R.string.profile_known_siblings), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         if (children.isEmpty()) {
-            Text("No siblings recorded.", color = Color.Gray, modifier = Modifier.padding(8.dp))
+            Text(stringResource(R.string.label_no_siblings), color = Color.Gray, modifier = Modifier.padding(8.dp))
         } else {
-            children.forEach { sib ->
+            for (sib in children) {
                 val link = links.find { it.siblingChildId == sib.childId }
-                SiblingItem(sib.firstName + " " + sib.lastName, "Age: ${sib.dateOfBirth ?: "N/A"}", "Relation: ${link?.relationshipType ?: "Sibling"}")
+                SiblingItem(sib.firstName + " " + sib.lastName, stringResource(R.string.label_age_format, sib.dateOfBirth ?: stringResource(R.string.search_na)), stringResource(R.string.label_relation_format, link?.relationshipType ?: stringResource(R.string.label_relation_sibling)))
             }
         }
     }
 }
 
+/**
+ * Medical tab displaying list of medical records.
+ * 
+ * @param records List of medical record entities.
+ */
 @Composable
 private fun MedicalListTab(records: List<MedicalRecordEntity>) {
     if (records.isEmpty()) {
-        EmptyState(Icons.Default.LocalHospital, "No medical records found")
+        EmptyState(Icons.Default.LocalHospital, stringResource(R.string.empty_medical_records))
     } else {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            records.forEach { record ->
+            for (record in records) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(record.visitDate, fontWeight = FontWeight.Bold)
-                            if (record.isImmunization) Badge { Text("Immunization") }
+                            if (record.isImmunization) Badge { Text(stringResource(R.string.label_immunization)) }
                         }
-                        Text("Hospital: ${record.hospitalName ?: "N/A"}", style = MaterialTheme.typography.bodySmall)
-                        Text("Doctor: ${record.doctorName ?: "N/A"}", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.label_hospital_format, record.hospitalName ?: stringResource(R.string.search_na)), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.label_doctor_format, record.doctorName ?: stringResource(R.string.search_na)), style = MaterialTheme.typography.bodySmall)
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        Text("Diagnosis: ${record.diagnosis ?: "N/A"}", fontWeight = FontWeight.Medium)
-                        Text("Treatment: ${record.treatment ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.label_diagnosis_format, record.diagnosis ?: stringResource(R.string.search_na)), fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.label_treatment_format, record.treatment ?: stringResource(R.string.search_na)), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
@@ -231,21 +260,26 @@ private fun MedicalListTab(records: List<MedicalRecordEntity>) {
     }
 }
 
+/**
+ * Education tab displaying list of education records.
+ * 
+ * @param records List of education record entities.
+ */
 @Composable
 private fun EducationListTab(records: List<EducationRecordEntity>) {
     if (records.isEmpty()) {
-        EmptyState(Icons.Default.School, "No education records found")
+        EmptyState(Icons.Default.School, stringResource(R.string.empty_education_records))
     } else {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            records.forEach { record ->
+            for (record in records) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(record.schoolName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Grade: ${record.grade ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                        Text("Enrolled: ${record.enrollmentDate ?: "N/A"}", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.label_grade_format, record.grade ?: stringResource(R.string.search_na)), style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.label_enrolled_format, record.enrollmentDate ?: stringResource(R.string.search_na)), style = MaterialTheme.typography.bodySmall)
                         if (record.performance != null) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            Text("Performance: ${record.performance}", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.label_performance_format, record.performance), style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
@@ -254,16 +288,21 @@ private fun EducationListTab(records: List<EducationRecordEntity>) {
     }
 }
 
+/**
+ * Documents tab displaying list of child's documents.
+ * 
+ * @param docs List of document entities.
+ */
 @Composable
 private fun DocumentsListTab(docs: List<DocumentEntity>) {
     if (docs.isEmpty()) {
-        EmptyState(Icons.Default.Description, "No documents found")
+        EmptyState(Icons.Default.Description, stringResource(R.string.empty_documents))
     } else {
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            docs.forEach { doc ->
+            for (doc in docs) {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.InsertDriveFile, contentDescription = null, tint = Color.Gray)
+                        Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, tint = Color.Gray)
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(doc.fileName, fontWeight = FontWeight.Bold)
@@ -276,8 +315,13 @@ private fun DocumentsListTab(docs: List<DocumentEntity>) {
     }
 }
 
+/**
+ * A visualization component for sibling relationships.
+ * 
+ * @param siblingsCount The number of siblings to visualize.
+ */
 @Composable
-private fun SiblingTreeMap(childName: String, siblingsCount: Int) {
+private fun SiblingTreeMap(siblingsCount: Int) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             val center = size.center
@@ -294,10 +338,17 @@ private fun SiblingTreeMap(childName: String, siblingsCount: Int) {
                 drawCircle(Color(0xFF4CAF50), radius * 0.7f, target)
             }
         }
-        Text("You", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+        Text(stringResource(R.string.label_you), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 10.sp)
     }
 }
 
+/**
+ * Component for displaying an individual sibling item in a list.
+ * 
+ * @param name The sibling's name.
+ * @param age The sibling's age.
+ * @param relation The relationship type.
+ */
 @Composable
 private fun SiblingItem(name: String, age: String, relation: String) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(1.dp)) {
@@ -314,6 +365,12 @@ private fun SiblingItem(name: String, age: String, relation: String) {
     }
 }
 
+/**
+ * Component for displaying an empty state message with an icon.
+ * 
+ * @param icon The icon to display.
+ * @param message The message to display.
+ */
 @Composable
 private fun EmptyState(icon: ImageVector, message: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -325,6 +382,13 @@ private fun EmptyState(icon: ImageVector, message: String) {
     }
 }
 
+/**
+ * A section for displaying grouped profile details.
+ * 
+ * @param title The title of the section.
+ * @param icon The icon representing the section.
+ * @param content The composable content to display within the section.
+ */
 @Composable
 private fun DetailSectionModern(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
@@ -340,6 +404,12 @@ private fun DetailSectionModern(title: String, icon: ImageVector, content: @Comp
     }
 }
 
+/**
+ * A row for displaying a single detail label and value.
+ * 
+ * @param label The descriptive label for the detail.
+ * @param value The value associated with the label.
+ */
 @Composable
 private fun DetailRowModern(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -348,12 +418,19 @@ private fun DetailRowModern(label: String, value: String) {
     }
 }
 
+/**
+ * Card for displaying critical alerts or warnings.
+ * 
+ * @param title The title of the alert card.
+ * @param items List of alert messages.
+ * @param color The theme color for the alert.
+ */
 @Composable
 private fun AlertCard(title: String, items: List<String>, color: Color) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)), border = BorderStroke(1.dp, color)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(title, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = color)
-            items.forEach { item ->
+            for (item in items) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Warning, null, tint = color, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))

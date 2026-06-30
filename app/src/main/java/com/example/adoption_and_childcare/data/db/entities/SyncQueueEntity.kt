@@ -28,4 +28,11 @@ data class SyncQueueEntity(
     @ColumnInfo(name = "created_at") val createdAt: Long,
     val synced: Int = 0,
     @ColumnInfo(name = "retry_count") val retryCount: Int = 0
-)
+) {
+    companion object {
+        const val TABLE_NAME = "sync_queue"
+        const val OP_INSERT = "INSERT"
+        const val OP_UPDATE = "UPDATE"
+        const val OP_DELETE = "DELETE"
+    }
+}

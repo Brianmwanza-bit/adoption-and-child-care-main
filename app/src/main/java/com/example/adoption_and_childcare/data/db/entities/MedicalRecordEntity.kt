@@ -46,4 +46,9 @@ data class MedicalRecordEntity(
     @ColumnInfo(name = "medical_report_size") val medicalReportSize: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "created_by") val createdBy: Int? = null
-)
+) {
+    companion object {
+        const val TABLE_NAME = "medical_records"
+    }
+}
+

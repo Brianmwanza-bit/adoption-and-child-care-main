@@ -9,8 +9,22 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+    <list default="true" id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
       <changelist_data name="Brian" email="brianmwanza651@gmail.com" automatic="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/planningMode.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/planningMode.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabaseMinimal.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabaseMinimal.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/BackgroundCheckDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/BackgroundCheckDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/ChildDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/ChildDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/EducationRecordDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/EducationRecordDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/MedicalRecordDao.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/dao/MedicalRecordDao.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/BackgroundCheckEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/BackgroundCheckEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/EducationRecordEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/EducationRecordEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/MedicalRecordEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/MedicalRecordEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/viewmodel/ChildrenViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/viewmodel/ChildrenViewModel.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/viewmodel/FamilyHubViewModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/viewmodel/FamilyHubViewModel.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -128,12 +142,16 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Android App.Run Config.executor": "Run",
+    "Android App.Run Config.executor": "Debug",
+    "DEBUGGABLE_DEVICE": "Pixel_10_Pro_XL [emulator-5554]",
+    "DEBUGGABLE_PROCESS": "com.example.adoption_and_childcare",
+    "DEBUGGER_ID": "Auto",
     "Git.Working.Tree.Tab.closed.by.user": "closed",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHOW_ALL_PROCESSES": "false",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
@@ -218,13 +236,13 @@
       <option name="presentableId" value="Default" />
       <updated>1780400546230</updated>
     </task>
-    <task id="LOCAL-00001" summary="Fix unresolved references in WelcomeScreen.kt, update ModernLandingPage.kt with opaque white cards, and integrate WelcomeScreen as the initial entry point">
+    <task id="LOCAL-00001" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
       <option name="closed" value="true" />
-      <created>1780824824960</created>
+      <created>1782834217408</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1780824824962</updated>
+      <updated>1782834217409</updated>
     </task>
     <task id="LOCAL-00002" summary="Fix unresolved references in WelcomeScreen.kt, update ModernLandingPage.kt with opaque white cards, and integrate WelcomeScreen as the initial entry point">
       <option name="closed" value="true" />
@@ -282,6 +300,7 @@
       <option name="project" value="LOCAL" />
       <updated>1781297697927</updated>
     </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -301,7 +320,8 @@
     <MESSAGE value="commit this project" />
     <MESSAGE value="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/appInsightsSettings.xml&#10;#&#9;.idea/caches/deviceStreaming.xml&#10;#&#9;.idea/deploymentTargetSelector.xml&#10;#&#9;.idea/planningMode.xml&#10;#&#9;.idea/workspace.xml&#10;#&#9;backend/package-lock.json&#10;#&#9;package-lock.json" />
     <MESSAGE value="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
-    <option name="LAST_COMMIT_MESSAGE" value="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
+    <MESSAGE value="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
+    <option name="LAST_COMMIT_MESSAGE" value="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
   </component>
   <component name="play_dynamic_filters_status">
     <option name="appIdToCheckInfo">

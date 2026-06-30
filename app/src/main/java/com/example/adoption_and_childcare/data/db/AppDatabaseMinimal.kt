@@ -84,7 +84,7 @@ import com.example.adoption_and_childcare.data.db.entities.*
         StaffResourceEntity::class,
     ],
     version = 21,
-    exportSchema = false
+    exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabaseMinimal : RoomDatabase(), BaseAppDatabase {

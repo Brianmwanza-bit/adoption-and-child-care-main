@@ -34,4 +34,8 @@ data class BackgroundCheckEntity(
     @ColumnInfo(name = "clearance_certificate_data", typeAffinity = ColumnInfo.BLOB) val clearanceCertificateData: ByteArray? = null,
     @ColumnInfo(name = "clearance_mime_type") val clearanceMimeType: String? = null,
     @ColumnInfo(name = "clearance_size") val clearanceSize: Int? = null
-)
+) {
+    companion object {
+        const val TABLE_NAME = "background_checks"
+    }
+}

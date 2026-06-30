@@ -9,8 +9,8 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e7d4d077-490a-4fd9-88e1-f5d4d64d33fd" name="Changes" comment="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <changelist_data name="Brian" email="brianmwanza651@gmail.com" automatic="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,6 +75,7 @@
         <option value="Brian &lt;brianmwanza651@gmail.com&gt;" />
       </list>
     </option>
+    <option name="PUSH_AUTO_UPDATE" value="true" />
     <option name="PUSH_TAGS">
       <GitPushTagMode>
         <option name="argument" value="--tags" />
@@ -91,8 +92,8 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/mwanzabrian373-gif/adoption-and-child-care-main&quot;,
-    &quot;accountId&quot;: &quot;ef0a7568-32a2-4eae-a7ad-4197fa4bf607&quot;
+    &quot;url&quot;: &quot;https://github.com/Brianmwanza-bit/adoption-and-child-care-main.git&quot;,
+    &quot;accountId&quot;: &quot;2f9733d9-85c9-4c05-b869-85ea980f8773&quot;
   }
 }</component>
   <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="C:\Users\Lydia mwanza\.gradle\wrapper\dists\gradle-9.4.1-bin\arn2x92ynaizyzdaamcbpbhtj\gradle-9.4.1" javaHome="C:\Users\Lydia mwanza\.gradle\jdks\jetbrains_s_r_o_-21-amd64-windows.2" gradleVersion="9.4.1" />
@@ -127,18 +128,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Android App.New Run Config.executor": "Debug",
     "Android App.Run Config.executor": "Run",
-    "Android App.app.executor": "Run",
-    "Gradle.Configure Daemon JVM Criteria.executor": "Run",
-    "Gradle.Upgrade Gradle wrapper.executor": "Run",
-    "GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled": "true",
-    "Notification.DisplayName-DoNotAsk-Error Report": "Internal error report submitted",
-    "Notification.DisplayName-DoNotAsk-Execution": "External process execution failed",
-    "Notification.DoNotAsk-Error Report": "true",
-    "Notification.DoNotAsk-Execution": "true",
-    "ResourceManagerPrefKey.ResourceType": "STRING",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "Git.Working.Tree.Tab.closed.by.user": "closed",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -146,30 +137,14 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "dart.analysis.tool.window.visible": "false",
-    "device.streaming.spark.single.device.do.not.ask": "true",
     "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Lydia mwanza/OneDrive/Desktop/school PROJECT FILE/adoption-and-child-care-main",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.17",
-    "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "com.google.gct.login2.settings.GoogleLoginApplicationSettingsConfigurableProvider",
-    "show.migrate.to.gradle.popup": "false",
-    "to.speed.mode.migration.done": "true"
+    "show.migrate.to.gradle.popup": "false"
   }
 }]]></component>
-  <component name="RunAnythingCache">
-    <option name="myCommands">
-      <command value="npm run dev" />
-    </option>
-  </component>
   <component name="RunManager" selected="Android App.Run Config">
     <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
-      <module name="Adoption-And-Childcare.app" />
       <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
       <option name="DEPLOY" value="true" />
       <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
@@ -237,7 +212,7 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="e7d4d077-490a-4fd9-88e1-f5d4d64d33fd" name="Changes" comment="" />
+      <changelist id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
       <created>1780400546230</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -307,43 +282,7 @@
       <option name="project" value="LOCAL" />
       <updated>1781297697927</updated>
     </task>
-    <task id="LOCAL-00009" summary="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <option name="closed" value="true" />
-      <created>1781744849066</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1781744849067</updated>
-    </task>
-    <task id="LOCAL-00010" summary="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <option name="closed" value="true" />
-      <created>1781745452688</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1781745452688</updated>
-    </task>
-    <task id="LOCAL-00011" summary="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <option name="closed" value="true" />
-      <created>1781745460607</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1781745460607</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <option name="closed" value="true" />
-      <created>1782826931081</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1782826931082</updated>
-    </task>
-    <option name="localTasksCounter" value="13" />
     <servers />
-  </component>
-  <component name="UnknownFeatures">
-    <option featureType="com.intellij.fileTypeFactory" implementationName="*.ps1" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -360,6 +299,7 @@
     <MESSAGE value="Merge branch 'main' of https://github.com/mwanzabrian373-gif/adoption-and-child-care-main&#10;&#10;# Conflicts:&#10;#&#9;.gradle/buildOutputCleanup/buildOutputCleanup.lock&#10;#&#9;.gradle/buildOutputCleanup/cache.properties&#10;#&#9;.idea/misc.xml&#10;#&#9;.vscode/extensions.json&#10;#&#9;app/build.gradle.kts&#10;#&#9;app/src/main/AndroidManifest.xml&#10;#&#9;app/src/main/java/com/example/adoption_and_childcare/MainActivity.kt&#10;#&#9;app/src/main/java/com/example/adoption_and_childcare/network/RetrofitClient.kt&#10;#&#9;app/src/main/java/com/example/adoption_and_childcare/ui/compose/DashboardScreen.kt&#10;#&#9;app/src/main/java/com/example/adoption_and_childcare/ui/compose/LoginScreen.kt&#10;#&#9;backend/package.json&#10;#&#9;backend/server.js&#10;#&#9;build.gradle.kts&#10;#&#9;gradle.properties" />
     <MESSAGE value="Fix unresolved references in WelcomeScreen.kt, update ModernLandingPage.kt with opaque white cards, and integrate WelcomeScreen as the initial entry point" />
     <MESSAGE value="commit this project" />
+    <MESSAGE value="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/appInsightsSettings.xml&#10;#&#9;.idea/caches/deviceStreaming.xml&#10;#&#9;.idea/deploymentTargetSelector.xml&#10;#&#9;.idea/planningMode.xml&#10;#&#9;.idea/workspace.xml&#10;#&#9;backend/package-lock.json&#10;#&#9;package-lock.json" />
     <MESSAGE value="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
     <option name="LAST_COMMIT_MESSAGE" value="Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub" />
   </component>
@@ -367,14 +307,10 @@
     <option name="appIdToCheckInfo">
       <map>
         <entry key="com.example.adoption_and_childcare">
-          <value>
-            <CheckInfo lastCheckTimestamp="1782768670846" />
-          </value>
+          <value />
         </entry>
         <entry key="com.example.adoption_and_childcare.test">
-          <value>
-            <CheckInfo lastCheckTimestamp="1782768670843" />
-          </value>
+          <value />
         </entry>
       </map>
     </option>

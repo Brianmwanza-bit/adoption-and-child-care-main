@@ -64,6 +64,9 @@ interface EducationRecordDao {
     @Query("SELECT * FROM education_records WHERE child_id = :childId ORDER BY enrollment_date DESC")
     fun observeForChild(childId: Int): Flow<List<EducationRecordEntity>>
 
+    @Query("SELECT * FROM education_records WHERE child_id = :childId ORDER BY enrollment_date DESC")
+    suspend fun getForChild(childId: Int): List<EducationRecordEntity>
+
     @Query("SELECT COUNT(*) FROM education_records")
     suspend fun count(): Int
 

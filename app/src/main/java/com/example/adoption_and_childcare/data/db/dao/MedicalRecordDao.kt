@@ -64,6 +64,9 @@ interface MedicalRecordDao {
     @Query("SELECT * FROM medical_records WHERE child_id = :childId ORDER BY visit_date DESC")
     fun observeForChild(childId: Int): Flow<List<MedicalRecordEntity>>
 
+    @Query("SELECT * FROM medical_records WHERE child_id = :childId ORDER BY visit_date DESC")
+    suspend fun getForChild(childId: Int): List<MedicalRecordEntity>
+
     @Query("SELECT COUNT(*) FROM medical_records")
     suspend fun count(): Int
 

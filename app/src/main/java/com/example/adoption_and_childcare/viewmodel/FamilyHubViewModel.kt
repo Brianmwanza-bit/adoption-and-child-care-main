@@ -17,7 +17,9 @@ class FamilyHubViewModel @Inject constructor(
     private val childDao: ChildDao,
     private val placementDao: PlacementDao,
     private val backgroundCheckDao: BackgroundCheckDao,
-    private val familyDao: FamilyDao
+    private val familyDao: FamilyDao,
+    private val medicalRecordDao: MedicalRecordDao,
+    private val educationRecordDao: EducationRecordDao
 ) : ViewModel() {
 
     private val _placedChildren = MutableStateFlow<List<ChildEntity>>(emptyList())

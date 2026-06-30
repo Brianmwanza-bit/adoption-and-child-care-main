@@ -4,26 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-22T11:51:39.967486600Z">
-          <Target type="BOOT_WITH_SNAPSHOT">
-            <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Lydia mwanza\.android\avd\Pixel_7.avd" />
-            </handle>
-            <Snapshot name="snap_2026-06-06_16-18-05" path="C:\Users\Lydia mwanza\.android\avd\Pixel_7.avd\snapshots\snap_2026-06-06_16-18-05" />
-          </Target>
-        </DropdownSelection>
         <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="Run Config">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-22T11:51:39.967486600Z">
-          <Target type="BOOT_WITH_SNAPSHOT">
-            <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Lydia mwanza\.android\avd\Pixel_7.avd" />
-            </handle>
-            <Snapshot name="snap_2026-06-06_16-18-05" path="C:\Users\Lydia mwanza\.android\avd\Pixel_7.avd\snapshots\snap_2026-06-06_16-18-05" />
-          </Target>
-        </DropdownSelection>
         <DialogSelection />
       </SelectionState>
     </selectionStates>

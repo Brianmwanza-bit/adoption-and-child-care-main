@@ -42,4 +42,9 @@ data class EducationRecordEntity(
     @ColumnInfo(name = "report_card_size") val reportCardSize: Int? = null,
     @ColumnInfo(name = "created_at") val createdAt: String? = null,
     @ColumnInfo(name = "updated_at") val updatedAt: String? = null
-)
+) {
+    companion object {
+        const val TABLE_NAME = "education_records"
+    }
+}
+

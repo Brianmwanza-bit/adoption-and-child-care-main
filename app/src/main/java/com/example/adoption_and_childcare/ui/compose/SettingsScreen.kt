@@ -15,7 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.session.AppSettings
 import com.example.adoption_and_childcare.data.session.SessionManager
@@ -262,7 +264,7 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleMenuState) },
                             modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor()
                                 .fillMaxWidth()
                         )
                         ExposedDropdownMenu(
@@ -528,7 +530,7 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showThemeDropdownState) },
                             modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor()
                                 .fillMaxWidth()
                         )
                         ExposedDropdownMenu(
@@ -560,7 +562,7 @@ fun SettingsScreen(
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showLanguageDropdownState) },
                             modifier = Modifier
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                .menuAnchor()
                                 .fillMaxWidth()
                         )
                         ExposedDropdownMenu(

@@ -18,7 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.GuardianEntity
 import com.example.adoption_and_childcare.utils.AuthManager

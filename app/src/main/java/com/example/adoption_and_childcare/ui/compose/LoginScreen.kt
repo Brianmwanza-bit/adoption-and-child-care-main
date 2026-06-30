@@ -27,7 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.ExperimentalMaterial3Api
 import coil.compose.AsyncImage
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 import com.example.adoption_and_childcare.data.model.UserRole
@@ -396,7 +398,7 @@ fun RegisterScreen(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOccupationDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = showOccupationDropdown,

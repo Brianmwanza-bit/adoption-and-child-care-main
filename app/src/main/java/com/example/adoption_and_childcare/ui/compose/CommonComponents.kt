@@ -66,7 +66,7 @@ fun SearchableChildSelector(
             onValueChange = { if (expanded) searchQuery = it },
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
             readOnly = !expanded,
             placeholder = { Text(stringResource(R.string.common_start_typing_name)) }
         )
@@ -108,15 +108,15 @@ fun SearchableChildSelector(
 /**
  * A modern card displaying a form record with header details and action buttons.
  *
- * @param title Record title.
- * @param subtitle Record subtitle.
- * @param pageNumber Page or record number.
- * @param onEdit Callback for edit action.
- * @param onDelete Callback for delete action.
- * @param onDownloadPdf Optional callback for PDF download.
- * @param headerIcon Optional icon for the header card.
- * @param onClick Optional callback for clicking the entire card.
- * @param content Composable content for the card body.
+ * @param title The primary title of the record (e.g., "EDUCATION RECORD #1").
+ * @param subtitle A descriptive subtitle (e.g., the school name).
+ * @param pageNumber The 1-based index or page number of this record in a list.
+ * @param onEdit Callback triggered when the edit button is clicked.
+ * @param onDelete Callback triggered when the delete button is clicked.
+ * @param onDownloadPdf Optional callback for PDF generation/download. If null, button is hidden.
+ * @param headerIcon Optional icon to display in the header box. Defaults to Icons.Default.Person.
+ * @param onClick Optional callback for clicking anywhere on the card.
+ * @param content Composable content block containing the record's specific details.
  */
 @Composable
 fun FormRecordCard(

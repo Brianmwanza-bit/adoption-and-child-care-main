@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.DocumentEntity
 import com.example.adoption_and_childcare.viewmodel.DocumentsViewModel

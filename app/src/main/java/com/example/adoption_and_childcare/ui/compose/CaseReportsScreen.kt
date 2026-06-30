@@ -14,7 +14,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.adoption_and_childcare.R
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.adoption_and_childcare.data.db.entities.CaseReportEntity
 import com.example.adoption_and_childcare.viewmodel.CaseReportsViewModel
 
@@ -33,10 +34,10 @@ fun CaseReportsScreen(
     onBack: () -> Unit = {},
     viewModel: CaseReportsViewModel = hiltViewModel()
 ) {
-    val reports by viewModel.reports.collectAsState(initial = emptyList())
-    val children by viewModel.children.collectAsState(initial = emptyList())
+    val reports by viewModel.reports.collectAsStateWithLifecycle(initialValue = emptyList())
+    val children by viewModel.children.collectAsStateWithLifecycle(initialValue = emptyList())
     // UI State from ViewModel
-    val isLoading by viewModel.isLoading.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle(initialValue = false)
 
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -84,15 +85,15 @@ fun CaseReportsScreen(
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.reports_add_desc))
                 }
             }
-        ) {
+        ) { scaffoldPadding: PaddingValues ->
             val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(it)
-                    .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(paddingValues = scaffoldPadding)
+                    .verticalScroll(state = scrollState)
+                    .padding(all = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(space = 16.dp)
             ) {
                 if (reports.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
@@ -131,15 +132,15 @@ fun CaseReportsScreen(
                             }
                         ) {
                             FormDetailRow(label = stringResource(R.string.reports_label_child_id), value = r.childId.toString())
-                            var child: com.example.adoption_and_childcare.data.db.entities.ChildEntity? = null
+                            var childEntity: com.example.adoption_and_childcare.data.db.entities.ChildEntity? = null
                             for (c in children) {
                                 if (c.childId == r.childId) {
-                                    child = c
+                                    childEntity = c
                                     break
                                 }
                             }
-                            if (child != null) {
-                                FormDetailRow(label = stringResource(R.string.reports_label_child_name), value = "${child.firstName} ${child.lastName}")
+                            if (childEntity != null) {
+                                FormDetailRow(label = stringResource(R.string.reports_label_child_name), value = "${childEntity.firstName} ${childEntity.lastName}")
                             }
                             FormDetailRow(label = stringResource(R.string.reports_label_author_id), value = r.userId.toString())
                             FormDetailRow(label = stringResource(R.string.reports_label_report_date), value = r.reportDate)
@@ -278,4 +279,3 @@ fun CaseReportsScreen(
         )
     }
 }
-

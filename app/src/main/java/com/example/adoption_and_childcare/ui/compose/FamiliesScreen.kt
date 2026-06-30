@@ -18,7 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 import com.example.adoption_and_childcare.viewmodel.FamiliesViewModel
@@ -176,7 +178,7 @@ fun FamiliesScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.families_label_status)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
                             statuses.forEach { s ->
@@ -245,7 +247,7 @@ fun FamiliesScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.families_label_status)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
                             statuses.forEach { s ->

@@ -764,7 +764,7 @@ abstract class AppDatabase : RoomDatabase(), BaseAppDatabase {
                     MIGRATION_19_20,
                     MIGRATION_20_21
                 )
-                .fallbackToDestructiveMigration(true)
+                .fallbackToDestructiveMigration()
                 .build()
                 .also { INSTANCE = it }
         }

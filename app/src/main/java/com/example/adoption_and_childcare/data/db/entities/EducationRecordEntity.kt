@@ -26,22 +26,22 @@ import androidx.room.PrimaryKey
  * @property updatedAt Timestamp when the record was last updated.
  */
 @Entity(tableName = EducationRecordEntity.TABLE_NAME)
-data class EducationRecordEntity(
+public data class EducationRecordEntity(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = COLUMN_RECORD_ID) val recordId: Int = 0,
-    @ColumnInfo(name = COLUMN_CHILD_ID) val childId: Int,
-    @ColumnInfo(name = COLUMN_SCHOOL_NAME) val schoolName: String,
-    @ColumnInfo(name = COLUMN_GRADE) val grade: String? = null,
-    @ColumnInfo(name = COLUMN_ENROLLMENT_DATE) val enrollmentDate: String? = null,
-    @ColumnInfo(name = COLUMN_EXIT_DATE) val exitDate: String? = null,
-    @ColumnInfo(name = COLUMN_PERFORMANCE) val performance: String? = null,
-    @ColumnInfo(name = COLUMN_SPECIAL_NEEDS) val specialNeeds: String? = null,
-    @ColumnInfo(name = COLUMN_TEACHER_CONTACT) val teacherContact: String? = null,
-    @ColumnInfo(name = COLUMN_REPORT_CARD_DATA, typeAffinity = ColumnInfo.BLOB) val reportCardData: ByteArray? = null,
-    @ColumnInfo(name = COLUMN_REPORT_CARD_MIME_TYPE) val reportCardMimeType: String? = null,
-    @ColumnInfo(name = COLUMN_REPORT_CARD_SIZE) val reportCardSize: Int? = null,
-    @ColumnInfo(name = COLUMN_CREATED_AT) val createdAt: String? = null,
-    @ColumnInfo(name = COLUMN_UPDATED_AT) val updatedAt: String? = null
+    @ColumnInfo(name = COLUMN_RECORD_ID) public val recordId: Int = 0,
+    @ColumnInfo(name = COLUMN_CHILD_ID) public val childId: Int,
+    @ColumnInfo(name = COLUMN_SCHOOL_NAME) public val schoolName: String,
+    @ColumnInfo(name = COLUMN_GRADE) public val grade: String? = null,
+    @ColumnInfo(name = COLUMN_ENROLLMENT_DATE) public val enrollmentDate: String? = null,
+    @ColumnInfo(name = COLUMN_EXIT_DATE) public val exitDate: String? = null,
+    @ColumnInfo(name = COLUMN_PERFORMANCE) public val performance: String? = null,
+    @ColumnInfo(name = COLUMN_SPECIAL_NEEDS) public val specialNeeds: String? = null,
+    @ColumnInfo(name = COLUMN_TEACHER_CONTACT) public val teacherContact: String? = null,
+    @ColumnInfo(name = COLUMN_REPORT_CARD_DATA, typeAffinity = ColumnInfo.BLOB) public val reportCardData: ByteArray? = null,
+    @ColumnInfo(name = COLUMN_REPORT_CARD_MIME_TYPE) public val reportCardMimeType: String? = null,
+    @ColumnInfo(name = COLUMN_REPORT_CARD_SIZE) public val reportCardSize: Int? = null,
+    @ColumnInfo(name = COLUMN_CREATED_AT) public val createdAt: String? = null,
+    @ColumnInfo(name = COLUMN_UPDATED_AT) public val updatedAt: String? = null
 ) {
     /**
      * Compares this education record entity with another object for equality.
@@ -99,23 +99,38 @@ data class EducationRecordEntity(
         return result
     }
 
-    companion object {
+    public companion object {
         /** Name of the database table for education records. */
-        const val TABLE_NAME = "education_records"
+        @Suppress("HardcodedStringLiteral")
+        public const val TABLE_NAME: String = "education_records"
         
-        const val COLUMN_RECORD_ID = "record_id"
-        const val COLUMN_CHILD_ID = "child_id"
-        const val COLUMN_SCHOOL_NAME = "school_name"
-        const val COLUMN_GRADE = "grade"
-        const val COLUMN_ENROLLMENT_DATE = "enrollment_date"
-        const val COLUMN_EXIT_DATE = "exit_date"
-        const val COLUMN_PERFORMANCE = "performance"
-        const val COLUMN_SPECIAL_NEEDS = "special_needs"
-        const val COLUMN_TEACHER_CONTACT = "teacher_contact"
-        const val COLUMN_REPORT_CARD_DATA = "report_card_data"
-        const val COLUMN_REPORT_CARD_MIME_TYPE = "report_card_mime_type"
-        const val COLUMN_REPORT_CARD_SIZE = "report_card_size"
-        const val COLUMN_CREATED_AT = "created_at"
-        const val COLUMN_UPDATED_AT = "updated_at"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_RECORD_ID: String = "record_id"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CHILD_ID: String = "child_id"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_SCHOOL_NAME: String = "school_name"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_GRADE: String = "grade"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_ENROLLMENT_DATE: String = "enrollment_date"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_EXIT_DATE: String = "exit_date"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_PERFORMANCE: String = "performance"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_SPECIAL_NEEDS: String = "special_needs"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_TEACHER_CONTACT: String = "teacher_contact"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_REPORT_CARD_DATA: String = "report_card_data"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_REPORT_CARD_MIME_TYPE: String = "report_card_mime_type"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_REPORT_CARD_SIZE: String = "report_card_size"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CREATED_AT: String = "created_at"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_UPDATED_AT: String = "updated_at"
     }
 }

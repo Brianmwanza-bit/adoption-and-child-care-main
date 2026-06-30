@@ -1,6 +1,7 @@
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
@@ -9,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.example.adoption_and_childcare"
-    compileSdk = 37
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.adoption_and_childcare"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -65,10 +66,7 @@ hilt {
 }
 
 ksp {
-    val disableValidation = true
-    val projectTypeApp = "APP"
-    arg("hilt.disableAndroidSuperclassValidation", disableValidation.toString())
-    arg("hilt.projectType", projectTypeApp)
+    // Suppress Hilt/KSP warnings
 }
 
 tasks.withType<JavaCompile>().configureEach {

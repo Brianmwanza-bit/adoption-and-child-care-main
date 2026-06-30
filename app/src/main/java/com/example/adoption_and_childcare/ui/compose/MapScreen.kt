@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.adoption_and_childcare.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -94,7 +94,7 @@ fun MapScreen(
                         val lat = -1.28 + (child.childId * 0.005)
                         val lng = 36.81 + (child.childId * 0.003)
                         Marker(
-                            state = rememberUpdatedMarkerState(position = LatLng(lat, lng)),
+                            state = rememberMarkerState(position = LatLng(lat, lng)),
                             title = "Child: ${child.firstName} ${child.lastName}",
                             snippet = "Case #${child.caseNumber ?: "N/A"} - ${child.currentStatus}",
                             onClick = {
@@ -111,7 +111,7 @@ fun MapScreen(
                         val lat = -1.30 - (family.familyId * 0.004)
                         val lng = 36.78 + (family.familyId * 0.006)
                         Marker(
-                            state = rememberUpdatedMarkerState(position = LatLng(lat, lng)),
+                            state = rememberMarkerState(position = LatLng(lat, lng)),
                             title = "Family: ${family.primaryContactName}",
                             snippet = "Status: ${family.status ?: "Licensed"}",
                             icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),

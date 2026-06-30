@@ -18,7 +18,9 @@ import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.MoneyRecordEntity
 import com.example.adoption_and_childcare.data.repository.MoneyRecordRepositoryImpl
 import com.example.adoption_and_childcare.utils.AuthManager
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.viewmodel.FinanceViewModel
 import kotlinx.coroutines.launch
 
@@ -238,7 +240,7 @@ fun FinanceScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.finance_type_field)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTransactionTypeDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(
                             expanded = showTransactionTypeDropdown,
@@ -262,7 +264,7 @@ fun FinanceScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.finance_payment_method_field)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPaymentMethodDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(
                             expanded = showPaymentMethodDropdown,
@@ -393,7 +395,7 @@ fun FinanceScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.finance_type_field)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTransactionTypeDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(
                             expanded = showTransactionTypeDropdown,
@@ -417,7 +419,7 @@ fun FinanceScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.finance_payment_method_field)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showPaymentMethodDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(
                             expanded = showPaymentMethodDropdown,

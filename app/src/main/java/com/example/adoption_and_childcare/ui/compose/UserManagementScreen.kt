@@ -14,7 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
 import com.example.adoption_and_childcare.viewmodel.UserManagementViewModel
@@ -266,8 +267,8 @@ private fun UserFormDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(value = username, onValueChange = onUsernameChange, label = { Text(stringResource(R.string.user_management_username_label)) }, singleLine = true)
                 OutlinedTextField(value = email, onValueChange = onEmailChange, label = { Text(stringResource(R.string.user_management_email_label)) }, singleLine = true)
-                ExposedDropdownMenuBox(expanded = showRoleDropdown, onExpandedChange = onToggleRoleDropdown) {
-                    OutlinedTextField(value = role, onValueChange = { }, readOnly = true, label = { Text(stringResource(R.string.user_management_role_label)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleDropdown) }, modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth())
+                                    ExposedDropdownMenuBox(expanded = showRoleDropdown, onExpandedChange = onToggleRoleDropdown) {
+                    OutlinedTextField(value = role, onValueChange = { }, readOnly = true, label = { Text(stringResource(R.string.user_management_role_label)) }, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showRoleDropdown) }, modifier = Modifier.menuAnchor().fillMaxWidth())
                     ExposedDropdownMenu(expanded = showRoleDropdown, onDismissRequest = { onToggleRoleDropdown(false) }) {
                         roles.forEach { DropdownMenuItem(text = { Text(it) }, onClick = { onRoleChange(it); onToggleRoleDropdown(false) }) }
                     }

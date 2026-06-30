@@ -14,7 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.PlacementEntity
 import com.example.adoption_and_childcare.data.repository.PlacementRepositoryImpl
@@ -206,7 +208,7 @@ fun PlacementsScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.placements_field_type)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTypeDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showTypeDropdown, onDismissRequest = { showTypeDropdown = false }) {
                             placementTypes.forEach { typeName ->
@@ -274,7 +276,7 @@ fun PlacementsScreen(
                             readOnly = true,
                             label = { Text(stringResource(R.string.placements_field_type)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showTypeDropdown) },
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = showTypeDropdown, onDismissRequest = { showTypeDropdown = false }) {
                             placementTypes.forEach { typeName ->

@@ -35,7 +35,7 @@ import com.example.adoption_and_childcare.viewmodel.SOSState
 import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import com.example.adoption_and_childcare.viewmodel.SyncViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner

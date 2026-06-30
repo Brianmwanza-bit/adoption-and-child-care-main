@@ -10,8 +10,50 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <changelist_data name="Brian" email="brianmwanza651@gmail.com" automatic="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/planningMode.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/planningMode.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabase.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabase.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabaseMinimal.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/AppDatabaseMinimal.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/AdoptionApplicationsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/AdoptionApplicationsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/BackgroundChecksScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/BackgroundChecksScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/CaseActivityFeedScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/CaseActivityFeedScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/ChildrenListScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/ChildrenListScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/CourtCasesScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/CourtCasesScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DashboardScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DashboardScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DashboardScreenModern.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DashboardScreenModern.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DocumentsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/DocumentsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FamiliesScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FamiliesScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FamilyHubScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FamilyHubScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FinanceScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FinanceScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FosterMatchesScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FosterMatchesScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FosterTasksScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/FosterTasksScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/GuardiansScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/GuardiansScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/LoginScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/LoginScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MapScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MapScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MedicalDetailScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MedicalDetailScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MedicalScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MedicalScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MissingScreens.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/MissingScreens.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/ModernLandingPage.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/ModernLandingPage.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PermanencyRoadmapScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PermanencyRoadmapScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementCompatibilityEngineScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementCompatibilityEngineScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementProfileScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementProfileScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/PlacementsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/RiskAssessmentCenterScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/RiskAssessmentCenterScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SOSScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SOSScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SearchScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SearchScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SettingsScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/SettingsScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/UserManagementScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/UserManagementScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/WorkloadWellnessScreen.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/ui/compose/WorkloadWellnessScreen.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle/libs.versions.toml" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/libs.versions.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,11 +171,12 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Android App.Run Config.executor": "Run",
+    "Android App.Run Config.executor": "Debug",
     "DEBUGGABLE_DEVICE": "Pixel_10_Pro_XL [emulator-5554]",
     "DEBUGGABLE_PROCESS": "com.example.adoption_and_childcare",
     "DEBUGGER_ID": "Auto",
     "Git.Working.Tree.Tab.closed.by.user": "closed",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -144,6 +187,7 @@
     "com.google.services.firebase.aqiPopupShown": "true",
     "dart.analysis.tool.window.visible": "false",
     "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "preferences.pluginManager",
@@ -321,7 +365,79 @@
       <option name="project" value="LOCAL" />
       <updated>1782848150248</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782849518684</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1782849518684</updated>
+    </task>
+    <task id="LOCAL-00014" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782849721886</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1782849721886</updated>
+    </task>
+    <task id="LOCAL-00015" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782909659546</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1782909659546</updated>
+    </task>
+    <task id="LOCAL-00016" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782910301571</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1782910301571</updated>
+    </task>
+    <task id="LOCAL-00017" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782910845976</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1782910845976</updated>
+    </task>
+    <task id="LOCAL-00018" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782920715910</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1782920715910</updated>
+    </task>
+    <task id="LOCAL-00019" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782927759101</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1782927759101</updated>
+    </task>
+    <task id="LOCAL-00020" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782927833211</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1782927833211</updated>
+    </task>
+    <task id="LOCAL-00021" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782929019495</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1782929019495</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -348,10 +464,14 @@
     <option name="appIdToCheckInfo">
       <map>
         <entry key="com.example.adoption_and_childcare">
-          <value />
+          <value>
+            <CheckInfo lastCheckTimestamp="1783005294755" />
+          </value>
         </entry>
         <entry key="com.example.adoption_and_childcare.test">
-          <value />
+          <value>
+            <CheckInfo lastCheckTimestamp="1783005294745" />
+          </value>
         </entry>
       </map>
     </option>

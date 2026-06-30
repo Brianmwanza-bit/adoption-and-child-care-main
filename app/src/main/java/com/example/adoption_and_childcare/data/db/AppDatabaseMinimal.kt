@@ -236,7 +236,7 @@ abstract class AppDatabaseMinimal : RoomDatabase(), BaseAppDatabase {
                 AppDatabaseMinimal::class.java,
                 "adoption_childcare_minimal.db"
             )
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                .fallbackToDestructiveMigration()
                 .build()
                 .also { INSTANCE = it }
         }

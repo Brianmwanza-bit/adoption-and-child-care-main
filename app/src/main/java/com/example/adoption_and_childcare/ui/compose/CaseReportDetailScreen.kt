@@ -17,7 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.viewmodel.CaseReportsViewModel
 
@@ -35,9 +36,9 @@ fun CaseReportDetailScreen(
     onBack: () -> Unit,
     viewModel: CaseReportsViewModel = hiltViewModel(),
 ) {
-    val reports by viewModel.reports.collectAsState(initial = emptyList())
+    val reports by viewModel.reports.collectAsStateWithLifecycle(initialValue = emptyList())
     val report = reports.find { it.reportId == reportId }
-    val isLoading by viewModel.isLoading.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle(initialValue = false)
 
     Scaffold(
         topBar = {
@@ -55,17 +56,17 @@ fun CaseReportDetailScreen(
                 )
             )
         }
-    ) {
+    ) { scaffoldPadding: PaddingValues ->
         if (isLoading) {
-            Box(Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(paddingValues = scaffoldPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color(0xFF673AB7))
             }
         } else if (report == null) {
-            Box(Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().padding(paddingValues = scaffoldPadding), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.search_na))
             }
         } else {
-            Column(modifier = Modifier.fillMaxSize().padding(it).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues = scaffoldPadding).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE7F6)), shape = RoundedCornerShape(16.dp)) {
                     Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                         Surface(modifier = Modifier.size(64.dp), shape = RoundedCornerShape(12.dp), color = Color(0xFF673AB7)) {

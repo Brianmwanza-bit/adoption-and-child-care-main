@@ -271,13 +271,13 @@
       <option name="project" value="LOCAL" />
       <updated>1782843094537</updated>
     </task>
-    <task id="LOCAL-00007" summary="commit this project">
+    <task id="LOCAL-00007" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
       <option name="closed" value="true" />
-      <created>1781297677276</created>
+      <created>1782845880538</created>
       <option name="number" value="00007" />
       <option name="presentableId" value="LOCAL-00007" />
       <option name="project" value="LOCAL" />
-      <updated>1781297677277</updated>
+      <updated>1782845880538</updated>
     </task>
     <task id="LOCAL-00008" summary="commit this project">
       <option name="closed" value="true" />
@@ -287,7 +287,7 @@
       <option name="project" value="LOCAL" />
       <updated>1781297697927</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

@@ -19,30 +19,35 @@ import androidx.room.PrimaryKey
  * @property retryCount Number of retry attempts for failed syncs.
  */
 @Entity(tableName = SyncQueueEntity.TABLE_NAME)
-data class SyncQueueEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    @ColumnInfo(name = COLUMN_TABLE_NAME) val tableName: String,
-    val operation: String, // 'INSERT', 'UPDATE', 'DELETE'
-    @ColumnInfo(name = COLUMN_RECORD_ID) val recordId: String,
-    val payload: String,
-    @ColumnInfo(name = COLUMN_CREATED_AT) val createdAt: Long,
-    val synced: Int = 0,
-    @ColumnInfo(name = COLUMN_RETRY_COUNT) val retryCount: Int = 0
+public data class SyncQueueEntity(
+    @PrimaryKey(autoGenerate = true) public val id: Int = 0,
+    @ColumnInfo(name = COLUMN_TABLE_NAME) public val tableName: String,
+    public val operation: String, // 'INSERT', 'UPDATE', 'DELETE'
+    @ColumnInfo(name = COLUMN_RECORD_ID) public val recordId: String,
+    public val payload: String,
+    @ColumnInfo(name = COLUMN_CREATED_AT) public val createdAt: Long,
+    public val synced: Int = 0,
+    @ColumnInfo(name = COLUMN_RETRY_COUNT) public val retryCount: Int = 0
 ) {
-    companion object {
+    public companion object {
         /** Name of the database table for sync queue. */
-        const val TABLE_NAME = "sync_queue"
+        @Suppress("HardcodedStringLiteral")
+        public const val TABLE_NAME: String = "sync_queue"
         
         /** Column name for the table name. */
-        const val COLUMN_TABLE_NAME = "table_name"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_TABLE_NAME: String = "table_name"
         
         /** Column name for the record ID. */
-        const val COLUMN_RECORD_ID = "record_id"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_RECORD_ID: String = "record_id"
         
         /** Column name for the creation timestamp. */
-        const val COLUMN_CREATED_AT = "created_at"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_CREATED_AT: String = "created_at"
         
         /** Column name for the retry count. */
-        const val COLUMN_RETRY_COUNT = "retry_count"
+        @Suppress("HardcodedStringLiteral")
+        public const val COLUMN_RETRY_COUNT: String = "retry_count"
     }
 }

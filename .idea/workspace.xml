@@ -10,9 +10,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="160abd4f-fb38-4cfc-ab4b-1d387ee6cf35" name="Changes" comment="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/BackgroundCheckEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/BackgroundCheckEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/EducationRecordEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/EducationRecordEntity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/MedicalRecordEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/MedicalRecordEntity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/adoption_and_childcare/data/db/entities/SyncQueueEntity.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -101,7 +99,7 @@
 }</component>
   <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="C:\Users\Lydia mwanza\.gradle\wrapper\dists\gradle-9.4.1-bin\arn2x92ynaizyzdaamcbpbhtj\gradle-9.4.1" javaHome="C:\Users\Lydia mwanza\.gradle\jdks\jetbrains_s_r_o_-21-amd64-windows.2" gradleVersion="9.4.1" />
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="_Designer_Tab" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5,
@@ -147,6 +145,7 @@
     "dart.analysis.tool.window.visible": "false",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
+    "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "show.migrate.to.gradle.popup": "false"
   }
@@ -298,7 +297,31 @@
       <option name="project" value="LOCAL" />
       <updated>1782847312947</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782848119723</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1782848119723</updated>
+    </task>
+    <task id="LOCAL-00011" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782848128112</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1782848128112</updated>
+    </task>
+    <task id="LOCAL-00012" summary="amend! Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub&#10;&#10;Force added package locks, IDE settings, and local properties to ensure project completeness on GitHub">
+      <option name="closed" value="true" />
+      <created>1782848150248</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1782848150248</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

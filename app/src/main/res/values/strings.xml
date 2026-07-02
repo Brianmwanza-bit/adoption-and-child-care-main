@@ -1264,6 +1264,7 @@
     <string name="sos_fire">Fire Department</string>
     <string name="sos_hospital">Hospital</string>
     <string name="sos_cps">Child Protection Services</string>
+    <string name="sos_ems">Emergency Medical Services (EMS)</string>
     <string name="sos_section_personal">Personal Contacts</string>
     <string name="sos_contact1_default">Contact 1</string>
     <string name="sos_contact2_default">Contact 2</string>

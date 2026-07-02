@@ -53,10 +53,10 @@ class SOSViewModel @Inject constructor(
             "hospital" to appSettings.getSosContact("hospital"),
             "cps" to appSettings.getSosContact("cps"),
             "ems" to appSettings.getSosContact("ems"),
-            "contact1_name" to appSettings.getSosContact("emergency1_name"),
-            "contact1_phone" to appSettings.getSosContact("emergency1_phone"),
-            "contact2_name" to appSettings.getSosContact("emergency2_name"),
-            "contact2_phone" to appSettings.getSosContact("emergency2_phone")
+            "emergency1_name" to appSettings.getSosContact("emergency1_name"),
+            "emergency1_phone" to appSettings.getSosContact("emergency1_phone"),
+            "emergency2_name" to appSettings.getSosContact("emergency2_name"),
+            "emergency2_phone" to appSettings.getSosContact("emergency2_phone")
         )
         _emergencyContacts.value = contacts
     }

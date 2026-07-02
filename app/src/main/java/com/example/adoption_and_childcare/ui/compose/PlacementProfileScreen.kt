@@ -29,11 +29,11 @@ import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 
 /**
  * High-detail "Placement 360° Profile" screen.
- * 
+ *
  * @param placement The placement entity to display.
- * @param child The related child entity, if available.
- * @param family The related family/provider entity, if available.
- * @param onBack Callback for back navigation.
+ * @param child The child associated with the placement.
+ * @param family The family/provider associated with the placement.
+ * @param onBack Callback invoked when the back button is clicked.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,101 +67,44 @@ fun PlacementProfileScreen(
                 )
             )
         }
-    ) { scaffoldPadding ->
-        /** @param scaffoldPadding The padding values provided by the Scaffold. */
-        PlacementScreenContent(
-            padding = scaffoldPadding,
-            selectedTab = selectedTab,
-            onTabSelected = { selectedTab = it },
-            tabs = tabs,
-            placement = placement,
-            child = child,
-            family = family
-        )
-    }
-}
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(it)) {
+            PlacementHeader(placement, child)
 
-/**
- * Main content area of the placement profile screen.
- * 
- * @param padding The inner padding provided by the Scaffold to avoid overlapping with top bar.
- * @param selectedTab The index of the currently selected tab.
- * @param onTabSelected Callback when a tab is selected.
- * @param tabs The list of tab titles.
- * @param placement The placement entity.
- * @param child The related child entity.
- * @param family The related family entity.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PlacementScreenContent(
-    padding: PaddingValues,
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit,
-    tabs: List<String>,
-    placement: PlacementEntity,
-    child: ChildEntity?,
-    family: FamilyEntity?
-) {
-    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-        PlacementHeader(placement, child)
-
-        PrimaryScrollableTabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Color.White,
-            contentColor = Color(0xFF8BC34A),
-            edgePadding = 16.dp
-        ) {
-            for ((index, tabTitle) in tabs.withIndex()) {
-                PlacementProfileTab(
-                    index = index,
-                    title = tabTitle,
-                    isSelected = selectedTab == index,
-                    onClick = { onTabSelected(index) }
-                )
+            PrimaryScrollableTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.White,
+                contentColor = Color(0xFF8BC34A),
+                edgePadding = 16.dp
+            ) {
+                for (tabIndex in tabs.indices) {
+                    val tabTitle = tabs[tabIndex]
+                    Tab(
+                        selected = selectedTab == tabIndex,
+                        onClick = { selectedTab = tabIndex },
+                        text = { Text(tabTitle) }
+                    )
+                }
             }
-        }
 
-        Box(modifier = Modifier.weight(1f)) {
-            when (selectedTab) {
-                0 -> PlacementOverviewTab(placement)
-                1 -> PlacementChildTab(child)
-                2 -> PlacementFamilyTab(family)
-                3 -> PlacementLogsTab()
+            Box(modifier = Modifier.weight(1f)) {
+                when (selectedTab) {
+                    0 -> PlacementOverviewTab(placement)
+                    1 -> PlacementChildTab(child)
+                    2 -> PlacementFamilyTab(family)
+                    3 -> PlacementLogsTab()
+                }
             }
         }
     }
 }
 
 /**
- * A single tab in the placement profile tab row.
- * 
- * @param index The zero-based index of the tab.
- * @param title The localized title text for the tab.
- * @param isSelected Whether the tab is currently selected.
- * @param onClick Callback when the tab is clicked.
- */
-@Composable
-private fun PlacementProfileTab(
-    index: Int,
-    title: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Tab(
-        selected = isSelected,
-        onClick = onClick,
-        text = { Text(title) }
-    )
-}
-
-/**
- * Header component for the placement profile.
- * 
+ * Header section for the placement profile.
+ *
  * @param placement The placement entity.
- * @param child The related child entity.
+ * @param child The associated child entity.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlacementHeader(placement: PlacementEntity, child: ChildEntity?) {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F8E9)), shape = RoundedCornerShape(16.dp)) {
@@ -171,10 +114,13 @@ private fun PlacementHeader(placement: PlacementEntity, child: ChildEntity?) {
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = stringResource(R.string.placement_id_format, placement.placementId.toString()), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.placement_id_format, placement.placementId), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(text = child?.let { "${it.firstName} ${it.lastName}" } ?: stringResource(R.string.placement_unknown_child))
                 Badge(containerColor = if (placement.isCurrent) Color(0xFFE8F5E9) else Color.LightGray) {
-                    Text(if (placement.isCurrent) stringResource(R.string.placement_status_current_caps) else stringResource(R.string.placement_status_past_caps), color = if (placement.isCurrent) Color(0xFF2E7D32) else Color.DarkGray)
+                    Text(
+                        if (placement.isCurrent) stringResource(R.string.placement_status_current_caps) else stringResource(R.string.placement_status_past_caps),
+                        color = if (placement.isCurrent) Color(0xFF2E7D32) else Color.DarkGray
+                    )
                 }
             }
         }
@@ -182,8 +128,8 @@ private fun PlacementHeader(placement: PlacementEntity, child: ChildEntity?) {
 }
 
 /**
- * Tab displaying general placement overview details.
- * 
+ * Tab content for placement overview details.
+ *
  * @param placement The placement entity.
  */
 @Composable
@@ -201,8 +147,8 @@ private fun PlacementOverviewTab(placement: PlacementEntity) {
 }
 
 /**
- * Tab displaying identity information for the child in this placement.
- * 
+ * Tab content for associated child information.
+ *
  * @param child The child entity.
  */
 @Composable
@@ -220,8 +166,8 @@ private fun PlacementChildTab(child: ChildEntity?) {
 }
 
 /**
- * Tab displaying information for the family/provider hosting this placement.
- * 
+ * Tab content for associated family/provider information.
+ *
  * @param family The family entity.
  */
 @Composable
@@ -239,7 +185,7 @@ private fun PlacementFamilyTab(family: FamilyEntity?) {
 }
 
 /**
- * Tab displaying historical activity logs for the placement.
+ * Tab content for placement activity logs.
  */
 @Composable
 private fun PlacementLogsTab() {
@@ -255,20 +201,20 @@ private fun PlacementLogsTab() {
 }
 
 /**
- * A section for displaying grouped placement details.
- * 
- * @param title The title of the section.
- * @param icon The icon representing the section.
- * @param content The composable content to display within the section.
+ * A styled detail section with a green header.
+ *
+ * @param sectionTitle The section title.
+ * @param icon The section icon.
+ * @param content The composable content for the section.
  */
 @Composable
-private fun DetailSectionGreen(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
+private fun DetailSectionGreen(sectionTitle: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, null, tint = Color(0xFF8BC34A), modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF8BC34A))
+                Text(sectionTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF8BC34A))
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
             content()
@@ -277,10 +223,10 @@ private fun DetailSectionGreen(title: String, icon: ImageVector, content: @Compo
 }
 
 /**
- * A row for displaying a single placement detail label and value.
- * 
- * @param label The descriptive label for the detail.
- * @param value The value associated with the label.
+ * A styled row for displaying label-value pairs in green theme.
+ *
+ * @param label The label text.
+ * @param value The value text.
  */
 @Composable
 private fun DetailRowGreen(label: String, value: String) {

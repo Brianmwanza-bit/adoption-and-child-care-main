@@ -32,7 +32,7 @@ import javax.inject.Singleton
  * @property context The application context.
  */
 @Singleton
-public class UserRepositoryImpl @Inject constructor(
+class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val syncQueueDao: SyncQueueDao,
     private val apiService: ApiService,
@@ -241,10 +241,10 @@ public class UserRepositoryImpl @Inject constructor(
             val authHeader = authManager.getAuthHeader() ?: return@withContext Result.failure(Exception("Not authenticated"))
 
             val response = apiService.getUsers(authHeader)
-            if (response.isSuccessful) {
-                val users = response.body() ?: emptyList()
-                users.forEach { user ->
-                    userDao.insert(user)
+            if (response.isSuccessful && response.body() != null) {
+                val users = response.body()!!.data
+                users.forEach {
+                    userDao.insert(it)
                 }
                 Result.success(users)
             } else {

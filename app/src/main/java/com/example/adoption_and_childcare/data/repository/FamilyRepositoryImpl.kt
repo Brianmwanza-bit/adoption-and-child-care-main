@@ -114,7 +114,7 @@ class FamilyRepositoryImpl @Inject constructor(
             val body = response.body()
             
             if (response.isSuccessful && body != null) {
-                val families = body
+                val families = body.data
                 
                 // Update local database with fetched data
                 for (family in families) {

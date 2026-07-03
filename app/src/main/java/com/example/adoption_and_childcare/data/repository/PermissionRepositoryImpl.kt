@@ -94,7 +94,7 @@ class PermissionRepositoryImpl @Inject constructor(
             
             val response = apiService.getPermissions(authHeader)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                Result.success(response.body()!!.data)
             } else {
                 Result.failure(Exception("Failed to fetch permissions: ${response.message()}"))
             }

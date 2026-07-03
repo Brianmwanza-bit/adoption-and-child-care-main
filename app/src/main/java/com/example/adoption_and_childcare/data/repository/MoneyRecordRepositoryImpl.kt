@@ -98,7 +98,7 @@ class MoneyRecordRepositoryImpl @Inject constructor(
             val response = apiService.getAllMoneyRecords(authHeader)
             val body = response.body()
             if (response.isSuccessful && body != null) {
-                Result.success(body)
+                Result.success(body.data)
             } else {
                 Result.failure(Exception("Failed to fetch money records: ${response.message()}"))
             }

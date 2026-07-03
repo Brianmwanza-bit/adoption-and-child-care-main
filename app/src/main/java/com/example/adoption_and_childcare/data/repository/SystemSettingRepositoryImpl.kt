@@ -110,7 +110,7 @@ class SystemSettingRepositoryImpl @Inject constructor(
             val authHeader = authManager.getAuthHeader() ?: return Result.failure(Exception("Not authenticated"))
             val response = apiService.getSystemSettings(authHeader)
             if (response.isSuccessful && response.body() != null) {
-                val data = response.body()!!
+                val data = response.body()!!.data
                 data.forEach { systemSettingDao.insert(it) }
                 Result.success(data)
             } else {

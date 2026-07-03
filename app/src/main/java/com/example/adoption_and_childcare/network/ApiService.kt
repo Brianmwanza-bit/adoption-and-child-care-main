@@ -99,7 +99,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(CHILDREN)
-    suspend fun getChildren(@Header(AUTHORIZATION) token: String): Response<List<ChildEntity>>
+    suspend fun getChildren(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<ChildEntity>>>
 
     /**
      * Creates a new child record.
@@ -107,7 +107,7 @@ interface ApiService {
      * @param child The child entity to create.
      */
     @POST(CHILDREN)
-    suspend fun createChild(@Header(AUTHORIZATION) token: String, @Body child: ChildEntity): Response<ChildEntity>
+    suspend fun createChild(@Header(AUTHORIZATION) token: String, @Body child: ChildEntity): Response<CreateResponse>
 
     /**
      * Updates an existing child record.
@@ -116,7 +116,7 @@ interface ApiService {
      * @param child The updated child entity.
      */
     @PUT(CHILD_BY_ID)
-    suspend fun updateChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body child: ChildEntity): Response<ChildEntity>
+    suspend fun updateChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body child: ChildEntity): Response<UpdateResponse>
 
     /**
      * Deletes a child record.
@@ -124,7 +124,7 @@ interface ApiService {
      * @param id The ID of the child to delete.
      */
     @DELETE(CHILD_BY_ID)
-    suspend fun deleteChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteChild(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Families Endpoints
     /**
@@ -132,7 +132,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(FAMILIES)
-    suspend fun getFamilies(@Header(AUTHORIZATION) token: String): Response<List<FamilyEntity>>
+    suspend fun getFamilies(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<FamilyEntity>>>
 
     /**
      * Creates a new family profile.
@@ -140,7 +140,7 @@ interface ApiService {
      * @param family The family entity to create.
      */
     @POST(FAMILY_PROFILE)
-    suspend fun createFamilyProfile(@Header(AUTHORIZATION) token: String, @Body family: FamilyEntity): Response<FamilyEntity>
+    suspend fun createFamilyProfile(@Header(AUTHORIZATION) token: String, @Body family: FamilyEntity): Response<CreateResponse>
 
     /**
      * Updates an existing family profile.
@@ -149,7 +149,7 @@ interface ApiService {
      * @param family The updated family entity.
      */
     @PUT(FAMILY_PROFILE_BY_ID)
-    suspend fun updateFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body family: FamilyEntity): Response<FamilyEntity>
+    suspend fun updateFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body family: FamilyEntity): Response<UpdateResponse>
 
     /**
      * Deletes a family profile.
@@ -157,7 +157,7 @@ interface ApiService {
      * @param id The ID of the family profile to delete.
      */
     @DELETE(FAMILY_PROFILE_BY_ID)
-    suspend fun deleteFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteFamilyProfile(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Adoption Applications Endpoints
     /**
@@ -165,7 +165,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(ADOPTION_APPLICATIONS)
-    suspend fun getAdoptionApplications(@Header(AUTHORIZATION) token: String): Response<List<AdoptionApplicationEntity>>
+    suspend fun getAdoptionApplications(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<AdoptionApplicationEntity>>>
 
     /**
      * Creates a new adoption application.
@@ -173,7 +173,7 @@ interface ApiService {
      * @param application The application entity to create.
      */
     @POST(ADOPTION_APPLICATIONS)
-    suspend fun createAdoptionApplication(@Header(AUTHORIZATION) token: String, @Body application: AdoptionApplicationEntity): Response<AdoptionApplicationEntity>
+    suspend fun createAdoptionApplication(@Header(AUTHORIZATION) token: String, @Body application: AdoptionApplicationEntity): Response<CreateResponse>
 
     /**
      * Updates an existing adoption application.
@@ -182,7 +182,7 @@ interface ApiService {
      * @param application The updated application entity.
      */
     @PUT(ADOPTION_APPLICATION_BY_ID)
-    suspend fun updateAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body application: AdoptionApplicationEntity): Response<AdoptionApplicationEntity>
+    suspend fun updateAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body application: AdoptionApplicationEntity): Response<UpdateResponse>
 
     /**
      * Deletes an adoption application.
@@ -190,7 +190,7 @@ interface ApiService {
      * @param id The ID of the application to delete.
      */
     @DELETE(ADOPTION_APPLICATION_BY_ID)
-    suspend fun deleteAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteAdoptionApplication(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Users Endpoints
     /**
@@ -198,7 +198,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(USERS)
-    suspend fun getUsers(@Header(AUTHORIZATION) token: String): Response<List<UserEntity>>
+    suspend fun getUsers(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<UserEntity>>>
 
     // Placements Endpoints
     /**
@@ -206,7 +206,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(PLACEMENTS)
-    suspend fun getPlacements(@Header(AUTHORIZATION) token: String): Response<List<PlacementEntity>>
+    suspend fun getPlacements(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<PlacementEntity>>>
 
     /**
      * Creates a new placement.
@@ -214,7 +214,7 @@ interface ApiService {
      * @param placement The placement entity to create.
      */
     @POST(PLACEMENTS)
-    suspend fun createPlacement(@Header(AUTHORIZATION) token: String, @Body placement: PlacementEntity): Response<PlacementEntity>
+    suspend fun createPlacement(@Header(AUTHORIZATION) token: String, @Body placement: PlacementEntity): Response<CreateResponse>
 
     /**
      * Updates an existing placement.
@@ -223,7 +223,7 @@ interface ApiService {
      * @param placement The updated placement entity.
      */
     @PUT(PLACEMENT_BY_ID)
-    suspend fun updatePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body placement: PlacementEntity): Response<PlacementEntity>
+    suspend fun updatePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body placement: PlacementEntity): Response<UpdateResponse>
 
     /**
      * Deletes a placement.
@@ -231,7 +231,7 @@ interface ApiService {
      * @param id The ID of the placement to delete.
      */
     @DELETE(PLACEMENT_BY_ID)
-    suspend fun deletePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deletePlacement(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Guardians Endpoints
     /**
@@ -239,7 +239,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(GUARDIANS)
-    suspend fun getGuardians(@Header(AUTHORIZATION) token: String): Response<List<GuardianEntity>>
+    suspend fun getGuardians(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<GuardianEntity>>>
 
     /**
      * Creates a new guardian.
@@ -247,7 +247,7 @@ interface ApiService {
      * @param guardian The guardian entity to create.
      */
     @POST(GUARDIANS)
-    suspend fun createGuardian(@Header(AUTHORIZATION) token: String, @Body guardian: GuardianEntity): Response<GuardianEntity>
+    suspend fun createGuardian(@Header(AUTHORIZATION) token: String, @Body guardian: GuardianEntity): Response<CreateResponse>
 
     /**
      * Updates an existing guardian.
@@ -256,7 +256,7 @@ interface ApiService {
      * @param guardian The updated guardian entity.
      */
     @PUT(GUARDIAN_BY_ID)
-    suspend fun updateGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body guardian: GuardianEntity): Response<GuardianEntity>
+    suspend fun updateGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body guardian: GuardianEntity): Response<UpdateResponse>
 
     /**
      * Deletes a guardian.
@@ -264,16 +264,23 @@ interface ApiService {
      * @param id The ID of the guardian to delete.
      */
     @DELETE(GUARDIAN_BY_ID)
-    suspend fun deleteGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteGuardian(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Court Cases Endpoints
+    /**
+     * Retrieves all court cases.
+     * @param token The authorization token.
+     */
+    @GET(COURT_CASES_JSON)
+    suspend fun getCourtCases(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<CourtCaseEntity>>>
+
     /**
      * Creates a new court case.
      * @param token The authorization token.
      * @param courtCase The court case entity to create.
      */
     @POST(COURT_CASES)
-    suspend fun createCourtCase(@Header(AUTHORIZATION) token: String, @Body courtCase: CourtCaseEntity): Response<CourtCaseEntity>
+    suspend fun createCourtCase(@Header(AUTHORIZATION) token: String, @Body courtCase: CourtCaseEntity): Response<CreateResponse>
 
     /**
      * Updates an existing court case.
@@ -282,7 +289,7 @@ interface ApiService {
      * @param courtCase The updated court case entity.
      */
     @PUT(COURT_CASE_BY_ID)
-    suspend fun updateCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body courtCase: CourtCaseEntity): Response<CourtCaseEntity>
+    suspend fun updateCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body courtCase: CourtCaseEntity): Response<UpdateResponse>
 
     /**
      * Deletes a court case.
@@ -290,16 +297,23 @@ interface ApiService {
      * @param id The ID of the court case to delete.
      */
     @DELETE(COURT_CASE_BY_ID)
-    suspend fun deleteCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteCourtCase(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Background Checks Endpoints
+    /**
+     * Retrieves all background checks.
+     * @param token The authorization token.
+     */
+    @GET(BACKGROUND_CHECKS_JSON)
+    suspend fun getBackgroundChecks(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<BackgroundCheckEntity>>>
+
     /**
      * Creates a new background check.
      * @param token The authorization token.
      * @param backgroundCheck The background check entity to create.
      */
     @POST(BACKGROUND_CHECKS)
-    suspend fun createBackgroundCheck(@Header(AUTHORIZATION) token: String, @Body backgroundCheck: BackgroundCheckEntity): Response<BackgroundCheckEntity>
+    suspend fun createBackgroundCheck(@Header(AUTHORIZATION) token: String, @Body backgroundCheck: BackgroundCheckEntity): Response<CreateResponse>
 
     /**
      * Updates an existing background check.
@@ -308,7 +322,7 @@ interface ApiService {
      * @param backgroundCheck The updated background check entity.
      */
     @PUT(BACKGROUND_CHECK_BY_ID)
-    suspend fun updateBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body backgroundCheck: BackgroundCheckEntity): Response<BackgroundCheckEntity>
+    suspend fun updateBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body backgroundCheck: BackgroundCheckEntity): Response<UpdateResponse>
 
     /**
      * Deletes a background check.
@@ -316,7 +330,7 @@ interface ApiService {
      * @param id The ID of the background check to delete.
      */
     @DELETE(BACKGROUND_CHECK_BY_ID)
-    suspend fun deleteBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteBackgroundCheck(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Foster Tasks Endpoints
     /**
@@ -324,7 +338,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(FOSTER_TASKS)
-    suspend fun getFosterTasks(@Header(AUTHORIZATION) token: String): Response<List<FosterTaskEntity>>
+    suspend fun getFosterTasks(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<FosterTaskEntity>>>
 
     /**
      * Creates a new foster task.
@@ -332,7 +346,7 @@ interface ApiService {
      * @param fosterTask The foster task entity to create.
      */
     @POST(FOSTER_TASKS)
-    suspend fun createFosterTask(@Header(AUTHORIZATION) token: String, @Body fosterTask: FosterTaskEntity): Response<FosterTaskEntity>
+    suspend fun createFosterTask(@Header(AUTHORIZATION) token: String, @Body fosterTask: FosterTaskEntity): Response<CreateResponse>
 
     /**
      * Updates an existing foster task.
@@ -341,7 +355,7 @@ interface ApiService {
      * @param fosterTask The updated foster task entity.
      */
     @PUT(FOSTER_TASK_BY_ID)
-    suspend fun updateFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterTask: FosterTaskEntity): Response<FosterTaskEntity>
+    suspend fun updateFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterTask: FosterTaskEntity): Response<UpdateResponse>
 
     /**
      * Deletes a foster task.
@@ -349,7 +363,7 @@ interface ApiService {
      * @param id The ID of the foster task to delete.
      */
     @DELETE(FOSTER_TASK_BY_ID)
-    suspend fun deleteFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteFosterTask(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Foster Matches Endpoints
     /**
@@ -357,7 +371,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(FOSTER_MATCHES)
-    suspend fun getFosterMatches(@Header(AUTHORIZATION) token: String): Response<List<FosterMatchEntity>>
+    suspend fun getFosterMatches(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<FosterMatchEntity>>>
 
     /**
      * Creates a new foster match.
@@ -365,7 +379,7 @@ interface ApiService {
      * @param fosterMatch The foster match entity to create.
      */
     @POST(FOSTER_MATCHES)
-    suspend fun createFosterMatch(@Header(AUTHORIZATION) token: String, @Body fosterMatch: FosterMatchEntity): Response<FosterMatchEntity>
+    suspend fun createFosterMatch(@Header(AUTHORIZATION) token: String, @Body fosterMatch: FosterMatchEntity): Response<CreateResponse>
 
     /**
      * Updates an existing foster match.
@@ -374,7 +388,7 @@ interface ApiService {
      * @param fosterMatch The updated foster match entity.
      */
     @PUT(FOSTER_MATCH_BY_ID)
-    suspend fun updateFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterMatch: FosterMatchEntity): Response<FosterMatchEntity>
+    suspend fun updateFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body fosterMatch: FosterMatchEntity): Response<UpdateResponse>
 
     /**
      * Deletes a foster match.
@@ -382,7 +396,7 @@ interface ApiService {
      * @param id The ID of the foster match to delete.
      */
     @DELETE(FOSTER_MATCH_BY_ID)
-    suspend fun deleteFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteFosterMatch(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Permissions Endpoints
     /**
@@ -390,7 +404,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(PERMISSIONS)
-    suspend fun getPermissions(@Header(AUTHORIZATION) token: String): Response<List<PermissionEntity>>
+    suspend fun getPermissions(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<PermissionEntity>>>
 
     /**
      * Creates a new permission.
@@ -398,7 +412,7 @@ interface ApiService {
      * @param permission The permission entity to create.
      */
     @POST(PERMISSIONS)
-    suspend fun createPermission(@Header(AUTHORIZATION) token: String, @Body permission: PermissionEntity): Response<PermissionEntity>
+    suspend fun createPermission(@Header(AUTHORIZATION) token: String, @Body permission: PermissionEntity): Response<CreateResponse>
 
     /**
      * Updates an existing permission.
@@ -407,7 +421,7 @@ interface ApiService {
      * @param permission The updated permission entity.
      */
     @PUT(PERMISSION_BY_ID)
-    suspend fun updatePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body permission: PermissionEntity): Response<PermissionEntity>
+    suspend fun updatePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body permission: PermissionEntity): Response<UpdateResponse>
 
     /**
      * Deletes a permission.
@@ -415,7 +429,7 @@ interface ApiService {
      * @param id The ID of the permission to delete.
      */
     @DELETE(PERMISSION_BY_ID)
-    suspend fun deletePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deletePermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // User Permissions Endpoints
     /**
@@ -423,7 +437,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(USER_PERMISSIONS)
-    suspend fun getUserPermissions(@Header(AUTHORIZATION) token: String): Response<List<UserPermissionEntity>>
+    suspend fun getUserPermissions(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<UserPermissionEntity>>>
 
     /**
      * Creates a new user permission mapping.
@@ -431,7 +445,7 @@ interface ApiService {
      * @param userPermission The user permission entity to create.
      */
     @POST(USER_PERMISSIONS)
-    suspend fun createUserPermission(@Header(AUTHORIZATION) token: String, @Body userPermission: UserPermissionEntity): Response<UserPermissionEntity>
+    suspend fun createUserPermission(@Header(AUTHORIZATION) token: String, @Body userPermission: UserPermissionEntity): Response<CreateResponse>
 
     /**
      * Deletes a user permission mapping.
@@ -439,7 +453,7 @@ interface ApiService {
      * @param id The ID of the user permission mapping to delete.
      */
     @DELETE(USER_PERMISSION_BY_ID)
-    suspend fun deleteUserPermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteUserPermission(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // System Settings Endpoints
     /**
@@ -447,7 +461,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(SYSTEM_SETTINGS)
-    suspend fun getSystemSettings(@Header(AUTHORIZATION) token: String): Response<List<SystemSettingEntity>>
+    suspend fun getSystemSettings(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<SystemSettingEntity>>>
 
     /**
      * Creates a new system setting.
@@ -455,7 +469,7 @@ interface ApiService {
      * @param setting The system setting entity to create.
      */
     @POST(SYSTEM_SETTINGS)
-    suspend fun createSystemSetting(@Header(AUTHORIZATION) token: String, @Body setting: SystemSettingEntity): Response<SystemSettingEntity>
+    suspend fun createSystemSetting(@Header(AUTHORIZATION) token: String, @Body setting: SystemSettingEntity): Response<CreateResponse>
 
     /**
      * Updates an existing system setting.
@@ -464,7 +478,7 @@ interface ApiService {
      * @param setting The updated system setting entity.
      */
     @PUT(SYSTEM_SETTING_BY_ID)
-    suspend fun updateSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body setting: SystemSettingEntity): Response<SystemSettingEntity>
+    suspend fun updateSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body setting: SystemSettingEntity): Response<UpdateResponse>
 
     /**
      * Deletes a system setting.
@@ -472,7 +486,7 @@ interface ApiService {
      * @param id The ID of the system setting to delete.
      */
     @DELETE(SYSTEM_SETTING_BY_ID)
-    suspend fun deleteSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteSystemSetting(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Documents Endpoints
     /**
@@ -480,7 +494,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(DOCUMENTS)
-    suspend fun getAllDocuments(@Header(AUTHORIZATION) token: String): Response<List<DocumentEntity>>
+    suspend fun getAllDocuments(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<DocumentEntity>>>
 
     /**
      * Creates a new document record.
@@ -488,7 +502,7 @@ interface ApiService {
      * @param document The document entity to create.
      */
     @POST(DOCUMENTS)
-    suspend fun createDocument(@Header(AUTHORIZATION) token: String, @Body document: DocumentEntity): Response<DocumentEntity>
+    suspend fun createDocument(@Header(AUTHORIZATION) token: String, @Body document: DocumentEntity): Response<CreateResponse>
 
     /**
      * Updates an existing document record.
@@ -497,7 +511,7 @@ interface ApiService {
      * @param document The updated document entity.
      */
     @PUT(DOCUMENT_BY_ID)
-    suspend fun updateDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body document: DocumentEntity): Response<DocumentEntity>
+    suspend fun updateDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body document: DocumentEntity): Response<UpdateResponse>
 
     /**
      * Deletes a document record.
@@ -505,7 +519,7 @@ interface ApiService {
      * @param id The ID of the document to delete.
      */
     @DELETE(DOCUMENT_BY_ID)
-    suspend fun deleteDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteDocument(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Education Records Endpoints
     /**
@@ -513,7 +527,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(EDUCATION_RECORDS)
-    suspend fun getAllEducationRecords(@Header(AUTHORIZATION) token: String): Response<List<EducationRecordEntity>>
+    suspend fun getAllEducationRecords(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<EducationRecordEntity>>>
 
     /**
      * Creates a new education record.
@@ -521,7 +535,7 @@ interface ApiService {
      * @param record The education record entity to create.
      */
     @POST(EDUCATION_RECORDS)
-    suspend fun createEducationRecord(@Header(AUTHORIZATION) token: String, @Body record: EducationRecordEntity): Response<EducationRecordEntity>
+    suspend fun createEducationRecord(@Header(AUTHORIZATION) token: String, @Body record: EducationRecordEntity): Response<CreateResponse>
 
     /**
      * Updates an existing education record.
@@ -530,7 +544,7 @@ interface ApiService {
      * @param record The updated education record entity.
      */
     @PUT(EDUCATION_RECORD_BY_ID)
-    suspend fun updateEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: EducationRecordEntity): Response<EducationRecordEntity>
+    suspend fun updateEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: EducationRecordEntity): Response<UpdateResponse>
 
     /**
      * Deletes an education record.
@@ -538,7 +552,7 @@ interface ApiService {
      * @param id The ID of the education record to delete.
      */
     @DELETE(EDUCATION_RECORD_BY_ID)
-    suspend fun deleteEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteEducationRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Medical Records Endpoints
     /**
@@ -546,7 +560,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(MEDICAL_RECORDS)
-    suspend fun getAllMedicalRecords(@Header(AUTHORIZATION) token: String): Response<List<MedicalRecordEntity>>
+    suspend fun getAllMedicalRecords(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<MedicalRecordEntity>>>
 
     /**
      * Creates a new medical record.
@@ -554,7 +568,7 @@ interface ApiService {
      * @param record The medical record entity to create.
      */
     @POST(MEDICAL_RECORDS)
-    suspend fun createMedicalRecord(@Header(AUTHORIZATION) token: String, @Body record: MedicalRecordEntity): Response<MedicalRecordEntity>
+    suspend fun createMedicalRecord(@Header(AUTHORIZATION) token: String, @Body record: MedicalRecordEntity): Response<CreateResponse>
 
     /**
      * Updates an existing medical record.
@@ -563,7 +577,7 @@ interface ApiService {
      * @param record The updated medical record entity.
      */
     @PUT(MEDICAL_RECORD_BY_ID)
-    suspend fun updateMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MedicalRecordEntity): Response<MedicalRecordEntity>
+    suspend fun updateMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MedicalRecordEntity): Response<UpdateResponse>
 
     /**
      * Deletes a medical record.
@@ -571,7 +585,40 @@ interface ApiService {
      * @param id The ID of the medical record to delete.
      */
     @DELETE(MEDICAL_RECORD_BY_ID)
-    suspend fun deleteMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteMedicalRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
+
+    // Case Reports Endpoints
+    /**
+     * Retrieves all case reports.
+     * @param token The authorization token.
+     */
+    @GET(CASE_REPORTS_JSON)
+    suspend fun getCaseReports(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<CaseReportEntity>>>
+
+    /**
+     * Creates a new case report.
+     * @param token The authorization token.
+     * @param report The case report entity to create.
+     */
+    @POST(CASE_REPORTS_JSON)
+    suspend fun createCaseReport(@Header(AUTHORIZATION) token: String, @Body report: CaseReportEntity): Response<CreateResponse>
+
+    /**
+     * Updates an existing case report.
+     * @param token The authorization token.
+     * @param id The ID of the case report to update.
+     * @param report The updated case report entity.
+     */
+    @PUT(CASE_REPORTS_JSON + "/{id}")
+    suspend fun updateCaseReport(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body report: CaseReportEntity): Response<UpdateResponse>
+
+    /**
+     * Deletes a case report.
+     * @param token The authorization token.
+     * @param id The ID of the case report to delete.
+     */
+    @DELETE(CASE_REPORTS_JSON + "/{id}")
+    suspend fun deleteCaseReport(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Money Records Endpoints
     /**
@@ -579,7 +626,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(MONEY_RECORDS)
-    suspend fun getAllMoneyRecords(@Header(AUTHORIZATION) token: String): Response<List<MoneyRecordEntity>>
+    suspend fun getAllMoneyRecords(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<MoneyRecordEntity>>>
 
     /**
      * Creates a new money record.
@@ -587,7 +634,7 @@ interface ApiService {
      * @param record The money record entity to create.
      */
     @POST(MONEY_RECORDS)
-    suspend fun createMoneyRecord(@Header(AUTHORIZATION) token: String, @Body record: MoneyRecordEntity): Response<MoneyRecordEntity>
+    suspend fun createMoneyRecord(@Header(AUTHORIZATION) token: String, @Body record: MoneyRecordEntity): Response<CreateResponse>
 
     /**
      * Updates an existing money record.
@@ -596,7 +643,7 @@ interface ApiService {
      * @param record The updated money record entity.
      */
     @PUT(MONEY_RECORD_BY_ID)
-    suspend fun updateMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MoneyRecordEntity): Response<MoneyRecordEntity>
+    suspend fun updateMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body record: MoneyRecordEntity): Response<UpdateResponse>
 
     /**
      * Deletes a money record.
@@ -604,7 +651,7 @@ interface ApiService {
      * @param id The ID of the money record to delete.
      */
     @DELETE(MONEY_RECORD_BY_ID)
-    suspend fun deleteMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteMoneyRecord(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Home Studies Endpoints
     /**
@@ -612,7 +659,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(HOME_STUDIES)
-    suspend fun getAllHomeStudies(@Header(AUTHORIZATION) token: String): Response<List<HomeStudyEntity>>
+    suspend fun getAllHomeStudies(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<HomeStudyEntity>>>
 
     /**
      * Creates a new home study.
@@ -620,7 +667,7 @@ interface ApiService {
      * @param study The home study entity to create.
      */
     @POST(HOME_STUDIES)
-    suspend fun createHomeStudy(@Header(AUTHORIZATION) token: String, @Body study: HomeStudyEntity): Response<HomeStudyEntity>
+    suspend fun createHomeStudy(@Header(AUTHORIZATION) token: String, @Body study: HomeStudyEntity): Response<CreateResponse>
 
     /**
      * Updates an existing home study.
@@ -629,7 +676,7 @@ interface ApiService {
      * @param study The updated home study entity.
      */
     @PUT(HOME_STUDY_BY_ID)
-    suspend fun updateHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body study: HomeStudyEntity): Response<HomeStudyEntity>
+    suspend fun updateHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body study: HomeStudyEntity): Response<UpdateResponse>
 
     /**
      * Deletes a home study.
@@ -637,7 +684,7 @@ interface ApiService {
      * @param id The ID of the home study to delete.
      */
     @DELETE(HOME_STUDY_BY_ID)
-    suspend fun deleteHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<Unit>
+    suspend fun deleteHomeStudy(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Analytics Endpoints
     /**
@@ -666,7 +713,7 @@ interface ApiService {
      * @param token The authorization token.
      */
     @GET(NOTIFICATIONS)
-    suspend fun getNotifications(@Header(AUTHORIZATION) token: String): Response<List<NotificationEntity>>
+    suspend fun getNotifications(@Header(AUTHORIZATION) token: String): Response<ApiResponse<List<NotificationEntity>>>
     
     /**
      * Retrieves the count of unread notifications.
@@ -681,7 +728,7 @@ interface ApiService {
      * @param notificationId The ID of the notification.
      */
     @POST(MARK_NOTIFICATION_READ)
-    suspend fun markNotificationAsRead(@Header(AUTHORIZATION) token: String, @Path(ID) notificationId: Int): Response<Unit>
+    suspend fun markNotificationAsRead(@Header(AUTHORIZATION) token: String, @Path(ID) notificationId: Int): Response<SimpleResponse>
 
     /**
      * Updates the FCM token for push notifications.
@@ -717,6 +764,46 @@ interface ApiService {
         @Query(SINCE) since: Long
     ): Response<SyncPullResponse>
 }
+
+/**
+ * Generic response wrapper for API responses.
+ * @property success Whether the operation was successful.
+ * @property data The response data.
+ */
+data class ApiResponse<T>(
+    val success: Boolean,
+    val data: T
+)
+
+/**
+ * Response for POST requests that create a new record.
+ * @property success Whether the operation was successful.
+ * @property id The ID of the newly created record.
+ */
+data class CreateResponse(
+    val success: Boolean,
+    val id: Int
+)
+
+/**
+ * Response for PUT requests that update a record.
+ * @property success Whether the operation was successful.
+ * @property affected The number of affected rows.
+ */
+data class UpdateResponse(
+    val success: Boolean,
+    val affected: Int
+)
+
+/**
+ * Response for DELETE requests or simple status checks.
+ * @property success Whether the operation was successful.
+ * @property message An optional message from the server.
+ */
+data class SimpleResponse(
+    val success: Boolean,
+    val message: String? = null
+)
 
 /**
  * Request item for pushing sync data.

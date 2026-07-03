@@ -62,7 +62,7 @@ class NotificationRepositoryImpl @Inject constructor(
             
             val response = apiService.getNotifications(authHeader)
             if (response.isSuccessful && response.body() != null) {
-                val notifications = response.body()!!
+                val notifications = response.body()!!.data
                 for (notification in notifications) {
                     val existing = notificationDao.findById(notification.notificationId)
                     if (existing != null) {

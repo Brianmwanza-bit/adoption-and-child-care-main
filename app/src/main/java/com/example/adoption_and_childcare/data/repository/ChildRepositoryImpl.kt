@@ -157,7 +157,7 @@ class ChildRepositoryImpl @Inject constructor(
             
             val body = response.body()
             if (response.isSuccessful && body != null) {
-                val children = body
+                val children = body.data
                 
                 // Update local database with fetched data
                 for (child in children) {

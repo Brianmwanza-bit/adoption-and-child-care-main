@@ -90,7 +90,7 @@ class PlacementRepositoryImpl @Inject constructor(
             val body = response.body()
             
             if (response.isSuccessful && body != null) {
-                val placements = body
+                val placements = body.data
                 for (placement in placements) {
                     val existing = placementDao.findById(placement.placementId)
                     if (existing != null) {

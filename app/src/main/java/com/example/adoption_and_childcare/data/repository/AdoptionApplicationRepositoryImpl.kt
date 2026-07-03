@@ -92,7 +92,7 @@ class AdoptionApplicationRepositoryImpl @Inject constructor(
             
             val body = response.body()
             if (response.isSuccessful && body != null) {
-                val list = body
+                val list = body.data
                 for (item in list) {
                     val existing = applicationDao.findById(item.applicationId)
                     if (existing != null) {

@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "com.example.adoption_and_childcare"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.adoption_and_childcare"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 

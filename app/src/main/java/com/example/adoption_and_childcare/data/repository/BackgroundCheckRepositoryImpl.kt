@@ -89,9 +89,21 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }
             
-            // TODO: Implement API endpoint for background checks
-            // val response = apiService.getAllBackgroundChecks(authHeader)
-            Result.failure(Exception("API endpoint not implemented yet"))
+            val response = apiService.getBackgroundChecks(authHeader)
+            if (response.isSuccessful && response.body() != null) {
+                val checks = response.body()!!.data
+                for (check in checks) {
+                    val existing = backgroundCheckDao.getById(check.checkId)
+                    if (existing != null) {
+                        backgroundCheckDao.update(check)
+                    } else {
+                        backgroundCheckDao.insert(check)
+                    }
+                }
+                Result.success(checks)
+            } else {
+                Result.failure(Exception("Failed to fetch background checks: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

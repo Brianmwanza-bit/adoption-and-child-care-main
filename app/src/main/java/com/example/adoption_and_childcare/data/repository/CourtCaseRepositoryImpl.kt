@@ -91,9 +91,21 @@ class CourtCaseRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }
             
-            // TODO: Implement API endpoint for court cases
-            // val response = apiService.getAllCourtCases(authHeader)
-            Result.failure(Exception("API endpoint not implemented yet"))
+            val response = apiService.getCourtCases(authHeader)
+            if (response.isSuccessful && response.body() != null) {
+                val cases = response.body()!!.data
+                for (courtCase in cases) {
+                    val existing = courtCaseDao.findById(courtCase.caseId)
+                    if (existing != null) {
+                        courtCaseDao.update(courtCase)
+                    } else {
+                        courtCaseDao.insert(courtCase)
+                    }
+                }
+                Result.success(cases)
+            } else {
+                Result.failure(Exception("Failed to fetch court cases: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

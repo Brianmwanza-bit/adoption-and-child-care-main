@@ -94,7 +94,7 @@ class FosterTaskRepositoryImpl @Inject constructor(
             
             val response = apiService.getFosterTasks(authHeader)
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!)
+                Result.success(response.body()!!.data)
             } else {
                 Result.failure(Exception("Failed to fetch foster tasks: ${response.message()}"))
             }

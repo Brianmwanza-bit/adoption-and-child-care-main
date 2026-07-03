@@ -31,7 +31,7 @@ class CaseReportRepositoryImpl @Inject constructor(
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    // apiService.createCaseReport(authHeader, report)
+                    apiService.createCaseReport(authHeader, report)
                 }
             } catch (e: Exception) {
                 // Ignore
@@ -50,7 +50,7 @@ class CaseReportRepositoryImpl @Inject constructor(
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    // apiService.updateCaseReport(authHeader, report.reportId, report)
+                    apiService.updateCaseReport(authHeader, report.reportId, report)
                 }
             } catch (e: Exception) {
                 // Ignore
@@ -69,7 +69,7 @@ class CaseReportRepositoryImpl @Inject constructor(
             try {
                 val authHeader = authManager.getAuthHeader()
                 if (authHeader != null) {
-                    // apiService.deleteCaseReport(authHeader, id)
+                    apiService.deleteCaseReport(authHeader, id)
                 }
             } catch (e: Exception) {
                 // Ignore
@@ -92,10 +92,21 @@ class CaseReportRepositoryImpl @Inject constructor(
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }
             
-            // Case reports fetched via pull sync endpoint
-            println("Case reports will be fetched via pull sync endpoint")
-            // TODO: Implement API endpoint
-            Result.success(emptyList())
+            val response = apiService.getCaseReports(authHeader)
+            if (response.isSuccessful && response.body() != null) {
+                val reports = response.body()!!.data
+                for (report in reports) {
+                    val existing = caseReportDao.findById(report.reportId)
+                    if (existing != null) {
+                        caseReportDao.update(report)
+                    } else {
+                        caseReportDao.insert(report)
+                    }
+                }
+                Result.success(reports)
+            } else {
+                Result.failure(Exception("Failed to fetch case reports: ${response.message()}"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -48,7 +48,7 @@ import javax.inject.Inject
 /**
  * Constants used throughout the MainActivity.
  */
-@Suppress("HardcodedStringLiteral")
+@Suppress("HardcodedStringLiteral") // Suppressed as these are internal route and key constants
 internal object MainActivityConstants {
     const val SYNC_PREFS = "sync_prefs"
     const val LAST_SYNCED_KEY = "last_synced_at"
@@ -242,7 +242,7 @@ class MainActivity : ComponentActivity() {
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
-                    val observer = LifecycleEventObserver { _, event ->
+                    val observer = LifecycleEventObserver { source: Any?, event: Lifecycle.Event -> // source: The lifecycle owner, event: The event
                         if (event == Lifecycle.Event.ON_RESUME) {
                             val lastSynced = context.getSharedPreferences(MainActivityConstants.SYNC_PREFS, 0)
                                 .getLong(MainActivityConstants.LAST_SYNCED_KEY, 0L)
@@ -284,7 +284,7 @@ class MainActivity : ComponentActivity() {
 
                 val imagePickerLauncher = rememberLauncherForActivityResult(
                     contract = PickVisualMedia()
-                ) { uri ->
+                ) { uri -> // uri: The selected image URI
                     profilePhotoUri = uri
                 }
 
@@ -298,7 +298,7 @@ class MainActivity : ComponentActivity() {
                             username = currentUser
                         )
                     } else {
-                        Crossfade(targetState = onboardingStep, label = MainActivityConstants.ONBOARDING_TRANSITION_LABEL) { step ->
+                        Crossfade(targetState = onboardingStep, label = MainActivityConstants.ONBOARDING_TRANSITION_LABEL) { step: Int -> // step: onboarding step index
                             when (step) {
                                 0 -> WelcomeScreen { onboardingStep = 1 }
                                 1 -> ModernLandingPage(
@@ -309,7 +309,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 2 -> TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
                                 3 -> LoginScreen(
-                                        onLoginSuccess = { user ->
+                                        onLoginSuccess = { user: com.example.adoption_and_childcare.data.db.entities.UserEntity -> // user: the logged-in user entity
                                             currentUser = user.username
                                             currentRole = user.role
                                             isLoadingAfterLogin = true
@@ -321,7 +321,7 @@ class MainActivity : ComponentActivity() {
                                         successMessage = registrationSuccessMessage
                                     )
                                 4 -> RegisterScreen(
-                                        onRegisterSuccess = { msg ->
+                                        onRegisterSuccess = { msg: String -> // msg: registration success message
                                             registrationSuccessMessage = msg
                                             onboardingStep = 3
                                         },
@@ -515,7 +515,7 @@ class MainActivity : ComponentActivity() {
                                     GreenHeader(
                                         profilePhotoUri = profilePhotoUri,
                                         searchQuery = headerSearchQuery,
-                                        onSearchQueryChange = { query ->
+                                        onSearchQueryChange = { query: String -> // query: the updated search text
                                             headerSearchQuery = query
                                             val currentPath = navController.currentDestination?.route
                                             if (query.isNotEmpty() && currentPath != AppRoute.SEARCH.routeVal) {
@@ -541,7 +541,7 @@ class MainActivity : ComponentActivity() {
                                     sosViewModel = sosViewModel
                                 )
                             }
-                        ) { scaffoldPadding ->
+                        ) { scaffoldPadding: PaddingValues -> // scaffoldPadding: padding values from Scaffold
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -550,7 +550,7 @@ class MainActivity : ComponentActivity() {
                                 AppNavHost(
                                     navController = navController,
                                     headerSearchQuery = headerSearchQuery,
-                                    onSearchQueryChange = { updatedQuery ->
+                                    onSearchQueryChange = { updatedQuery: String -> // updatedQuery: the new search query
                                         headerSearchQuery = updatedQuery 
                                     },
                                     userRole = currentRole,
@@ -572,6 +572,8 @@ class MainActivity : ComponentActivity() {
 
 /**
  * Main navigation host for the application.
+ *
+ * Suppressed LongMethod and LongParameterList as this defines the core app navigation structure.
  *
  * @param navController The navigation controller instance.
  * @param headerSearchQuery The current search query from the header.
@@ -607,7 +609,7 @@ private fun AppNavHost(
             val currentDest = navController.currentDestination?.route
             DashboardScreenModern(
                 userRole = userRole,
-                onNavigate = { destination ->
+                onNavigate = { destination: String -> // destination: target route string
                     if (currentDest != destination) {
                         if (canAccessRoute(destination, userRole, adminRole, supervisorRole, caseworkerRole, socialWorkerRole, guardianRole)) {
                             navController.navigate(destination) {
@@ -636,7 +638,7 @@ private fun AppNavHost(
             val itemsCountPrefix = stringResource(R.string.dashboard_items_count).take(3)
             MedicalScreen(
                 onBack = { navController.popBackStack() },
-                onMedicalRecordClick = { id ->
+                onMedicalRecordClick = { id: Int -> // id: medical record unique identifier
                     val medicalDetailPath = if (navMedicalDetailTemplate.contains(itemsCountPrefix)) {
                         String.format(navMedicalDetailTemplate, id)
                     } else {
@@ -646,7 +648,7 @@ private fun AppNavHost(
                 }
             ) 
         }
-        composable(navMedicalDetailRoute) { navBackStackEntry ->
+        composable(navMedicalDetailRoute) { navBackStackEntry: androidx.navigation.NavBackStackEntry -> // navBackStackEntry: current navigation state
             val recordId = navBackStackEntry.arguments?.getString("recordId")?.toIntOrNull() ?: 0
             MedicalDetailScreen(
                 recordId = recordId,

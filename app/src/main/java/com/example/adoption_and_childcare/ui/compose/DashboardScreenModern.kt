@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,9 +28,6 @@ import com.example.adoption_and_childcare.viewmodel.CaseToolsViewModel
 import com.example.adoption_and_childcare.MainActivityConstants
 import com.example.adoption_and_childcare.canAccessRoute
 import com.example.adoption_and_childcare.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.withContext
 
 private const val PERCENT_AT_RISK = 0.2
 
@@ -65,7 +61,6 @@ fun DashboardScreenModern(
     notificationsViewModel: NotificationsViewModel = hiltViewModel(),
     caseToolsViewModel: CaseToolsViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -224,20 +219,21 @@ fun CaseToolsGridModern(userRole: String, onNavigate: (String) -> Unit) {
     val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allTools = listOf(
-        Triple(R.string.dashboard_label_risk_assessments, R.string.dashboard_desc_risk_assessments, Triple(Icons.Default.Shield, Color(0xFFE91E63), MainActivityConstants.RISK_ASSESSMENTS_ROUTE)),
-        Triple(R.string.dashboard_label_permanency_plans, R.string.dashboard_desc_permanency_plans, Triple(Icons.Default.Map, Color(0xFF2196F3), MainActivityConstants.PERMANENCY_PLANS_ROUTE)),
-        Triple(R.string.dashboard_label_case_activities, R.string.dashboard_desc_case_activities, Triple(Icons.Default.History, Color(0xFF4CAF50), MainActivityConstants.CASE_ACTIVITIES_ROUTE)),
-        Triple(R.string.dashboard_label_deadlines, R.string.dashboard_desc_deadlines, Triple(Icons.Default.Schedule, Color(0xFFFF9800), MainActivityConstants.CASE_DEADLINES_ROUTE)),
-        Triple(R.string.dashboard_label_approvals, R.string.dashboard_desc_approvals, Triple(Icons.Default.CheckCircle, Color(0xFF9C27B0), MainActivityConstants.CASE_APPROVALS_ROUTE)),
-        Triple(R.string.dashboard_label_urgency_flags, R.string.dashboard_desc_urgency_flags, Triple(Icons.Default.PriorityHigh, Color(0xFFF44336), MainActivityConstants.CASE_URGENCY_FLAGS_ROUTE)),
-        Triple(R.string.dashboard_label_critical_dates, R.string.dashboard_desc_critical_dates, Triple(Icons.Default.Event, Color(0xFF607D8B), MainActivityConstants.CRITICAL_DATES_ROUTE)),
-        Triple(R.string.dashboard_label_compatibility, R.string.dashboard_desc_compatibility, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF009688), MainActivityConstants.PLACEMENT_COMPATIBILITY_ROUTE)),
-        Triple(R.string.dashboard_label_investigations, R.string.dashboard_desc_investigations, Triple(Icons.Default.Search, Color(0xFF795548), MainActivityConstants.INVESTIGATIONS_ROUTE)),
-        Triple(R.string.dashboard_label_service_plans, R.string.dashboard_desc_service_plans, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFF00BCD4), MainActivityConstants.SERVICE_PLANS_ROUTE)),
-        Triple(R.string.dashboard_label_visitation, R.string.dashboard_desc_visitation, Triple(Icons.Default.Event, Color(0xFFCDDC39), MainActivityConstants.VISITATION_SCHEDULES_ROUTE)),
-        Triple(R.string.dashboard_label_aftercare, R.string.dashboard_desc_aftercare, Triple(Icons.Default.LocalHospital, Color(0xFF795548), MainActivityConstants.AFTERCARE_PLANS_ROUTE)),
-        Triple(R.string.dashboard_label_disruptions, R.string.dashboard_desc_disruptions, Triple(Icons.Default.WarningAmber, Color(0xFFFF5722), MainActivityConstants.PLACEMENT_DISRUPTIONS_ROUTE)),
-        Triple(R.string.dashboard_label_foster_training_alt, R.string.dashboard_desc_foster_training_alt, Triple(Icons.Default.School, Color(0xFF3F51B5), MainActivityConstants.FOSTER_TRAINING_ROUTE))
+        Triple(R.string.dashboard_label_risk_assessments, R.string.dashboard_desc_risk_assessments, Triple(Icons.Default.Shield, Color(0xFFE91E63), MainActivityConstants.ROUTE_RISK_ASSESSMENTS)),
+        Triple(R.string.dashboard_label_permanency_plans, R.string.dashboard_desc_permanency_plans, Triple(Icons.Default.Map, Color(0xFF2196F3), MainActivityConstants.ROUTE_PERMANENCY_PLANS)),
+        Triple(R.string.dashboard_label_case_activities, R.string.dashboard_desc_case_activities, Triple(Icons.Default.History, Color(0xFF4CAF50), MainActivityConstants.ROUTE_CASE_ACTIVITIES)),
+        Triple(R.string.dashboard_label_deadlines, R.string.dashboard_desc_deadlines, Triple(Icons.Default.Schedule, Color(0xFFFF9800), MainActivityConstants.ROUTE_CASE_DEADLINES)),
+        Triple(R.string.dashboard_label_approvals, R.string.dashboard_desc_approvals, Triple(Icons.Default.CheckCircle, Color(0xFF9C27B0), MainActivityConstants.ROUTE_CASE_APPROVALS)),
+        Triple(R.string.dashboard_label_urgency_flags, R.string.dashboard_desc_urgency_flags, Triple(Icons.Default.PriorityHigh, Color(0xFFF44336), MainActivityConstants.ROUTE_CASE_URGENCY_FLAGS)),
+        Triple(R.string.dashboard_label_critical_dates, R.string.dashboard_desc_critical_dates, Triple(Icons.Default.Event, Color(0xFF607D8B), MainActivityConstants.ROUTE_CRITICAL_DATES)),
+        Triple(R.string.dashboard_label_compatibility, R.string.dashboard_desc_compatibility, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF009688), MainActivityConstants.ROUTE_PLACEMENT_COMPATIBILITY)),
+        Triple(R.string.dashboard_label_investigations, R.string.dashboard_desc_investigations, Triple(Icons.Default.Search, Color(0xFF795548), MainActivityConstants.ROUTE_INVESTIGATIONS)),
+        Triple(R.string.dashboard_label_service_plans, R.string.dashboard_desc_service_plans, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFF00BCD4), MainActivityConstants.ROUTE_SERVICE_PLANS)),
+        Triple(R.string.dashboard_label_visitation, R.string.dashboard_desc_visitation, Triple(Icons.Default.Event, Color(0xFFCDDC39), MainActivityConstants.ROUTE_VISITATION_SCHEDULES)),
+        Triple(R.string.dashboard_label_aftercare, R.string.dashboard_desc_aftercare, Triple(Icons.Default.LocalHospital, Color(0xFF795548), MainActivityConstants.ROUTE_AFTERCARE_PLANS)),
+        Triple(R.string.dashboard_label_disruptions, R.string.dashboard_desc_disruptions, Triple(Icons.Default.WarningAmber, Color(0xFFFF5722), MainActivityConstants.ROUTE_PLACEMENT_DISRUPTIONS)),
+        Triple(R.string.dashboard_label_referrals, R.string.dashboard_desc_referrals, Triple(Icons.Default.Share, Color(0xFFE91E63), MainActivityConstants.ROUTE_REFERRALS)),
+        Triple(R.string.dashboard_label_foster_training_alt, R.string.dashboard_desc_foster_training_alt, Triple(Icons.Default.School, Color(0xFF3F51B5), MainActivityConstants.ROUTE_FOSTER_TRAINING))
     )
 
     val filteredTools = allTools.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
@@ -426,10 +422,10 @@ fun KeyMetricsSectionModern(
     val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allMetrics = listOf(
-        Triple(R.string.dashboard_metric_children, childrenCount, Triple(Icons.Default.ChildCare, Color(0xFF4CAF50), MainActivityConstants.CHILDREN_LIST_ROUTE)),
-        Triple(R.string.dashboard_metric_families, familiesCount, Triple(Icons.Default.FamilyRestroom, Color(0xFF2196F3), MainActivityConstants.FAMILIES_ROUTE)),
-        Triple(R.string.dashboard_metric_placements, placementsCount, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.PLACEMENTS_ROUTE)),
-        Triple(R.string.dashboard_metric_applications, adoptionAppsCount, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ADOPTION_APPS_ROUTE))
+        Triple(R.string.dashboard_metric_children, childrenCount, Triple(Icons.Default.ChildCare, Color(0xFF4CAF50), MainActivityConstants.ROUTE_CHILDREN_LIST)),
+        Triple(R.string.dashboard_metric_families, familiesCount, Triple(Icons.Default.FamilyRestroom, Color(0xFF2196F3), MainActivityConstants.ROUTE_FAMILIES)),
+        Triple(R.string.dashboard_metric_placements, placementsCount, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.ROUTE_PLACEMENTS)),
+        Triple(R.string.dashboard_metric_applications, adoptionAppsCount, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ROUTE_ADOPTION_APPS))
     )
 
     val filteredMetrics = allMetrics.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
@@ -718,10 +714,10 @@ fun QuickAccessModulesModern(userRole: String, onNavigate: (String) -> Unit) {
     val guardianRole = stringResource(R.string.role_guardian_val)
 
     val allButtons = listOf(
-        Triple(R.string.dashboard_module_documents, Icons.Default.Description, Pair(Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
-        Triple(R.string.dashboard_module_medical, Icons.Default.LocalHospital, Pair(Color(0xFFF44336), MainActivityConstants.MEDICAL_ROUTE)),
-        Triple(R.string.dashboard_module_education, Icons.Default.School, Pair(Color(0xFF3F51B5), MainActivityConstants.EDUCATION_ROUTE)),
-        Triple(R.string.dashboard_module_finance, Icons.Default.AttachMoney, Pair(Color(0xFF4CAF50), MainActivityConstants.FINANCE_ROUTE))
+        Triple(R.string.dashboard_module_documents, Icons.Default.Description, Pair(Color(0xFF607D8B), MainActivityConstants.ROUTE_DOCUMENTS)),
+        Triple(R.string.dashboard_module_medical, Icons.Default.LocalHospital, Pair(Color(0xFFF44336), MainActivityConstants.ROUTE_MEDICAL)),
+        Triple(R.string.dashboard_module_education, Icons.Default.School, Pair(Color(0xFF3F51B5), MainActivityConstants.ROUTE_EDUCATION)),
+        Triple(R.string.dashboard_module_finance, Icons.Default.AttachMoney, Pair(Color(0xFF4CAF50), MainActivityConstants.ROUTE_FINANCE))
     )
 
     val filteredButtons = allButtons.filter { canAccessRoute(it.third.second, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }
@@ -771,34 +767,36 @@ fun AllScreensGridModern(userRole: String, onNavigate: (String) -> Unit) {
     val guardianRole = stringResource(R.string.role_guardian_val)
     
     val allScreens = listOf(
-        Triple(R.string.dashboard_label_analytics, R.string.dashboard_desc_analytics, Triple(Icons.Default.Analytics, Color(0xFF673AB7), MainActivityConstants.ANALYTICS_ROUTE)),
-        Triple(R.string.dashboard_label_guardians, R.string.dashboard_desc_guardians, Triple(Icons.Default.People, Color(0xFF00BCD4), MainActivityConstants.GUARDIANS_ROUTE)),
-        Triple(R.string.dashboard_label_court_cases, R.string.dashboard_desc_court_cases, Triple(Icons.Default.Gavel, Color(0xFF795548), MainActivityConstants.COURT_CASES_ROUTE)),
-        Triple(R.string.dashboard_label_foster_tasks, R.string.dashboard_desc_foster_tasks, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFFFF5722), MainActivityConstants.FOSTER_TASKS_ROUTE)),
-        Triple(R.string.dashboard_label_foster_matches, R.string.dashboard_desc_foster_matches, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF8BC34A), MainActivityConstants.FOSTER_MATCHES_ROUTE)),
-        Triple(R.string.dashboard_label_notifications, R.string.dashboard_desc_notifications, Triple(Icons.Default.Notifications, Color(0xFFFF9800), MainActivityConstants.NOTIFICATIONS_ROUTE)),
-        Triple(R.string.dashboard_label_background_checks, R.string.dashboard_desc_background_checks, Triple(Icons.Default.Shield, Color(0xFF3F51B5), MainActivityConstants.BACKGROUND_CHECKS_ROUTE)),
-        Triple(R.string.dashboard_label_map, R.string.dashboard_desc_map, Triple(Icons.Default.Map, Color(0xFF4CAF50), MainActivityConstants.MAP_ROUTE)),
-        Triple(R.string.dashboard_label_user_roles, R.string.dashboard_desc_user_roles, Triple(Icons.Default.Badge, Color(0xFFE91E63), MainActivityConstants.USER_ROLES_ROUTE)),
-        Triple(R.string.dashboard_label_camera, R.string.dashboard_desc_camera, Triple(Icons.Default.CameraAlt, Color(0xFF009688), MainActivityConstants.CAMERA_ROUTE)),
-        Triple(R.string.dashboard_label_home_studies_alt, R.string.dashboard_desc_home_studies_alt, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.HOME_STUDIES_ROUTE)),
-        Triple(R.string.dashboard_label_adoption_apps, R.string.dashboard_desc_adoption_apps, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ADOPTION_APPS_ROUTE)),
-        Triple(R.string.dashboard_label_vaccinations, R.string.dashboard_desc_vaccinations, Triple(Icons.Default.Vaccines, Color(0xFF4CAF50), MainActivityConstants.VACCINATION_RECORDS_ROUTE)),
-        Triple(R.string.dashboard_label_behavior, R.string.dashboard_desc_behavior, Triple(Icons.Default.Psychology, Color(0xFF9C27B0), MainActivityConstants.BEHAVIOR_ASSESSMENTS_ROUTE)),
-        Triple(R.string.dashboard_label_incidents, R.string.dashboard_desc_incidents, Triple(Icons.Default.ReportProblem, Color(0xFFF44336), MainActivityConstants.WELFARE_INCIDENTS_ROUTE)),
-        Triple(R.string.dashboard_label_consent, R.string.dashboard_desc_consent, Triple(Icons.Default.Description, Color(0xFF607D8B), MainActivityConstants.CONSENT_RECORDS_ROUTE)),
-        Triple(R.string.dashboard_label_partners, R.string.dashboard_desc_partners, Triple(Icons.Default.Business, Color(0xFF2196F3), MainActivityConstants.ORG_PARTNERS_ROUTE)),
-        Triple(R.string.dashboard_label_providers, R.string.dashboard_desc_providers, Triple(Icons.Default.MiscellaneousServices, Color(0xFF9C27B0), MainActivityConstants.SERVICE_PROVIDERS_ROUTE)),
-        Triple(R.string.dashboard_label_donors, R.string.dashboard_desc_donors, Triple(Icons.Default.VolunteerActivism, Color(0xFF4CAF50), MainActivityConstants.DONOR_FUNDING_ROUTE)),
-        Triple(R.string.dashboard_label_budgets, R.string.dashboard_desc_budgets, Triple(Icons.Default.AccountBalance, Color(0xFF607D8B), MainActivityConstants.BUDGET_ALLOCATIONS_ROUTE)),
-        Triple(R.string.dashboard_label_counties_alt, R.string.dashboard_desc_counties_alt, Triple(Icons.Default.LocationCity, Color(0xFF3F51B5), MainActivityConstants.COUNTIES_ROUTE)),
-        Triple(R.string.dashboard_label_county_offices, R.string.dashboard_desc_county_offices, Triple(Icons.Default.Apartment, Color(0xFF795548), MainActivityConstants.COUNTY_OFFICES_ROUTE)),
-        Triple(R.string.dashboard_label_reports_alt, R.string.dashboard_desc_reports_alt, Triple(Icons.Default.PictureAsPdf, Color(0xFFE91E63), MainActivityConstants.REPORTS_ROUTE)),
-        Triple(R.string.dashboard_label_emergency, R.string.dashboard_desc_emergency, Triple(Icons.Default.Sos, Color(0xFFF44336), MainActivityConstants.EMERGENCY_EVENTS_ROUTE)),
-        Triple(R.string.dashboard_label_doc_storage, R.string.dashboard_desc_doc_storage, Triple(Icons.Default.CloudUpload, Color(0xFF607D8B), MainActivityConstants.DOCUMENTS_ROUTE)),
-        Triple(R.string.dashboard_label_transfers, R.string.dashboard_desc_transfers, Triple(Icons.Default.SwapHoriz, Color(0xFFFF9800), MainActivityConstants.INTER_COUNTY_TRANSFERS_ROUTE)),
-        Triple(R.string.dashboard_label_siblings, R.string.dashboard_desc_siblings, Triple(Icons.Default.FamilyRestroom, Color(0xFF00BCD4), MainActivityConstants.SIBLINGS_ROUTE)),
-        Triple(R.string.dashboard_label_worker_loc, R.string.dashboard_desc_worker_loc, Triple(Icons.Default.LocationOn, Color(0xFF4CAF50), MainActivityConstants.WORKER_LOCATIONS_ROUTE))
+        Triple(R.string.dashboard_label_analytics, R.string.dashboard_desc_analytics, Triple(Icons.Default.Analytics, Color(0xFF673AB7), MainActivityConstants.ROUTE_ANALYTICS)),
+        Triple(R.string.dashboard_label_guardians, R.string.dashboard_desc_guardians, Triple(Icons.Default.People, Color(0xFF00BCD4), MainActivityConstants.ROUTE_GUARDIANS)),
+        Triple(R.string.dashboard_label_court_cases, R.string.dashboard_desc_court_cases, Triple(Icons.Default.Gavel, Color(0xFF795548), MainActivityConstants.ROUTE_COURT_CASES)),
+        Triple(R.string.dashboard_label_foster_tasks, R.string.dashboard_desc_foster_tasks, Triple(Icons.AutoMirrored.Filled.Assignment, Color(0xFFFF5722), MainActivityConstants.ROUTE_FOSTER_TASKS)),
+        Triple(R.string.dashboard_label_foster_matches, R.string.dashboard_desc_foster_matches, Triple(Icons.AutoMirrored.Filled.CompareArrows, Color(0xFF8BC34A), MainActivityConstants.ROUTE_FOSTER_MATCHES)),
+        Triple(R.string.dashboard_label_notifications, R.string.dashboard_desc_notifications, Triple(Icons.Default.Notifications, Color(0xFFFF9800), MainActivityConstants.ROUTE_NOTIFICATIONS)),
+        Triple(R.string.dashboard_label_background_checks, R.string.dashboard_desc_background_checks, Triple(Icons.Default.Shield, Color(0xFF3F51B5), MainActivityConstants.ROUTE_BACKGROUND_CHECKS)),
+        Triple(R.string.dashboard_label_map, R.string.dashboard_desc_map, Triple(Icons.Default.Map, Color(0xFF4CAF50), MainActivityConstants.ROUTE_MAP)),
+        Triple(R.string.dashboard_label_user_roles, R.string.dashboard_desc_user_roles, Triple(Icons.Default.Badge, Color(0xFFE91E63), MainActivityConstants.ROUTE_USER_ROLES)),
+        Triple(R.string.user_management_title, R.string.route_user_management, Triple(Icons.Default.AdminPanelSettings, Color(0xFF2196F3), MainActivityConstants.ROUTE_USER_MANAGEMENT)),
+        Triple(R.string.dashboard_label_camera, R.string.dashboard_desc_camera, Triple(Icons.Default.CameraAlt, Color(0xFF009688), MainActivityConstants.ROUTE_CAMERA)),
+        Triple(R.string.dashboard_label_home_studies_alt, R.string.dashboard_desc_home_studies_alt, Triple(Icons.Default.Home, Color(0xFF8BC34A), MainActivityConstants.ROUTE_HOME_STUDIES)),
+        Triple(R.string.dashboard_label_adoption_apps, R.string.dashboard_desc_adoption_apps, Triple(Icons.Default.Folder, Color(0xFF9C27B0), MainActivityConstants.ROUTE_ADOPTION_APPS)),
+        Triple(R.string.dashboard_label_vaccinations, R.string.dashboard_desc_vaccinations, Triple(Icons.Default.Vaccines, Color(0xFF4CAF50), MainActivityConstants.ROUTE_VACCINATION_RECORDS)),
+        Triple(R.string.dashboard_label_behavior, R.string.dashboard_desc_behavior, Triple(Icons.Default.Psychology, Color(0xFF9C27B0), MainActivityConstants.ROUTE_BEHAVIOR_ASSESSMENTS)),
+        Triple(R.string.dashboard_label_incidents, R.string.dashboard_desc_incidents, Triple(Icons.Default.ReportProblem, Color(0xFFF44336), MainActivityConstants.ROUTE_WELFARE_INCIDENTS)),
+        Triple(R.string.dashboard_label_consent, R.string.dashboard_desc_consent, Triple(Icons.Default.Description, Color(0xFF607D8B), MainActivityConstants.ROUTE_CONSENT_RECORDS)),
+        Triple(R.string.dashboard_label_partners, R.string.dashboard_desc_partners, Triple(Icons.Default.Business, Color(0xFF2196F3), MainActivityConstants.ROUTE_ORG_PARTNERS)),
+        Triple(R.string.dashboard_label_providers, R.string.dashboard_desc_providers, Triple(Icons.Default.MiscellaneousServices, Color(0xFF9C27B0), MainActivityConstants.ROUTE_SERVICE_PROVIDERS)),
+        Triple(R.string.dashboard_label_donors, R.string.dashboard_desc_donors, Triple(Icons.Default.VolunteerActivism, Color(0xFF4CAF50), MainActivityConstants.ROUTE_DONOR_FUNDING)),
+        Triple(R.string.dashboard_label_budgets, R.string.dashboard_desc_budgets, Triple(Icons.Default.AccountBalance, Color(0xFF607D8B), MainActivityConstants.ROUTE_BUDGET_ALLOCATIONS)),
+        Triple(R.string.dashboard_label_counties_alt, R.string.dashboard_desc_counties_alt, Triple(Icons.Default.LocationCity, Color(0xFF3F51B5), MainActivityConstants.ROUTE_COUNTIES)),
+        Triple(R.string.dashboard_label_county_offices, R.string.dashboard_desc_county_offices, Triple(Icons.Default.Apartment, Color(0xFF795548), MainActivityConstants.ROUTE_COUNTY_OFFICES)),
+        Triple(R.string.dashboard_label_reports_alt, R.string.dashboard_desc_reports_alt, Triple(Icons.Default.PictureAsPdf, Color(0xFFE91E63), MainActivityConstants.ROUTE_REPORTS)),
+        Triple(R.string.dashboard_label_emergency, R.string.dashboard_desc_emergency, Triple(Icons.Default.Sos, Color(0xFFF44336), MainActivityConstants.ROUTE_EMERGENCY_EVENTS)),
+        Triple(R.string.dashboard_label_doc_storage, R.string.dashboard_desc_doc_storage, Triple(Icons.Default.CloudUpload, Color(0xFF607D8B), MainActivityConstants.ROUTE_DOCUMENTS)),
+        Triple(R.string.dashboard_label_transfers, R.string.dashboard_desc_transfers, Triple(Icons.Default.SwapHoriz, Color(0xFFFF9800), MainActivityConstants.ROUTE_INTER_COUNTY_TRANSFERS)),
+        Triple(R.string.dashboard_label_siblings, R.string.dashboard_desc_siblings, Triple(Icons.Default.FamilyRestroom, Color(0xFF00BCD4), MainActivityConstants.ROUTE_SIBLINGS)),
+        Triple(R.string.dashboard_label_worker_loc, R.string.dashboard_desc_worker_loc, Triple(Icons.Default.LocationOn, Color(0xFF4CAF50), MainActivityConstants.ROUTE_WORKER_LOCATIONS)),
+        Triple(R.string.action_settings, R.string.route_settings, Triple(Icons.Default.Settings, Color(0xFF607D8B), MainActivityConstants.ROUTE_SETTINGS))
     )
 
     val filteredScreens = allScreens.filter { canAccessRoute(it.third.third, userRole, adminRole, supervisorRole, caseWorkerRole, socialWorkerRole, guardianRole) }

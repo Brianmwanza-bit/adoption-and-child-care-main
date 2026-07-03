@@ -197,7 +197,7 @@ fun SOSButton(sosViewModel: SOSViewModel, navController: NavController) {
                     .background(Color.Red.copy(alpha = if (sosState == SOSState.ACTIVE) pulseOpacity else 1f))
                     .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                     .clickable { 
-                        navController.navigate(MainActivityConstants.SOS_EMERGENCY_ROUTE)
+                        navController.navigate(MainActivityConstants.ROUTE_SOS_EMERGENCY)
                     }
                     .pointerInput(Unit) {
                         awaitPointerEventScope {

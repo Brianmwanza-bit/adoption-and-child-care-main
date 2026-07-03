@@ -169,6 +169,12 @@
     <string name="route_placement_disruptions">placement_disruptions</string>
     <string name="route_foster_training">foster_training</string>
 
+    <!-- System Constants -->
+    <string name="prefs_sync">sync_prefs</string>
+    <string name="key_last_synced_at">last_synced_at</string>
+    <string name="label_onboarding_transition">onboarding_transition</string>
+    <string name="tag_main_activity">MainActivity</string>
+
     <!-- Finance Screen Strings -->
     <string name="finance_title">Financial Records</string>
     <string name="finance_back_desc">Back</string>
@@ -755,6 +761,8 @@
     <string name="dashboard_desc_aftercare">Post-placement care plans</string>
     <string name="dashboard_label_disruptions">Disruptions</string>
     <string name="dashboard_desc_disruptions">Placement disruption logs</string>
+    <string name="dashboard_label_referrals">Referrals</string>
+    <string name="dashboard_desc_referrals">Child service referrals</string>
     <string name="dashboard_label_foster_training_alt">Foster Training</string>
     <string name="dashboard_desc_foster_training_alt">Training records &amp; certs</string>
     <string name="dashboard_label_vaccinations">Vaccinations</string>

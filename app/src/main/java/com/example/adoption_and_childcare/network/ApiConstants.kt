@@ -66,6 +66,7 @@ object ApiConstants {
     const val EDUCATION_RECORDS_JSON = "education_records"
     const val MONEY_RECORDS_JSON = "money_records"
     const val CASE_REPORTS_JSON = "case_reports"
+    const val CASE_REPORT_BY_ID = "case_reports/{id}"
     const val COURT_CASES_JSON = "court_cases"
     const val ADOPTION_APPLICATIONS_JSON = "adoption_applications"
     const val HOME_STUDIES_JSON = "home_studies"

@@ -14,6 +14,7 @@ import com.example.adoption_and_childcare.network.ApiConstants.BACKGROUND_CHECK_
 import com.example.adoption_and_childcare.network.ApiConstants.CASE_ACTIVITIES_JSON
 import com.example.adoption_and_childcare.network.ApiConstants.CASE_APPROVALS_JSON
 import com.example.adoption_and_childcare.network.ApiConstants.CASE_DEADLINES_JSON
+import com.example.adoption_and_childcare.network.ApiConstants.CASE_REPORT_BY_ID
 import com.example.adoption_and_childcare.network.ApiConstants.CASE_REPORTS_JSON
 import com.example.adoption_and_childcare.network.ApiConstants.CASE_URGENCY_FLAGS_JSON
 import com.example.adoption_and_childcare.network.ApiConstants.CHILDREN
@@ -609,7 +610,7 @@ interface ApiService {
      * @param id The ID of the case report to update.
      * @param report The updated case report entity.
      */
-    @PUT(CASE_REPORTS_JSON + "/{id}")
+    @PUT(CASE_REPORT_BY_ID)
     suspend fun updateCaseReport(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int, @Body report: CaseReportEntity): Response<UpdateResponse>
 
     /**
@@ -617,7 +618,7 @@ interface ApiService {
      * @param token The authorization token.
      * @param id The ID of the case report to delete.
      */
-    @DELETE(CASE_REPORTS_JSON + "/{id}")
+    @DELETE(CASE_REPORT_BY_ID)
     suspend fun deleteCaseReport(@Header(AUTHORIZATION) token: String, @Path(ID) id: Int): Response<SimpleResponse>
 
     // Money Records Endpoints

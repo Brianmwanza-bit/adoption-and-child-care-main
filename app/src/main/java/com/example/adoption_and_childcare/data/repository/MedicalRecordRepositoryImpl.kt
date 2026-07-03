@@ -20,8 +20,16 @@ class MedicalRecordRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
+    /**
+     * Observes all medical records from the local database.
+     */
     fun observeAll(): Flow<List<MedicalRecordEntity>> = medicalRecordDao.observeAll()
     
+    /**
+     * Inserts a medical record and attempts to sync it.
+     * @param record The record to insert.
+     * @param token Authentication token (fallback).
+     */
     suspend fun insert(record: MedicalRecordEntity, token: String): Result<Long> {
         return try {
             // Insert with sync queue support
@@ -29,12 +37,12 @@ class MedicalRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.createMedicalRecord(authHeader, record)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("MedicalRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(record.recordId.toLong())
         } catch (e: Exception) {
@@ -42,6 +50,11 @@ class MedicalRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Updates a medical record and attempts to sync it.
+     * @param record The record to update.
+     * @param token Authentication token (fallback).
+     */
     suspend fun update(record: MedicalRecordEntity, token: String): Result<Unit> {
         return try {
             // Update with sync queue support
@@ -49,12 +62,12 @@ class MedicalRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.updateMedicalRecord(authHeader, record.recordId, record)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("MedicalRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,6 +75,11 @@ class MedicalRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Deletes a medical record and attempts to sync it.
+     * @param id The record ID.
+     * @param token Authentication token (fallback).
+     */
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
             // Delete with sync queue support
@@ -69,12 +87,12 @@ class MedicalRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.deleteMedicalRecord(authHeader, id)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("MedicalRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -82,15 +100,25 @@ class MedicalRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Finds a medical record by ID.
+     */
     suspend fun findById(id: Int): MedicalRecordEntity? {
         return medicalRecordDao.findById(id)
     }
     
+    /**
+     * Returns the total count of medical records.
+     */
     suspend fun count(): Int = medicalRecordDao.getAll().size
     
+    /**
+     * Fetches all medical records from the API.
+     * @param token Authentication token.
+     */
     suspend fun fetchFromApi(token: String): Result<List<MedicalRecordEntity>> {
         return try {
-            val authHeader = authManager.getAuthHeader()
+            val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
             if (authHeader == null) {
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }

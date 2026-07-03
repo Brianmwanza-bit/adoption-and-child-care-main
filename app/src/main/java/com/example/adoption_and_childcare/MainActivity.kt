@@ -10,17 +10,57 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.FamilyRestroom
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,19 +68,92 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.adoption_and_childcare.data.db.AppDatabase
 import com.example.adoption_and_childcare.data.db.DatabaseInitializer
-import com.example.adoption_and_childcare.data.db.entities.UserEntity
-import com.example.adoption_and_childcare.ui.compose.*
-import com.example.adoption_and_childcare.ui.theme.AdoptionChildcareTheme
 import com.example.adoption_and_childcare.data.session.SessionManager
+import com.example.adoption_and_childcare.ui.compose.ActionItemsScreen
+import com.example.adoption_and_childcare.ui.compose.AdoptionApplicationsScreen
+import com.example.adoption_and_childcare.ui.compose.AftercarePlansScreen
+import com.example.adoption_and_childcare.ui.compose.AnalyticsScreen
+import com.example.adoption_and_childcare.ui.compose.AppPermissionsScreen
+import com.example.adoption_and_childcare.ui.compose.AuditLogsScreen
+import com.example.adoption_and_childcare.ui.compose.BackgroundChecksScreen
+import com.example.adoption_and_childcare.ui.compose.BehaviorAssessmentsScreen
+import com.example.adoption_and_childcare.ui.compose.BottomNavBar
+import com.example.adoption_and_childcare.ui.compose.BudgetAllocationsScreen
+import com.example.adoption_and_childcare.ui.compose.CameraScreen
+import com.example.adoption_and_childcare.ui.compose.CaseActivitiesScreen
+import com.example.adoption_and_childcare.ui.compose.CaseApprovalsScreen
+import com.example.adoption_and_childcare.ui.compose.CaseDeadlinesScreen
+import com.example.adoption_and_childcare.ui.compose.CaseInboxScreen
+import com.example.adoption_and_childcare.ui.compose.CaseReportsScreen
+import com.example.adoption_and_childcare.ui.compose.CaseUrgencyFlagsScreen
+import com.example.adoption_and_childcare.ui.compose.ChildServicesReferralsScreen
+import com.example.adoption_and_childcare.ui.compose.ChildrenListScreen
+import com.example.adoption_and_childcare.ui.compose.ConsentRecordsScreen
+import com.example.adoption_and_childcare.ui.compose.CountiesScreen
+import com.example.adoption_and_childcare.ui.compose.CountyOfficesScreen
+import com.example.adoption_and_childcare.ui.compose.CourtCasesScreen
+import com.example.adoption_and_childcare.ui.compose.CriticalDatesScreen
+import com.example.adoption_and_childcare.ui.compose.DashboardPreferencesScreen
+import com.example.adoption_and_childcare.ui.compose.DashboardScreenModern
+import com.example.adoption_and_childcare.ui.compose.DocumentsScreen
+import com.example.adoption_and_childcare.ui.compose.DonorFundingScreen
+import com.example.adoption_and_childcare.ui.compose.DrawerHeader
+import com.example.adoption_and_childcare.ui.compose.EducationScreen
+import com.example.adoption_and_childcare.ui.compose.EmergencyActiveBanner
+import com.example.adoption_and_childcare.ui.compose.EmergencyEventsScreen
+import com.example.adoption_and_childcare.ui.compose.FamiliesScreen
+import com.example.adoption_and_childcare.ui.compose.FinanceScreen
+import com.example.adoption_and_childcare.ui.compose.FosterFamilyTrainingScreen
+import com.example.adoption_and_childcare.ui.compose.FosterMatchesScreen
+import com.example.adoption_and_childcare.ui.compose.FosterTasksScreen
+import com.example.adoption_and_childcare.ui.compose.GlobalDocumentStorageScreen
+import com.example.adoption_and_childcare.ui.compose.GreenHeader
+import com.example.adoption_and_childcare.ui.compose.GuardiansScreen
+import com.example.adoption_and_childcare.ui.compose.HelpAboutScreen
+import com.example.adoption_and_childcare.ui.compose.HomeStudiesScreen
+import com.example.adoption_and_childcare.ui.compose.InterCountyTransfersScreen
+import com.example.adoption_and_childcare.ui.compose.InvestigationsScreen
+import com.example.adoption_and_childcare.ui.compose.LoadingAnimationScreen
+import com.example.adoption_and_childcare.ui.compose.LoginScreen
+import com.example.adoption_and_childcare.ui.compose.MapScreen
+import com.example.adoption_and_childcare.ui.compose.MedicalDetailScreen
+import com.example.adoption_and_childcare.ui.compose.MedicalScreen
+import com.example.adoption_and_childcare.ui.compose.ModernLandingPage
+import com.example.adoption_and_childcare.ui.compose.NotificationsScreen
+import com.example.adoption_and_childcare.ui.compose.OrganizationPartnersScreen
+import com.example.adoption_and_childcare.ui.compose.PermanencyPlansScreen
+import com.example.adoption_and_childcare.ui.compose.PlacementCompatibilityEngineScreen
+import com.example.adoption_and_childcare.ui.compose.PlacementDisruptionsScreen
+import com.example.adoption_and_childcare.ui.compose.PlacementsScreen
+import com.example.adoption_and_childcare.ui.compose.RecentActivityScreen
+import com.example.adoption_and_childcare.ui.compose.ReferralsScreen
+import com.example.adoption_and_childcare.ui.compose.RegisterScreen
+import com.example.adoption_and_childcare.ui.compose.ReportsGeneratedScreen
+import com.example.adoption_and_childcare.ui.compose.RiskAssessmentCenterScreen
+import com.example.adoption_and_childcare.ui.compose.SOSScreen
+import com.example.adoption_and_childcare.ui.compose.SearchScreen
+import com.example.adoption_and_childcare.ui.compose.ServicePlansScreen
+import com.example.adoption_and_childcare.ui.compose.ServiceProvidersScreen
+import com.example.adoption_and_childcare.ui.compose.SettingsScreen
+import com.example.adoption_and_childcare.ui.compose.ShortcutsScreen
+import com.example.adoption_and_childcare.ui.compose.SiblingsScreen
+import com.example.adoption_and_childcare.ui.compose.TasksScreen
+import com.example.adoption_and_childcare.ui.compose.TermsAndConditionsScreen
+import com.example.adoption_and_childcare.ui.compose.UserManagementScreen
+import com.example.adoption_and_childcare.ui.compose.UserRolesScreen
+import com.example.adoption_and_childcare.ui.compose.VaccinationRecordsScreen
+import com.example.adoption_and_childcare.ui.compose.VisitationSchedulesScreen
+import com.example.adoption_and_childcare.ui.compose.WelcomeScreen
+import com.example.adoption_and_childcare.ui.compose.WelfareIncidentsScreen
+import com.example.adoption_and_childcare.ui.compose.WorkerLocationScreen
+import com.example.adoption_and_childcare.ui.compose.WorkerMessagesScreen
+import com.example.adoption_and_childcare.ui.compose.WorkloadDashboardScreen
+import com.example.adoption_and_childcare.ui.theme.AdoptionChildcareTheme
 import com.example.adoption_and_childcare.viewmodel.NotificationsViewModel
 import com.example.adoption_and_childcare.viewmodel.SOSState
 import com.example.adoption_and_childcare.viewmodel.SOSViewModel
 import com.example.adoption_and_childcare.viewmodel.SyncViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,180 +161,162 @@ import javax.inject.Inject
 /**
  * Constants used throughout the MainActivity.
  */
-@Suppress("HardcodedStringLiteral") // Suppressed as these are internal route and key constants
+@Suppress("HardcodedStringLiteral")
 internal object MainActivityConstants {
-    const val SYNC_PREFS = "sync_prefs"
-    const val LAST_SYNCED_KEY = "last_synced_at"
-    const val ONBOARDING_TRANSITION_LABEL = "onboarding_transition"
-    const val LOG_TAG = "MainActivity"
-    
-    // Routes
-    const val DASHBOARD_ROUTE = "dashboard"
-    const val CHILDREN_LIST_ROUTE = "children_list"
-    const val FAMILIES_ROUTE = "families"
-    const val ADOPTION_APPS_ROUTE = "adoption_applications"
-    const val HOME_STUDIES_ROUTE = "home_studies"
-    const val DOCUMENTS_ROUTE = "documents"
-    const val PLACEMENTS_ROUTE = "placements"
-    const val REPORTS_ROUTE = "reports"
-    const val EDUCATION_ROUTE = "education"
-    const val MEDICAL_ROUTE = "medical"
-    const val FINANCE_ROUTE = "finance"
-    const val SETTINGS_ROUTE = "settings"
-    const val MAP_ROUTE = "map"
-    const val BACKGROUND_CHECKS_ROUTE = "background_checks"
-    const val USER_MANAGEMENT_ROUTE = "user_management"
-    const val NOTIFICATIONS_ROUTE = "notifications"
-    const val AUDIT_LOGS_ROUTE = "audit_logs"
-    const val SEARCH_ROUTE = "search"
-    const val CAMERA_ROUTE = "camera"
-    const val USER_ROLES_ROUTE = "user_roles"
-    const val ANALYTICS_ROUTE = "analytics"
-    const val GUARDIANS_ROUTE = "guardians"
-    const val COURT_CASES_ROUTE = "court_cases"
-    const val FOSTER_TASKS_ROUTE = "foster_tasks"
-    const val FOSTER_MATCHES_ROUTE = "foster_matches"
-    const val TASKS_ROUTE = "tasks"
-    const val ACTION_ITEMS_ROUTE = "action_items"
-    const val RISK_ASSESSMENTS_ROUTE = "risk_assessments"
-    const val PERMANENCY_PLANS_ROUTE = "permanency_plans"
-    const val CASE_ACTIVITIES_ROUTE = "case_activities"
-    const val CASE_DEADLINES_ROUTE = "case_deadlines"
-    const val CASE_APPROVALS_ROUTE = "case_approvals"
-    const val CASE_URGENCY_FLAGS_ROUTE = "case_urgency_flags"
-    const val CRITICAL_DATES_ROUTE = "critical_dates"
-    const val WORKLOAD_ROUTE = "workload"
-    const val WORKER_MESSAGES_ROUTE = "worker_messages"
-    const val PLACEMENT_COMPATIBILITY_ROUTE = "placement_compatibility"
-    const val DASHBOARD_PREFERENCES_ROUTE = "dashboard_preferences"
-    const val VACCINATION_RECORDS_ROUTE = "vaccination_records"
-    const val BEHAVIOR_ASSESSMENTS_ROUTE = "behavior_assessments"
-    const val WELFARE_INCIDENTS_ROUTE = "welfare_incidents"
-    const val SIBLINGS_ROUTE = "siblings"
-    const val CONSENT_RECORDS_ROUTE = "consent_records"
-    const val INVESTIGATIONS_ROUTE = "investigations"
-    const val SERVICE_PLANS_ROUTE = "service_plans"
-    const val VISITATION_SCHEDULES_ROUTE = "visitation_schedules"
-    const val REFERRALS_ROUTE = "referrals"
-    const val AFTERCARE_PLANS_ROUTE = "aftercare_plans"
-    const val CHILD_SERVICES_REFERRALS_ROUTE = "child_services_referrals"
-    const val ORG_PARTNERS_ROUTE = "org_partners"
-    const val SERVICE_PROVIDERS_ROUTE = "service_providers"
-    const val DONOR_FUNDING_ROUTE = "donor_funding"
-    const val BUDGET_ALLOCATIONS_ROUTE = "budget_allocations"
-    const val COUNTIES_ROUTE = "counties"
-    const val COUNTY_OFFICES_ROUTE = "county_offices"
-    const val PLACEMENT_DISRUPTIONS_ROUTE = "placement_disruptions"
-    const val FOSTER_TRAINING_ROUTE = "foster_training"
-    const val REPORTS_GENERATED_ROUTE = "reports_generated"
-    const val EMERGENCY_EVENTS_ROUTE = "emergency_events"
-    const val DOCUMENT_STORAGE_ROUTE = "document_storage"
-    const val INTER_COUNTY_TRANSFERS_ROUTE = "inter_county_transfers"
-    const val WORKER_LOCATIONS_ROUTE = "worker_locations"
-    const val CASE_INBOX_ROUTE = "case_inbox"
-    const val RECENT_ACTIVITY_ROUTE = "recent_activity"
-    const val SHORTCUTS_ROUTE = "shortcuts"
-    const val PERMISSIONS_ROUTE = "permissions"
-    const val HELP_ABOUT_ROUTE = "help_about"
-    const val SOS_EMERGENCY_ROUTE = "sos_emergency"
-    
-    const val SYNC_THRESHOLD_SECONDS = 15 * 60
+    /** Route: Dashboard. */
+    const val ROUTE_DASHBOARD = "dashboard"
+    /** Route: Children List. */
+    const val ROUTE_CHILDREN_LIST = "children_list"
+    /** Route: Families. */
+    const val ROUTE_FAMILIES = "families"
+    /** Route: Adoption Applications. */
+    const val ROUTE_ADOPTION_APPS = "adoption_applications"
+    /** Route: Home Studies. */
+    const val ROUTE_HOME_STUDIES = "home_studies"
+    /** Route: Documents. */
+    const val ROUTE_DOCUMENTS = "documents"
+    /** Route: Placements. */
+    const val ROUTE_PLACEMENTS = "placements"
+    /** Route: Reports. */
+    const val ROUTE_REPORTS = "reports"
+    /** Route: Education. */
+    const val ROUTE_EDUCATION = "education"
+    /** Route: Medical. */
+    const val ROUTE_MEDICAL = "medical"
+    /** Route: Finance. */
+    const val ROUTE_FINANCE = "finance"
+    /** Route: Settings. */
+    const val ROUTE_SETTINGS = "settings"
+    /** Route: Map. */
+    const val ROUTE_MAP = "map"
+    /** Route: Background Checks. */
+    const val ROUTE_BACKGROUND_CHECKS = "background_checks"
+    /** Route: User Management. */
+    const val ROUTE_USER_MANAGEMENT = "user_management"
+    /** Route: Notifications. */
+    const val ROUTE_NOTIFICATIONS = "notifications"
+    /** Route: Audit Logs. */
+    const val ROUTE_AUDIT_LOGS = "audit_logs"
+    /** Route: Search. */
+    const val ROUTE_SEARCH = "search"
+    /** Route: Camera. */
+    const val ROUTE_CAMERA = "camera"
+    /** Route: User Roles. */
+    const val ROUTE_USER_ROLES = "user_roles"
+    /** Route: Analytics. */
+    const val ROUTE_ANALYTICS = "analytics"
+    /** Route: Guardians. */
+    const val ROUTE_GUARDIANS = "guardians"
+    /** Route: Court Cases. */
+    const val ROUTE_COURT_CASES = "court_cases"
+    /** Route: Foster Tasks. */
+    const val ROUTE_FOSTER_TASKS = "foster_tasks"
+    /** Route: Foster Matches. */
+    const val ROUTE_FOSTER_MATCHES = "foster_matches"
+    /** Route: Tasks. */
+    const val ROUTE_TASKS = "tasks"
+    /** Route: Action Items. */
+    const val ROUTE_ACTION_ITEMS = "action_items"
+    /** Route: Risk Assessments. */
+    const val ROUTE_RISK_ASSESSMENTS = "risk_assessments"
+    /** Route: Permanency Plans. */
+    const val ROUTE_PERMANENCY_PLANS = "permanency_plans"
+    /** Route: Case Activities. */
+    const val ROUTE_CASE_ACTIVITIES = "case_activities"
+    /** Route: Case Deadlines. */
+    const val ROUTE_CASE_DEADLINES = "case_deadlines"
+    /** Route: Case Approvals. */
+    const val ROUTE_CASE_APPROVALS = "case_approvals"
+    /** Route: Case Urgency Flags. */
+    const val ROUTE_CASE_URGENCY_FLAGS = "case_urgency_flags"
+    /** Route: Critical Dates. */
+    const val ROUTE_CRITICAL_DATES = "critical_dates"
+    /** Route: Workload. */
+    const val ROUTE_WORKLOAD = "workload"
+    /** Route: Worker Messages. */
+    const val ROUTE_WORKER_MESSAGES = "worker_messages"
+    /** Route: Placement Compatibility. */
+    const val ROUTE_PLACEMENT_COMPATIBILITY = "placement_compatibility"
+    /** Route: Dashboard Preferences. */
+    const val ROUTE_DASHBOARD_PREFERENCES = "dashboard_preferences"
+    /** Route: Vaccination Records. */
+    const val ROUTE_VACCINATION_RECORDS = "vaccination_records"
+    /** Route: Behavior Assessments. */
+    const val ROUTE_BEHAVIOR_ASSESSMENTS = "behavior_assessments"
+    /** Route: Welfare Incidents. */
+    const val ROUTE_WELFARE_INCIDENTS = "welfare_incidents"
+    /** Route: Siblings. */
+    const val ROUTE_SIBLINGS = "siblings"
+    /** Route: Consent Records. */
+    const val ROUTE_CONSENT_RECORDS = "consent_records"
+    /** Route: Investigations. */
+    const val ROUTE_INVESTIGATIONS = "investigations"
+    /** Route: Service Plans. */
+    const val ROUTE_SERVICE_PLANS = "service_plans"
+    /** Route: Visitation Schedules. */
+    const val ROUTE_VISITATION_SCHEDULES = "visitation_schedules"
+    /** Route: Referrals. */
+    const val ROUTE_REFERRALS = "referrals"
+    /** Route: Aftercare Plans. */
+    const val ROUTE_AFTERCARE_PLANS = "aftercare_plans"
+    /** Route: Child Services Referrals. */
+    const val ROUTE_CHILD_SERVICES_REFERRALS = "child_services_referrals"
+    /** Route: Organization Partners. */
+    const val ROUTE_ORG_PARTNERS = "org_partners"
+    /** Route: Service Providers. */
+    const val ROUTE_SERVICE_PROVIDERS = "service_providers"
+    /** Route: Donor Funding. */
+    const val ROUTE_DONOR_FUNDING = "donor_funding"
+    /** Route: Budget Allocations. */
+    const val ROUTE_BUDGET_ALLOCATIONS = "budget_allocations"
+    /** Route: Counties. */
+    const val ROUTE_COUNTIES = "counties"
+    /** Route: County Offices. */
+    const val ROUTE_COUNTY_OFFICES = "county_offices"
+    /** Route: Placement Disruptions. */
+    const val ROUTE_PLACEMENT_DISRUPTIONS = "placement_disruptions"
+    /** Route: Foster Training. */
+    const val ROUTE_FOSTER_TRAINING = "foster_training"
+    /** Route: Reports Generated. */
+    const val ROUTE_REPORTS_GENERATED = "reports_generated"
+    /** Route: Emergency Events. */
+    const val ROUTE_EMERGENCY_EVENTS = "emergency_events"
+    /** Route: Document Storage. */
+    const val ROUTE_DOCUMENT_STORAGE = "document_storage"
+    /** Route: Inter-county Transfers. */
+    const val ROUTE_INTER_COUNTY_TRANSFERS = "inter_county_transfers"
+    /** Route: Worker Locations. */
+    const val ROUTE_WORKER_LOCATIONS = "worker_locations"
+    /** Route: Case Inbox. */
+    const val ROUTE_CASE_INBOX = "case_inbox"
+    /** Route: Recent Activity. */
+    const val ROUTE_RECENT_ACTIVITY = "recent_activity"
+    /** Route: Shortcuts. */
+    const val ROUTE_SHORTCUTS = "shortcuts"
+    /** Route: Permissions. */
+    const val ROUTE_PERMISSIONS = "permissions"
+    /** Route: Help/About. */
+    const val ROUTE_HELP_ABOUT = "help_about"
+    /** Route: SOS Emergency. */
+    const val ROUTE_SOS_EMERGENCY = "sos_emergency"
 }
 
 /**
- * Routes for the application navigation.
- *
- * @param routeVal The string representation of the route.
- */
-private enum class AppRoute(val routeVal: String) {
-    DASHBOARD(MainActivityConstants.DASHBOARD_ROUTE),
-    CHILDREN_LIST(MainActivityConstants.CHILDREN_LIST_ROUTE),
-    FAMILIES(MainActivityConstants.FAMILIES_ROUTE),
-    ADOPTION_APPS(MainActivityConstants.ADOPTION_APPS_ROUTE),
-    HOME_STUDIES(MainActivityConstants.HOME_STUDIES_ROUTE),
-    DOCUMENTS(MainActivityConstants.DOCUMENTS_ROUTE),
-    PLACEMENTS(MainActivityConstants.PLACEMENTS_ROUTE),
-    REPORTS(MainActivityConstants.REPORTS_ROUTE),
-    EDUCATION(MainActivityConstants.EDUCATION_ROUTE),
-    MEDICAL(MainActivityConstants.MEDICAL_ROUTE),
-    FINANCE(MainActivityConstants.FINANCE_ROUTE),
-    SETTINGS(MainActivityConstants.SETTINGS_ROUTE),
-    MAP(MainActivityConstants.MAP_ROUTE),
-    BACKGROUND_CHECKS(MainActivityConstants.BACKGROUND_CHECKS_ROUTE),
-    USER_MANAGEMENT(MainActivityConstants.USER_MANAGEMENT_ROUTE),
-    NOTIFICATIONS(MainActivityConstants.NOTIFICATIONS_ROUTE),
-    AUDIT_LOGS(MainActivityConstants.AUDIT_LOGS_ROUTE),
-    SEARCH(MainActivityConstants.SEARCH_ROUTE),
-    CAMERA(MainActivityConstants.CAMERA_ROUTE),
-    USER_ROLES(MainActivityConstants.USER_ROLES_ROUTE),
-    ANALYTICS(MainActivityConstants.ANALYTICS_ROUTE),
-    GUARDIANS(MainActivityConstants.GUARDIANS_ROUTE),
-    COURT_CASES(MainActivityConstants.COURT_CASES_ROUTE),
-    FOSTER_TASKS(MainActivityConstants.FOSTER_TASKS_ROUTE),
-    FOSTER_MATCHES(MainActivityConstants.FOSTER_MATCHES_ROUTE),
-    TASKS(MainActivityConstants.TASKS_ROUTE),
-    ACTION_ITEMS(MainActivityConstants.ACTION_ITEMS_ROUTE),
-    RISK_ASSESSMENTS(MainActivityConstants.RISK_ASSESSMENTS_ROUTE),
-    PERMANENCY_PLANS(MainActivityConstants.PERMANENCY_PLANS_ROUTE),
-    CASE_ACTIVITIES(MainActivityConstants.CASE_ACTIVITIES_ROUTE),
-    CASE_DEADLINES(MainActivityConstants.CASE_DEADLINES_ROUTE),
-    CASE_APPROVALS(MainActivityConstants.CASE_APPROVALS_ROUTE),
-    CASE_URGENCY_FLAGS(MainActivityConstants.CASE_URGENCY_FLAGS_ROUTE),
-    CRITICAL_DATES(MainActivityConstants.CRITICAL_DATES_ROUTE),
-    WORKLOAD(MainActivityConstants.WORKLOAD_ROUTE),
-    WORKER_MESSAGES(MainActivityConstants.WORKER_MESSAGES_ROUTE),
-    PLACEMENT_COMPATIBILITY(MainActivityConstants.PLACEMENT_COMPATIBILITY_ROUTE),
-    DASHBOARD_PREFERENCES(MainActivityConstants.DASHBOARD_PREFERENCES_ROUTE),
-    VACCINATION_RECORDS(MainActivityConstants.VACCINATION_RECORDS_ROUTE),
-    BEHAVIOR_ASSESSMENTS(MainActivityConstants.BEHAVIOR_ASSESSMENTS_ROUTE),
-    WELFARE_INCIDENTS(MainActivityConstants.WELFARE_INCIDENTS_ROUTE),
-    SIBLINGS(MainActivityConstants.SIBLINGS_ROUTE),
-    CONSENT_RECORDS(MainActivityConstants.CONSENT_RECORDS_ROUTE),
-    INVESTIGATIONS(MainActivityConstants.INVESTIGATIONS_ROUTE),
-    SERVICE_PLANS(MainActivityConstants.SERVICE_PLANS_ROUTE),
-    VISITATION_SCHEDULES(MainActivityConstants.VISITATION_SCHEDULES_ROUTE),
-    REFERRALS(MainActivityConstants.REFERRALS_ROUTE),
-    AFTERCARE_PLANS(MainActivityConstants.AFTERCARE_PLANS_ROUTE),
-    CHILD_SERVICES_REFERRALS(MainActivityConstants.CHILD_SERVICES_REFERRALS_ROUTE),
-    ORG_PARTNERS(MainActivityConstants.ORG_PARTNERS_ROUTE),
-    SERVICE_PROVIDERS(MainActivityConstants.SERVICE_PROVIDERS_ROUTE),
-    DONOR_FUNDING(MainActivityConstants.DONOR_FUNDING_ROUTE),
-    BUDGET_ALLOCATIONS(MainActivityConstants.BUDGET_ALLOCATIONS_ROUTE),
-    COUNTIES(MainActivityConstants.COUNTIES_ROUTE),
-    COUNTY_OFFICES(MainActivityConstants.COUNTY_OFFICES_ROUTE),
-    PLACEMENT_DISRUPTIONS(MainActivityConstants.PLACEMENT_DISRUPTIONS_ROUTE),
-    FOSTER_TRAINING(MainActivityConstants.FOSTER_TRAINING_ROUTE),
-    REPORTS_GENERATED(MainActivityConstants.REPORTS_GENERATED_ROUTE),
-    EMERGENCY_EVENTS(MainActivityConstants.EMERGENCY_EVENTS_ROUTE),
-    DOCUMENT_STORAGE(MainActivityConstants.DOCUMENT_STORAGE_ROUTE),
-    INTER_COUNTY_TRANSFERS(MainActivityConstants.INTER_COUNTY_TRANSFERS_ROUTE),
-    WORKER_LOCATIONS(MainActivityConstants.WORKER_LOCATIONS_ROUTE),
-    CASE_INBOX(MainActivityConstants.CASE_INBOX_ROUTE),
-    RECENT_ACTIVITY(MainActivityConstants.RECENT_ACTIVITY_ROUTE),
-    SHORTCUTS(MainActivityConstants.SHORTCUTS_ROUTE),
-    PERMISSIONS(MainActivityConstants.PERMISSIONS_ROUTE),
-    HELP_ABOUT(MainActivityConstants.HELP_ABOUT_ROUTE),
-    SOS_EMERGENCY(MainActivityConstants.SOS_EMERGENCY_ROUTE)
-}
-
-/**
- * Main activity of the application, handling navigation, state management, and main UI shell.
+ * Main activity of the application.
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     /**
-     * Database instance for the application, lazily injected via Hilt.
+     * Database instance.
      */
     @Inject
     lateinit var database: dagger.Lazy<AppDatabase>
 
     /**
-     * Called when the activity is starting.
+     * Entry point of the activity.
      *
-     * @param savedInstanceState If the activity is being re-initialized after
-     *     previously being shut down then this Bundle contains the data it most
-     *     recently supplied.
+     * @param savedInstanceState The saved state of the activity.
      */
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -242,12 +337,12 @@ class MainActivity : ComponentActivity() {
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
-                    val observer = LifecycleEventObserver { source: Any?, event: Lifecycle.Event -> // source: The lifecycle owner, event: The event
+                    val observer = LifecycleEventObserver { _: Any, event: Lifecycle.Event ->
                         if (event == Lifecycle.Event.ON_RESUME) {
-                            val lastSynced = context.getSharedPreferences(MainActivityConstants.SYNC_PREFS, 0)
-                                .getLong(MainActivityConstants.LAST_SYNCED_KEY, 0L)
+                            val lastSynced = context.getSharedPreferences(context.getString(R.string.prefs_sync), 0)
+                                .getLong(context.getString(R.string.key_last_synced_at), 0L)
                             val now = System.currentTimeMillis() / 1000
-                            if ((now - lastSynced) > MainActivityConstants.SYNC_THRESHOLD_SECONDS) {
+                            if ((now - lastSynced) > (15 * 60)) {
                                 syncViewModel.triggerSync()
                             }
                         }
@@ -284,7 +379,7 @@ class MainActivity : ComponentActivity() {
 
                 val imagePickerLauncher = rememberLauncherForActivityResult(
                     contract = PickVisualMedia()
-                ) { uri -> // uri: The selected image URI
+                ) { uri: Uri? -> 
                     profilePhotoUri = uri
                 }
 
@@ -298,7 +393,7 @@ class MainActivity : ComponentActivity() {
                             username = currentUser
                         )
                     } else {
-                        Crossfade(targetState = onboardingStep, label = MainActivityConstants.ONBOARDING_TRANSITION_LABEL) { step: Int -> // step: onboarding step index
+                        Crossfade(targetState = onboardingStep, label = stringResource(R.string.label_onboarding_transition)) { step: Int ->
                             when (step) {
                                 0 -> WelcomeScreen { onboardingStep = 1 }
                                 1 -> ModernLandingPage(
@@ -309,7 +404,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 2 -> TermsAndConditionsScreen(onAccept = { onboardingStep = 3 })
                                 3 -> LoginScreen(
-                                        onLoginSuccess = { user: com.example.adoption_and_childcare.data.db.entities.UserEntity -> // user: the logged-in user entity
+                                        onLoginSuccess = { user ->
                                             currentUser = user.username
                                             currentRole = user.role
                                             isLoadingAfterLogin = true
@@ -321,8 +416,8 @@ class MainActivity : ComponentActivity() {
                                         successMessage = registrationSuccessMessage
                                     )
                                 4 -> RegisterScreen(
-                                        onRegisterSuccess = { msg: String -> // msg: registration success message
-                                            registrationSuccessMessage = msg
+                                        onRegisterSuccess = { message: String ->
+                                            registrationSuccessMessage = message
                                             onboardingStep = 3
                                         },
                                         onNavigateToLogin = {
@@ -358,26 +453,26 @@ class MainActivity : ComponentActivity() {
                                         .verticalScroll(rememberScrollState())
                                         .padding(bottom = 16.dp)
                                 ) {
-                                if (canAccessRoute(AppRoute.CHILDREN_LIST.routeVal, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                if (canAccessRoute(MainActivityConstants.ROUTE_CHILDREN_LIST, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
                                         NavigationDrawerItem(
                                             icon = { Icon(Icons.Default.ChildCare, contentDescription = null) },
                                             label = { Text(stringResource(R.string.module_children)) },
-                                            selected = currentRoute(navController) == AppRoute.CHILDREN_LIST.routeVal,
+                                            selected = currentRoute(navController) == MainActivityConstants.ROUTE_CHILDREN_LIST,
                                             onClick = {
-                                                navController.navigate(AppRoute.CHILDREN_LIST.routeVal)
+                                                navController.navigate(MainActivityConstants.ROUTE_CHILDREN_LIST)
                                                 scope.launch { drawerState.close() }
                                             },
                                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                         )
                                     }
                                     
-                                    if (canAccessRoute(AppRoute.FAMILIES.routeVal, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                    if (canAccessRoute(MainActivityConstants.ROUTE_FAMILIES, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
                                         NavigationDrawerItem(
                                             icon = { Icon(Icons.Default.FamilyRestroom, contentDescription = null) },
                                             label = { Text(stringResource(R.string.module_families)) },
-                                            selected = currentRoute(navController) == AppRoute.FAMILIES.routeVal,
+                                            selected = currentRoute(navController) == MainActivityConstants.ROUTE_FAMILIES,
                                             onClick = {
-                                                navController.navigate(AppRoute.FAMILIES.routeVal)
+                                                navController.navigate(MainActivityConstants.ROUTE_FAMILIES)
                                                 scope.launch { drawerState.close() }
                                             },
                                             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -394,26 +489,26 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier.padding(horizontal = 28.dp, vertical = 4.dp)
                                         )
                                         
-                                        if (canAccessRoute(AppRoute.USER_MANAGEMENT.routeVal, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                        if (canAccessRoute(MainActivityConstants.ROUTE_USER_MANAGEMENT, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
                                             NavigationDrawerItem(
                                                 icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) },
                                                 label = { Text(stringResource(R.string.user_management_title)) },
-                                                selected = currentRoute(navController) == AppRoute.USER_MANAGEMENT.routeVal,
+                                                selected = currentRoute(navController) == MainActivityConstants.ROUTE_USER_MANAGEMENT,
                                                 onClick = {
-                                                    navController.navigate(AppRoute.USER_MANAGEMENT.routeVal)
+                                                    navController.navigate(MainActivityConstants.ROUTE_USER_MANAGEMENT)
                                                     scope.launch { drawerState.close() }
                                                 },
                                                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                             )
                                         }
                                         
-                                        if (canAccessRoute(AppRoute.USER_ROLES.routeVal, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
+                                        if (canAccessRoute(MainActivityConstants.ROUTE_USER_ROLES, currentRole, adminRoleVal, supervisorRoleVal, caseworkerRoleVal, socialWorkerRoleVal, guardianRoleVal)) {
                                             NavigationDrawerItem(
                                                 icon = { Icon(Icons.Default.Badge, contentDescription = null) },
                                                 label = { Text(stringResource(R.string.dashboard_label_user_roles)) },
-                                                selected = currentRoute(navController) == AppRoute.USER_ROLES.routeVal,
+                                                selected = currentRoute(navController) == MainActivityConstants.ROUTE_USER_ROLES,
                                                 onClick = {
-                                                    navController.navigate(AppRoute.USER_ROLES.routeVal)
+                                                    navController.navigate(MainActivityConstants.ROUTE_USER_ROLES)
                                                     scope.launch { drawerState.close() }
                                                 },
                                                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -424,9 +519,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                                         label = { Text(stringResource(R.string.action_settings)) },
-                                        selected = currentRoute(navController) == AppRoute.SETTINGS.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_SETTINGS,
                                         onClick = {
-                                            navController.navigate(AppRoute.SETTINGS.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_SETTINGS)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -437,9 +532,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.Inbox, contentDescription = null) },
                                         label = { Text(stringResource(R.string.title_case_inbox)) },
-                                        selected = currentRoute(navController) == AppRoute.CASE_INBOX.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_CASE_INBOX,
                                         onClick = {
-                                            navController.navigate(AppRoute.CASE_INBOX.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_CASE_INBOX)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -448,9 +543,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.History, contentDescription = null) },
                                         label = { Text(stringResource(R.string.title_recent_activity)) },
-                                        selected = currentRoute(navController) == AppRoute.RECENT_ACTIVITY.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_RECENT_ACTIVITY,
                                         onClick = {
-                                            navController.navigate(AppRoute.RECENT_ACTIVITY.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_RECENT_ACTIVITY)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -459,9 +554,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.PushPin, contentDescription = null) },
                                         label = { Text(stringResource(R.string.title_shortcuts)) },
-                                        selected = currentRoute(navController) == AppRoute.SHORTCUTS.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_SHORTCUTS,
                                         onClick = {
-                                            navController.navigate(AppRoute.SHORTCUTS.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_SHORTCUTS)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -470,9 +565,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.Lock, contentDescription = null) },
                                         label = { Text(stringResource(R.string.title_permissions)) },
-                                        selected = currentRoute(navController) == AppRoute.PERMISSIONS.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_PERMISSIONS,
                                         onClick = {
-                                            navController.navigate(AppRoute.PERMISSIONS.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_PERMISSIONS)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -481,9 +576,9 @@ class MainActivity : ComponentActivity() {
                                     NavigationDrawerItem(
                                         icon = { Icon(Icons.Default.Info, contentDescription = null) },
                                         label = { Text(stringResource(R.string.help_about_label)) },
-                                        selected = currentRoute(navController) == AppRoute.HELP_ABOUT.routeVal,
+                                        selected = currentRoute(navController) == MainActivityConstants.ROUTE_HELP_ABOUT,
                                         onClick = {
-                                            navController.navigate(AppRoute.HELP_ABOUT.routeVal)
+                                            navController.navigate(MainActivityConstants.ROUTE_HELP_ABOUT)
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -515,11 +610,11 @@ class MainActivity : ComponentActivity() {
                                     GreenHeader(
                                         profilePhotoUri = profilePhotoUri,
                                         searchQuery = headerSearchQuery,
-                                        onSearchQueryChange = { query: String -> // query: the updated search text
+                                        onSearchQueryChange = { query: String ->
                                             headerSearchQuery = query
                                             val currentPath = navController.currentDestination?.route
-                                            if (query.isNotEmpty() && currentPath != AppRoute.SEARCH.routeVal) {
-                                                navController.navigate(AppRoute.SEARCH.routeVal)
+                                            if (query.isNotEmpty() && currentPath != MainActivityConstants.ROUTE_SEARCH) {
+                                                navController.navigate(MainActivityConstants.ROUTE_SEARCH)
                                             }
                                         },
                                         onImagePicker = { 
@@ -541,7 +636,7 @@ class MainActivity : ComponentActivity() {
                                     sosViewModel = sosViewModel
                                 )
                             }
-                        ) { scaffoldPadding: PaddingValues -> // scaffoldPadding: padding values from Scaffold
+                        ) { scaffoldPadding: PaddingValues ->
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -550,7 +645,7 @@ class MainActivity : ComponentActivity() {
                                 AppNavHost(
                                     navController = navController,
                                     headerSearchQuery = headerSearchQuery,
-                                    onSearchQueryChange = { updatedQuery: String -> // updatedQuery: the new search query
+                                    onSearchQueryChange = { updatedQuery: String ->
                                         headerSearchQuery = updatedQuery 
                                     },
                                     userRole = currentRole,
@@ -573,8 +668,6 @@ class MainActivity : ComponentActivity() {
 /**
  * Main navigation host for the application.
  *
- * Suppressed LongMethod and LongParameterList as this defines the core app navigation structure.
- *
  * @param navController The navigation controller instance.
  * @param headerSearchQuery The current search query from the header.
  * @param onSearchQueryChange Callback when the search query changes.
@@ -587,7 +680,6 @@ class MainActivity : ComponentActivity() {
  * @param modifier The modifier to be applied to the NavHost.
  */
 @Composable
-@Suppress("LongMethod", "LongParameterList")
 private fun AppNavHost(
     navController: NavHostController,
     headerSearchQuery: String,
@@ -603,146 +695,145 @@ private fun AppNavHost(
     val navMedicalDetailTemplate = stringResource(R.string.nav_medical_detail)
     val navMedicalDetailRoute = stringResource(R.string.nav_medical_detail_route)
     val deniedMsgTemplate = stringResource(R.string.error_access_denied)
+    val logTag = stringResource(R.string.tag_main_activity)
 
-    NavHost(navController = navController, startDestination = AppRoute.DASHBOARD.routeVal, modifier = modifier) {
-        composable(AppRoute.DASHBOARD.routeVal) {
-            val currentDest = navController.currentDestination?.route
-            DashboardScreenModern(
-                userRole = userRole,
-                onNavigate = { destination: String -> // destination: target route string
-                    if (currentDest != destination) {
-                        if (canAccessRoute(destination, userRole, adminRole, supervisorRole, caseworkerRole, socialWorkerRole, guardianRole)) {
-                            navController.navigate(destination) {
-                                popUpTo(AppRoute.DASHBOARD.routeVal) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        } else {
-                            val deniedMsg = String.format(deniedMsgTemplate, destination, userRole)
-                            Log.d(MainActivityConstants.LOG_TAG, deniedMsg)
-                        }
-                    }
-                }
-            )
-        }
-        composable(AppRoute.CHILDREN_LIST.routeVal) { ChildrenListScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.FAMILIES.routeVal) { FamiliesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.ADOPTION_APPS.routeVal) { AdoptionApplicationsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.HOME_STUDIES.routeVal) { HomeStudiesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.DOCUMENTS.routeVal) { DocumentsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.PLACEMENTS.routeVal) { PlacementsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.REPORTS.routeVal) { CaseReportsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.EDUCATION.routeVal) { EducationScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.MEDICAL.routeVal) { 
+    NavHost(navController = navController, startDestination = MainActivityConstants.ROUTE_DASHBOARD, modifier = modifier) {
+        composable(MainActivityConstants.ROUTE_DASHBOARD) { _: NavBackStackEntry ->
+                                    val currentDest = navController.currentDestination?.route
+                                    DashboardScreenModern(
+                                        userRole = userRole,
+                                        onNavigate = { destination: String ->
+                                            if (currentDest != destination) {
+                                                if (canAccessRoute(destination, userRole, adminRole, supervisorRole, caseworkerRole, socialWorkerRole, guardianRole)) {
+                                                    navController.navigate(destination) {
+                                                        popUpTo(MainActivityConstants.ROUTE_DASHBOARD) { saveState = true }
+                                                        launchSingleTop = true
+                                                        restoreState = true
+                                                    }
+                                                } else {
+                                                    val deniedMsg = String.format(deniedMsgTemplate, destination, userRole)
+                                                    Log.d(logTag, deniedMsg)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+        composable(MainActivityConstants.ROUTE_CHILDREN_LIST) { _: NavBackStackEntry -> ChildrenListScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_FAMILIES) { _: NavBackStackEntry -> FamiliesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_ADOPTION_APPS) { _: NavBackStackEntry -> AdoptionApplicationsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_HOME_STUDIES) { _: NavBackStackEntry -> HomeStudiesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_DOCUMENTS) { _: NavBackStackEntry -> DocumentsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_PLACEMENTS) { _: NavBackStackEntry -> PlacementsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_REPORTS) { _: NavBackStackEntry -> CaseReportsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_EDUCATION) { _: NavBackStackEntry -> EducationScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_MEDICAL) { _: NavBackStackEntry -> 
             val medicalDetailPathPattern = stringResource(R.string.nav_medical_detail_path)
             val itemsCountPrefix = stringResource(R.string.dashboard_items_count).take(3)
             MedicalScreen(
                 onBack = { navController.popBackStack() },
-                onMedicalRecordClick = { id: Int -> // id: medical record unique identifier
+                onMedicalRecordClick = { id: Int ->
                     val medicalDetailPath = if (navMedicalDetailTemplate.contains(itemsCountPrefix)) {
                         String.format(navMedicalDetailTemplate, id)
                     } else {
-                        String.format(medicalDetailPathPattern, AppRoute.MEDICAL.routeVal, id)
+                        String.format(medicalDetailPathPattern, MainActivityConstants.ROUTE_MEDICAL, id)
                     }
                     navController.navigate(medicalDetailPath) 
                 }
             ) 
         }
-        composable(navMedicalDetailRoute) { navBackStackEntry: androidx.navigation.NavBackStackEntry -> // navBackStackEntry: current navigation state
-            val recordId = navBackStackEntry.arguments?.getString("recordId")?.toIntOrNull() ?: 0
+        composable(navMedicalDetailRoute) { entry: NavBackStackEntry ->
+            val recordId = entry.arguments?.getString("recordId")?.toIntOrNull() ?: 0
             MedicalDetailScreen(
                 recordId = recordId,
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(AppRoute.FINANCE.routeVal) { FinanceScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SETTINGS.routeVal) {
+        composable(MainActivityConstants.ROUTE_FINANCE) { _: NavBackStackEntry -> FinanceScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SETTINGS) { _: NavBackStackEntry ->
             SettingsScreen(
                 onBack = {
-                    navController.navigate(AppRoute.DASHBOARD.routeVal) {
-                        popUpTo(AppRoute.DASHBOARD.routeVal) { inclusive = true }
+                    navController.navigate(MainActivityConstants.ROUTE_DASHBOARD) {
+                        popUpTo(MainActivityConstants.ROUTE_DASHBOARD) { inclusive = true }
                     }
                 }
             )
         }
-        composable(AppRoute.MAP.routeVal) { MapScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SOS_EMERGENCY.routeVal) { SOSScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.BACKGROUND_CHECKS.routeVal) { BackgroundChecksScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.USER_MANAGEMENT.routeVal) { UserManagementScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.NOTIFICATIONS.routeVal) { NotificationsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.AUDIT_LOGS.routeVal) { AuditLogsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SEARCH.routeVal) {
+        composable(MainActivityConstants.ROUTE_MAP) { _: NavBackStackEntry -> MapScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SOS_EMERGENCY) { _: NavBackStackEntry -> SOSScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_BACKGROUND_CHECKS) { _: NavBackStackEntry -> BackgroundChecksScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_USER_MANAGEMENT) { _: NavBackStackEntry -> UserManagementScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_NOTIFICATIONS) { _: NavBackStackEntry -> NotificationsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_AUDIT_LOGS) { _: NavBackStackEntry -> AuditLogsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SEARCH) { _: NavBackStackEntry ->
             SearchScreen(
                 query = headerSearchQuery,
                 onQueryChange = onSearchQueryChange,
                 onBack = { navController.popBackStack() }
             )
         }
-        composable(AppRoute.CAMERA.routeVal) { CameraScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.USER_ROLES.routeVal) { UserRolesScreen(onBack = { navController.popBackStack() }) }
-        // Add additional screens to navigation
-        composable(AppRoute.ANALYTICS.routeVal) { AnalyticsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.GUARDIANS.routeVal) { GuardiansScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.COURT_CASES.routeVal) { CourtCasesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.FOSTER_TASKS.routeVal) { FosterTasksScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.FOSTER_MATCHES.routeVal) { FosterMatchesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.TASKS.routeVal) { TasksScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.ACTION_ITEMS.routeVal) { ActionItemsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.RISK_ASSESSMENTS.routeVal) { RiskAssessmentCenterScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.PERMANENCY_PLANS.routeVal) { PermanencyPlansScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CASE_ACTIVITIES.routeVal) { CaseActivitiesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CASE_DEADLINES.routeVal) { CaseDeadlinesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CASE_APPROVALS.routeVal) { CaseApprovalsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CASE_URGENCY_FLAGS.routeVal) { CaseUrgencyFlagsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CRITICAL_DATES.routeVal) { CriticalDatesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.WORKLOAD.routeVal) { WorkloadDashboardScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.WORKER_MESSAGES.routeVal) { WorkerMessagesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.PLACEMENT_COMPATIBILITY.routeVal) { PlacementCompatibilityEngineScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.DASHBOARD_PREFERENCES.routeVal) { DashboardPreferencesScreen(onBack = { navController.popBackStack() }) }
-        // New screens
-        composable(AppRoute.VACCINATION_RECORDS.routeVal) { VaccinationRecordsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.BEHAVIOR_ASSESSMENTS.routeVal) { BehaviorAssessmentsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.WELFARE_INCIDENTS.routeVal) { WelfareIncidentsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SIBLINGS.routeVal) { SiblingsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CONSENT_RECORDS.routeVal) { ConsentRecordsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.INVESTIGATIONS.routeVal) { InvestigationsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SERVICE_PLANS.routeVal) { ServicePlansScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.VISITATION_SCHEDULES.routeVal) { VisitationSchedulesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.REFERRALS.routeVal) { ReferralsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.AFTERCARE_PLANS.routeVal) { AftercarePlansScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CHILD_SERVICES_REFERRALS.routeVal) { ChildServicesReferralsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.ORG_PARTNERS.routeVal) { OrganizationPartnersScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.SERVICE_PROVIDERS.routeVal) { ServiceProvidersScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.DONOR_FUNDING.routeVal) { DonorFundingScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.BUDGET_ALLOCATIONS.routeVal) { BudgetAllocationsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.COUNTIES.routeVal) { CountiesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.COUNTY_OFFICES.routeVal) { CountyOfficesScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.PLACEMENT_DISRUPTIONS.routeVal) { PlacementDisruptionsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.FOSTER_TRAINING.routeVal) { FosterFamilyTrainingScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.REPORTS_GENERATED.routeVal) { ReportsGeneratedScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.EMERGENCY_EVENTS.routeVal) { EmergencyEventsScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.DOCUMENT_STORAGE.routeVal) { GlobalDocumentStorageScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.INTER_COUNTY_TRANSFERS.routeVal) { InterCountyTransfersScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.WORKER_LOCATIONS.routeVal) { WorkerLocationScreen(onBack = { navController.popBackStack() }) }
-        composable(AppRoute.CASE_INBOX.routeVal) { CaseInboxScreen() }
-        composable(AppRoute.RECENT_ACTIVITY.routeVal) { RecentActivityScreen() }
-        composable(AppRoute.SHORTCUTS.routeVal) { ShortcutsScreen() }
-        composable(AppRoute.PERMISSIONS.routeVal) { AppPermissionsScreen() }
-        composable(AppRoute.HELP_ABOUT.routeVal) { HelpAboutScreen() }
+        composable(MainActivityConstants.ROUTE_CAMERA) { _: NavBackStackEntry -> CameraScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_USER_ROLES) { _: NavBackStackEntry -> UserRolesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_ANALYTICS) { _: NavBackStackEntry -> AnalyticsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_GUARDIANS) { _: NavBackStackEntry -> GuardiansScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_COURT_CASES) { _: NavBackStackEntry -> CourtCasesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_FOSTER_TASKS) { _: NavBackStackEntry -> FosterTasksScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_FOSTER_MATCHES) { _: NavBackStackEntry -> FosterMatchesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_TASKS) { _: NavBackStackEntry -> TasksScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_ACTION_ITEMS) { _: NavBackStackEntry -> ActionItemsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_RISK_ASSESSMENTS) { _: NavBackStackEntry -> RiskAssessmentCenterScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_PERMANENCY_PLANS) { _: NavBackStackEntry -> PermanencyPlansScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CASE_ACTIVITIES) { _: NavBackStackEntry -> CaseActivitiesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CASE_DEADLINES) { _: NavBackStackEntry -> CaseDeadlinesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CASE_APPROVALS) { _: NavBackStackEntry -> CaseApprovalsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CASE_URGENCY_FLAGS) { _: NavBackStackEntry -> CaseUrgencyFlagsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CRITICAL_DATES) { _: NavBackStackEntry -> CriticalDatesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_WORKLOAD) { _: NavBackStackEntry -> WorkloadDashboardScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_WORKER_MESSAGES) { _: NavBackStackEntry -> WorkerMessagesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_PLACEMENT_COMPATIBILITY) { _: NavBackStackEntry -> PlacementCompatibilityEngineScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_DASHBOARD_PREFERENCES) { _: NavBackStackEntry -> DashboardPreferencesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_VACCINATION_RECORDS) { _: NavBackStackEntry -> VaccinationRecordsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_BEHAVIOR_ASSESSMENTS) { _: NavBackStackEntry -> BehaviorAssessmentsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_WELFARE_INCIDENTS) { _: NavBackStackEntry -> WelfareIncidentsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SIBLINGS) { _: NavBackStackEntry -> SiblingsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CONSENT_RECORDS) { _: NavBackStackEntry -> ConsentRecordsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_INVESTIGATIONS) { _: NavBackStackEntry -> InvestigationsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SERVICE_PLANS) { _: NavBackStackEntry -> ServicePlansScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_VISITATION_SCHEDULES) { _: NavBackStackEntry -> VisitationSchedulesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_REFERRALS) { _: NavBackStackEntry -> ReferralsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_AFTERCARE_PLANS) { _: NavBackStackEntry -> AftercarePlansScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CHILD_SERVICES_REFERRALS) { _: NavBackStackEntry -> ChildServicesReferralsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_ORG_PARTNERS) { _: NavBackStackEntry -> OrganizationPartnersScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_SERVICE_PROVIDERS) { _: NavBackStackEntry -> ServiceProvidersScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_DONOR_FUNDING) { _: NavBackStackEntry -> DonorFundingScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_BUDGET_ALLOCATIONS) { _: NavBackStackEntry -> BudgetAllocationsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_COUNTIES) { _: NavBackStackEntry -> CountiesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_COUNTY_OFFICES) { _: NavBackStackEntry -> CountyOfficesScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_PLACEMENT_DISRUPTIONS) { _: NavBackStackEntry -> PlacementDisruptionsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_FOSTER_TRAINING) { _: NavBackStackEntry -> FosterFamilyTrainingScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_REPORTS_GENERATED) { _: NavBackStackEntry -> ReportsGeneratedScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_EMERGENCY_EVENTS) { _: NavBackStackEntry -> EmergencyEventsScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_DOCUMENT_STORAGE) { _: NavBackStackEntry -> GlobalDocumentStorageScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_INTER_COUNTY_TRANSFERS) { _: NavBackStackEntry -> InterCountyTransfersScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_WORKER_LOCATIONS) { _: NavBackStackEntry -> WorkerLocationScreen(onBack = { navController.popBackStack() }) }
+        composable(MainActivityConstants.ROUTE_CASE_INBOX) { _: NavBackStackEntry -> CaseInboxScreen() }
+        composable(MainActivityConstants.ROUTE_RECENT_ACTIVITY) { _: NavBackStackEntry -> RecentActivityScreen() }
+        composable(MainActivityConstants.ROUTE_SHORTCUTS) { _: NavBackStackEntry -> ShortcutsScreen() }
+        composable(MainActivityConstants.ROUTE_PERMISSIONS) { _: NavBackStackEntry -> AppPermissionsScreen() }
+        composable(MainActivityConstants.ROUTE_HELP_ABOUT) { _: NavBackStackEntry -> HelpAboutScreen() }
     }
 }
 
 /**
- * Check if current user can access a specific route based on their role.
+ * Check if current user can access a specific route.
  *
- * @param route The destination route to check.
+ * @param route The destination route string.
  * @param userRole The role of the current user.
- * @param adminRole String for admin role.
- * @param supervisorRole String for supervisor role.
- * @param caseworkerRole String for caseworker role.
- * @param socialWorkerRole String for social worker role.
- * @param guardianRole String for guardian role.
- * @return True if the user has permission to access the route.
+ * @param adminRole String value for admin role.
+ * @param supervisorRole String value for supervisor role.
+ * @param caseworkerRole String value for caseworker role.
+ * @param socialWorkerRole String value for social worker role.
+ * @param guardianRole String value for guardian role.
+ * @return True if access is granted, false otherwise.
  */
 internal fun canAccessRoute(
     route: String,
@@ -754,51 +845,51 @@ internal fun canAccessRoute(
     guardianRole: String
 ): Boolean {
     val commonRoutes = listOf(
-        MainActivityConstants.DASHBOARD_ROUTE,
-        MainActivityConstants.SETTINGS_ROUTE,
-        MainActivityConstants.NOTIFICATIONS_ROUTE,
-        MainActivityConstants.SEARCH_ROUTE,
-        MainActivityConstants.CAMERA_ROUTE,
-        MainActivityConstants.CASE_INBOX_ROUTE,
-        MainActivityConstants.RECENT_ACTIVITY_ROUTE,
-        MainActivityConstants.SHORTCUTS_ROUTE,
-        MainActivityConstants.PERMISSIONS_ROUTE,
-        MainActivityConstants.HELP_ABOUT_ROUTE
+        MainActivityConstants.ROUTE_DASHBOARD,
+        MainActivityConstants.ROUTE_SETTINGS,
+        MainActivityConstants.ROUTE_NOTIFICATIONS,
+        MainActivityConstants.ROUTE_SEARCH,
+        MainActivityConstants.ROUTE_CAMERA,
+        MainActivityConstants.ROUTE_CASE_INBOX,
+        MainActivityConstants.ROUTE_RECENT_ACTIVITY,
+        MainActivityConstants.ROUTE_SHORTCUTS,
+        MainActivityConstants.ROUTE_PERMISSIONS,
+        MainActivityConstants.ROUTE_HELP_ABOUT
     )
 
     return when (userRole) {
         adminRole, supervisorRole -> true
         
         caseworkerRole -> route !in listOf(
-            MainActivityConstants.USER_MANAGEMENT_ROUTE,
-            MainActivityConstants.USER_ROLES_ROUTE,
-            MainActivityConstants.AUDIT_LOGS_ROUTE
+            MainActivityConstants.ROUTE_USER_MANAGEMENT,
+            MainActivityConstants.ROUTE_USER_ROLES,
+            MainActivityConstants.ROUTE_AUDIT_LOGS
         )
 
         socialWorkerRole -> route in commonRoutes + listOf(
-            MainActivityConstants.CHILDREN_LIST_ROUTE,
-            MainActivityConstants.FAMILIES_ROUTE,
-            MainActivityConstants.DOCUMENTS_ROUTE,
-            MainActivityConstants.REPORTS_ROUTE,
-            MainActivityConstants.HOME_STUDIES_ROUTE,
-            MainActivityConstants.PLACEMENTS_ROUTE,
-            MainActivityConstants.EDUCATION_ROUTE,
-            MainActivityConstants.MEDICAL_ROUTE,
-            MainActivityConstants.COURT_CASES_ROUTE,
-            MainActivityConstants.FOSTER_MATCHES_ROUTE,
-            MainActivityConstants.CASE_ACTIVITIES_ROUTE,
-            MainActivityConstants.CASE_DEADLINES_ROUTE
+            MainActivityConstants.ROUTE_CHILDREN_LIST,
+            MainActivityConstants.ROUTE_FAMILIES,
+            MainActivityConstants.ROUTE_DOCUMENTS,
+            MainActivityConstants.ROUTE_REPORTS,
+            MainActivityConstants.ROUTE_HOME_STUDIES,
+            MainActivityConstants.ROUTE_PLACEMENTS,
+            MainActivityConstants.ROUTE_EDUCATION,
+            MainActivityConstants.ROUTE_MEDICAL,
+            MainActivityConstants.ROUTE_COURT_CASES,
+            MainActivityConstants.ROUTE_FOSTER_MATCHES,
+            MainActivityConstants.ROUTE_CASE_ACTIVITIES,
+            MainActivityConstants.ROUTE_CASE_DEADLINES
         )
 
         guardianRole -> route in commonRoutes + listOf(
-            MainActivityConstants.CHILDREN_LIST_ROUTE,
-            MainActivityConstants.DOCUMENTS_ROUTE,
-            MainActivityConstants.EDUCATION_ROUTE,
-            MainActivityConstants.MEDICAL_ROUTE,
-            MainActivityConstants.FOSTER_TASKS_ROUTE,
-            MainActivityConstants.VACCINATION_RECORDS_ROUTE,
-            MainActivityConstants.BEHAVIOR_ASSESSMENTS_ROUTE,
-            MainActivityConstants.VISITATION_SCHEDULES_ROUTE
+            MainActivityConstants.ROUTE_CHILDREN_LIST,
+            MainActivityConstants.ROUTE_DOCUMENTS,
+            MainActivityConstants.ROUTE_EDUCATION,
+            MainActivityConstants.ROUTE_MEDICAL,
+            MainActivityConstants.ROUTE_FOSTER_TASKS,
+            MainActivityConstants.ROUTE_VACCINATION_RECORDS,
+            MainActivityConstants.ROUTE_BEHAVIOR_ASSESSMENTS,
+            MainActivityConstants.ROUTE_VISITATION_SCHEDULES
         )
 
         else -> route in commonRoutes
@@ -806,10 +897,10 @@ internal fun canAccessRoute(
 }
 
 /**
- * Returns the current route in the navigation stack.
+ * Returns the current route.
  *
- * @param navController The navigation controller instance.
- * @return The current route string or null if not available.
+ * @param navController The navigation controller.
+ * @return The route string or null.
  */
 @Composable
 private fun currentRoute(navController: NavHostController): String? {

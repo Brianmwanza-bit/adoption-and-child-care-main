@@ -20,8 +20,16 @@ class EducationRecordRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
+    /**
+     * Observes all education records from the local database.
+     */
     fun observeAll(): Flow<List<EducationRecordEntity>> = educationRecordDao.observeAll()
     
+    /**
+     * Inserts an education record and attempts to sync it.
+     * @param record The record to insert.
+     * @param token Authentication token (fallback).
+     */
     suspend fun insert(record: EducationRecordEntity, token: String): Result<Long> {
         return try {
             // Insert with sync queue support
@@ -29,12 +37,12 @@ class EducationRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.createEducationRecord(authHeader, record)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("EducationRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(record.recordId.toLong())
         } catch (e: Exception) {
@@ -42,6 +50,11 @@ class EducationRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Updates an education record and attempts to sync it.
+     * @param record The record to update.
+     * @param token Authentication token (fallback).
+     */
     suspend fun update(record: EducationRecordEntity, token: String): Result<Unit> {
         return try {
             // Update with sync queue support
@@ -49,12 +62,12 @@ class EducationRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.updateEducationRecord(authHeader, record.recordId, record)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("EducationRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -62,6 +75,11 @@ class EducationRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Deletes an education record and attempts to sync it.
+     * @param id The record ID.
+     * @param token Authentication token (fallback).
+     */
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
             // Delete with sync queue support
@@ -69,12 +87,12 @@ class EducationRecordRepositoryImpl @Inject constructor(
             
             // Immediate sync attempt
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.deleteEducationRecord(authHeader, id)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("EducationRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -82,15 +100,25 @@ class EducationRecordRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Finds an education record by ID.
+     */
     suspend fun findById(id: Int): EducationRecordEntity? {
         return educationRecordDao.findById(id)
     }
     
+    /**
+     * Returns the total count of education records.
+     */
     suspend fun count(): Int = educationRecordDao.getAll().size
     
+    /**
+     * Fetches all education records from the API.
+     * @param token Authentication token.
+     */
     suspend fun fetchFromApi(token: String): Result<List<EducationRecordEntity>> {
         return try {
-            val authHeader = authManager.getAuthHeader()
+            val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
             if (authHeader == null) {
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }

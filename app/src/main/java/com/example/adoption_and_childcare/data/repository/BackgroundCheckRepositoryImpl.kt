@@ -20,20 +20,28 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
     private val authManager: AuthManager
 ) {
+    /**
+     * Observes all background checks from the local database.
+     */
     fun observeAll(): Flow<List<BackgroundCheckEntity>> = backgroundCheckDao.observeAll()
     
+    /**
+     * Inserts a background check and attempts to sync it.
+     * @param check The check to insert.
+     * @param token Authentication token (fallback).
+     */
     suspend fun insert(check: BackgroundCheckEntity, token: String): Result<Long> {
         return try {
             // Insert with sync queue support
             backgroundCheckDao.insertWithSync(check, syncQueueDao)
             
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.createBackgroundCheck(authHeader, check)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("BackgroundCheckRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(check.checkId.toLong())
         } catch (e: Exception) {
@@ -41,18 +49,23 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Updates a background check and attempts to sync it.
+     * @param check The check to update.
+     * @param token Authentication token (fallback).
+     */
     suspend fun update(check: BackgroundCheckEntity, token: String): Result<Unit> {
         return try {
             // Update with sync queue support
             backgroundCheckDao.updateWithSync(check, syncQueueDao)
             
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.updateBackgroundCheck(authHeader, check.checkId, check)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("BackgroundCheckRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -60,18 +73,23 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Deletes a background check and attempts to sync it.
+     * @param id The check ID.
+     * @param token Authentication token (fallback).
+     */
     suspend fun delete(id: Int, token: String): Result<Unit> {
         return try {
             // Delete with sync queue support
             backgroundCheckDao.deleteByIdWithSync(id, syncQueueDao)
             
             try {
-                val authHeader = authManager.getAuthHeader()
+                val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
                 if (authHeader != null) {
                     apiService.deleteBackgroundCheck(authHeader, id)
                 }
             } catch (e: Exception) {
-                // Ignore
+                android.util.Log.w("BackgroundCheckRepo", "Immediate sync failed: ${e.message}")
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -79,12 +97,23 @@ class BackgroundCheckRepositoryImpl @Inject constructor(
         }
     }
     
+    /**
+     * Finds a background check by ID.
+     */
     suspend fun findById(id: Int): BackgroundCheckEntity? = backgroundCheckDao.getById(id)
+    
+    /**
+     * Returns the total count of background checks.
+     */
     suspend fun count(): Int = backgroundCheckDao.getAll().size
     
+    /**
+     * Fetches all background checks from the API.
+     * @param token Authentication token.
+     */
     suspend fun fetchFromApi(token: String): Result<List<BackgroundCheckEntity>> {
         return try {
-            val authHeader = authManager.getAuthHeader()
+            val authHeader = authManager.getAuthHeader() ?: if (token.isNotEmpty()) "Bearer $token" else null
             if (authHeader == null) {
                 return Result.failure(Exception("Not authenticated. Please log in."))
             }

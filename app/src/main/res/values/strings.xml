@@ -47,7 +47,7 @@
     <string name="dashboard_title_events">Upcoming Events</string>
     <string name="dashboard_view_all">View All</string>
     <string name="dashboard_view_calendar">View Calendar</string>
-    <string name="dashboard_search_hint">Search children, families, cases&#8230;</string>
+    <string name="dashboard_search_hint">Search children, families, cases…</string>
     <string name="dashboard_search_desc">Search</string>
     <string name="dashboard_clear_desc">Clear</string>
     <string name="dashboard_items_count">%1$d items</string>
@@ -169,6 +169,12 @@
     <string name="route_placement_disruptions">placement_disruptions</string>
     <string name="route_foster_training">foster_training</string>
 
+    <!-- System Constants -->
+    <string name="prefs_sync">sync_prefs</string>
+    <string name="key_last_synced_at">last_synced_at</string>
+    <string name="label_onboarding_transition">onboarding_transition</string>
+    <string name="tag_main_activity">MainActivity</string>
+
     <!-- Finance Screen Strings -->
     <string name="finance_title">Financial Records</string>
     <string name="finance_back_desc">Back</string>
@@ -194,17 +200,17 @@
     <string name="finance_kes_prefix">KES </string>
     <string name="finance_type_field">Transaction Type</string>
     <string name="finance_payment_method_field">Payment Method</string>
-    <string name="finance_mpesa_phone_field">M-Pesa Phone Number</string>
-    <string name="finance_mpesa_txn_id_field">M-Pesa Transaction ID (Optional)</string>
+    <string name="finance_mpesa_phone_field">M&#8211;Pesa Phone Number</string>
+    <string name="finance_mpesa_txn_id_field">M&#8211;Pesa Transaction ID (Optional)</string>
     <string name="finance_bank_account_field">Bank Account Number</string>
     <string name="finance_bank_ref_field">Bank Reference Number</string>
-    <string name="finance_date_field">Date (YYYY-MM-DD)</string>
+    <string name="finance_date_field">Date (YYYY&#8211;MM&#8211;DD)</string>
     <string name="finance_desc_field">Description (Optional)</string>
     <string name="finance_save">Save</string>
     <string name="finance_cancel">Cancel</string>
     <string name="finance_update">Update</string>
     <string name="finance_delete">Delete</string>
-    <string name="finance_child_readonly">Child (Read-only)</string>
+    <string name="finance_child_readonly">Child (Read&#8211;only)</string>
     <string name="finance_legacy_page_title">LEGACY FINANCIAL PAGE #%1$d</string>
     <string name="finance_legacy_ref_label">Ref: %1$s</string>
     <string name="finance_legacy_content">Legacy View Content for Record %1$d</string>
@@ -278,7 +284,7 @@
     <string name="txn_type_other">Other</string>
 
     <string name="pay_method_cash">Cash</string>
-    <string name="pay_method_mpesa">M-Pesa</string>
+    <string name="pay_method_mpesa">M&#8211;Pesa</string>
     <string name="pay_method_bank">Bank Transfer</string>
     <string name="pay_method_mobile">Mobile Banking</string>
     <string name="pay_method_cheque">Cheque</string>
@@ -375,7 +381,7 @@
     <!-- Modern Dashboard Strings -->
     <string name="dashboard_priority_alerts">Priority Alerts</string>
     <string name="dashboard_urgent">Urgent</string>
-    <string name="dashboard_at_risk">At-Risk</string>
+    <string name="dashboard_at_risk">At&#8211;Risk</string>
     <string name="dashboard_upcoming">Upcoming</string>
     <string name="dashboard_key_metrics">Key Metrics</string>
     <string name="dashboard_metric_children">Children</string>
@@ -396,10 +402,10 @@
     <string name="dashboard_module_finance">Finance</string>
     <string name="dashboard_update_1">New adoption application: Brown Family</string>
     <string name="dashboard_update_2">Document uploaded: School Records (Alex)</string>
-    <string name="dashboard_update_3">Placement changed: Foster Home -> Kinship Care</string>
-    <string name="dashboard_update_4">Court hearing scheduled: 2024-07-15</string>
-    <string name="dashboard_task_1">Home Study Review - Smith Family</string>
-    <string name="dashboard_task_2">Medical Follow-up - Johnny M.</string>
+    <string name="dashboard_update_3">Placement changed: Foster Home –> Kinship Care</string>
+    <string name="dashboard_update_4">Court hearing scheduled: 2024–07–15</string>
+    <string name="dashboard_task_1">Home Study Review – Smith Family</string>
+    <string name="dashboard_task_2">Medical Follow–up – Johnny M.</string>
     <string name="dashboard_task_3">Placement Stability Check</string>
     <string name="dashboard_priority_urgent_val">urgent</string>
     <string name="dashboard_priority_high_val">high</string>
@@ -430,7 +436,7 @@
     <string name="medical_label_medications">Medications</string>
     <string name="medical_immunization">Immunization</string>
     <string name="medical_label_type">Type</string>
-    <string name="medical_follow_up">Follow-up</string>
+    <string name="medical_follow_up">Follow&#8211;up</string>
     <string name="medical_label_scheduled_date">Scheduled Date</string>
     <string name="medical_export_pdf">Export PDF</string>
     <string name="medical_share">Share</string>
@@ -441,7 +447,7 @@
     <string name="medical_no_records">No medical records yet</string>
     <string name="medical_record_title_format">MEDICAL RECORD #%1$d</string>
     <string name="medical_hospital_subtitle">Hospital: %1$s</string>
-    <string name="medical_field_visit_date">Visit date (YYYY-MM-DD)</string>
+    <string name="medical_field_visit_date">Visit date (YYYY&#8211;MM&#8211;DD)</string>
     <string name="medical_field_hospital">Hospital name (optional)</string>
     <string name="medical_field_diagnosis">Diagnosis (optional)</string>
     <string name="medical_field_treatment">Treatment (optional)</string>
@@ -450,7 +456,7 @@
     <string name="medical_summary_unique_conditions">Unique Conditions:</string>
     <string name="medical_refresh_desc">Refresh</string>
     <string name="medical_add_desc">Add Medical Record</string>
-    <string name="medical_child_readonly">Child (Read-only)</string>
+    <string name="medical_child_readonly">Child (Read&#8211;only)</string>
     <string name="medical_error_no_token">No authentication token available</string>
     <string name="medical_error_fetch_failed">Failed to fetch medical records: %1$s</string>
 
@@ -478,8 +484,8 @@
     <string name="placements_delete_title">Delete Placement</string>
     <string name="placements_delete_confirm">Are you sure you want to delete placement #%1$d?</string>
     <string name="placements_field_family_id">Destination Family ID</string>
-    <string name="placements_field_start_date">Start date (YYYY-MM-DD)</string>
-    <string name="placements_field_end_date">End date (YYYY-MM-DD, optional)</string>
+    <string name="placements_field_start_date">Start date (YYYY&#8211;MM&#8211;DD)</string>
+    <string name="placements_field_end_date">End date (YYYY&#8211;MM&#8211;DD, optional)</string>
     <string name="placements_field_type">Placement Type</string>
     <string name="placements_field_notes">Notes (optional)</string>
     <string name="placements_summary_title">Placement Metrics</string>
@@ -544,7 +550,7 @@
     <string name="settings_sync_interval_label">Sync Interval (hours)</string>
     <string name="settings_auto_sync_label">Auto Sync</string>
     <string name="settings_notifications_label">Notifications</string>
-    <string name="settings_wifi_only_label">Wi-Fi Only Sync</string>
+    <string name="settings_wifi_only_label">Wi&#8211;Fi Only Sync</string>
     <string name="settings_save_sync">Save Sync Settings</string>
 
     <string name="settings_upload_section">File Upload</string>
@@ -674,7 +680,7 @@
     <string name="sync_error_pull_failed">Pull failed: %1$s</string>
     <string name="sync_error_unknown">Unknown sync error</string>
 
-    <!-- Auto-save Strings -->
+    <!-- Auto&#8211;save Strings -->
     <string name="autosave_restored">Form data restored from previous session</string>
 
     <!-- Auth Constants -->
@@ -706,7 +712,7 @@
     <string name="dashboard_label_risk_assessments">Risk Assessments</string>
     <string name="dashboard_desc_risk_assessments">Safety evaluation</string>
     <string name="dashboard_label_permanency_plans">Permanency Plans</string>
-    <string name="dashboard_desc_permanency_plans">Long-term goals</string>
+    <string name="dashboard_desc_permanency_plans">Long&#8211;term goals</string>
     <string name="dashboard_label_case_activities">Case Activities</string>
     <string name="dashboard_desc_case_activities">Recent actions</string>
     <string name="dashboard_label_deadlines">Deadlines</string>
@@ -752,9 +758,11 @@
     <string name="dashboard_label_visitation">Visitation</string>
     <string name="dashboard_desc_visitation">Scheduled visits &amp; supervision</string>
     <string name="dashboard_label_aftercare">Aftercare</string>
-    <string name="dashboard_desc_aftercare">Post-placement care plans</string>
+    <string name="dashboard_desc_aftercare">Post&#8211;placement care plans</string>
     <string name="dashboard_label_disruptions">Disruptions</string>
     <string name="dashboard_desc_disruptions">Placement disruption logs</string>
+    <string name="dashboard_label_referrals">Referrals</string>
+    <string name="dashboard_desc_referrals">Child service referrals</string>
     <string name="dashboard_label_foster_training_alt">Foster Training</string>
     <string name="dashboard_desc_foster_training_alt">Training records &amp; certs</string>
     <string name="dashboard_label_vaccinations">Vaccinations</string>
@@ -784,7 +792,7 @@
     <string name="dashboard_label_doc_storage">Doc Storage</string>
     <string name="dashboard_desc_doc_storage">Global document storage</string>
     <string name="dashboard_label_transfers">Transfers</string>
-    <string name="dashboard_desc_transfers">Inter-county transfers</string>
+    <string name="dashboard_desc_transfers">Inter&#8211;county transfers</string>
     <string name="dashboard_label_siblings">Siblings</string>
     <string name="dashboard_desc_siblings">Sibling relationships</string>
     <string name="dashboard_label_worker_loc">Worker Loc.</string>
@@ -831,7 +839,7 @@
     <string name="guardians_edit_title">Edit Guardian</string>
     <string name="guardians_field_first_name">First Name</string>
     <string name="guardians_field_last_name">Last Name</string>
-    <string name="guardians_child_readonly">Child (Read-only)</string>
+    <string name="guardians_child_readonly">Child (Read&#8211;only)</string>
     <string name="guardians_save">Save</string>
     <string name="guardians_cancel">Cancel</string>
     <string name="guardians_update">Update</string>
@@ -853,7 +861,7 @@
     <string name="landing_welcome_back">Welcome Back to\nYour Portal</string>
     <string name="landing_headline">Building Families,\nNurturing Dreams</string>
     <string name="landing_signin_desc">Sign in to access your dashboard and manage your cases seamlessly.</string>
-    <string name="landing_hero_desc">The all-in-one platform for modern adoption management and child welfare tracking.</string>
+    <string name="landing_hero_desc">The all&#8211;in&#8211;one platform for modern adoption management and child welfare tracking.</string>
     <string name="landing_already_account">Already have an account? Sign In</string>
     <string name="landing_stat_children">1,200+</string>
     <string name="landing_stat_children_label">Children Placed</string>
@@ -862,10 +870,10 @@
     <string name="landing_stat_success">98%</string>
     <string name="landing_stat_success_label">Success Rate</string>
     <string name="landing_features_title">Everything you need</string>
-    <string name="landing_feature_realtime_title">Real-time Tracking</string>
+    <string name="landing_feature_realtime_title">Real&#8211;time Tracking</string>
     <string name="landing_feature_realtime_desc">Monitor case progress and milestones instantly.</string>
     <string name="landing_feature_secure_title">Secure Documents</string>
-    <string name="landing_feature_secure_desc">Military-grade encryption for all sensitive records.</string>
+    <string name="landing_feature_secure_desc">Military&#8211;grade encryption for all sensitive records.</string>
     <string name="landing_feature_matching_title">Family Matching</string>
     <string name="landing_feature_matching_desc">Smart algorithms to find the perfect home for every child.</string>
     <string name="landing_testimonial_quote">This platform transformed how we manage our case load. We\'ve seen a 30% increase in placement speed.</string>
@@ -894,8 +902,8 @@
     <string name="foster_tasks_desc_field">Description (optional)</string>
     <string name="foster_tasks_desc_field_edit">Description</string>
     <string name="foster_tasks_status_field">Status</string>
-    <string name="foster_tasks_due_date_field">Due Date (YYYY-MM-DD, optional)</string>
-    <string name="foster_tasks_due_date_field_edit">Due Date (YYYY-MM-DD)</string>
+    <string name="foster_tasks_due_date_field">Due Date (YYYY&#8211;MM&#8211;DD, optional)</string>
+    <string name="foster_tasks_due_date_field_edit">Due Date (YYYY&#8211;MM&#8211;DD)</string>
     <string name="foster_tasks_save">Save</string>
     <string name="foster_tasks_cancel">Cancel</string>
     <string name="foster_tasks_update">Update</string>
@@ -926,7 +934,7 @@
     <string name="label_phone_format">Phone: %1$s</string>
     <string name="legal_disclaimer">Legal: This application is for authorized agency use only. All actions are monitored and recorded for compliance.</string>
     <string name="support_email">support@adoptioncare.org</string>
-    <string name="support_phone">+1 (555) 123-4567</string>
+    <string name="support_phone">+1 (555) 123–4567</string>
 
     <!-- Case Inbox Screen Strings -->
     <string name="title_case_inbox">Case Inbox</string>
@@ -1027,7 +1035,7 @@
     <string name="docs_update">Update</string>
     <string name="docs_delete">Delete</string>
     <string name="docs_downloading">Downloading document: %1$s</string>
-    <string name="docs_child_readonly">Child (Read-only)</string>
+    <string name="docs_child_readonly">Child (Read&#8211;only)</string>
     <string name="docs_error_token">No authentication token available</string>
     <string name="docs_error_fetch">Failed to fetch documents: %1$s</string>
 
@@ -1054,6 +1062,9 @@
     <string name="families_field_address">Address (optional)</string>
     <string name="families_field_city">City (optional)</string>
     <string name="families_field_county">County (optional)</string>
+    <string name="families_field_state">State/Region (optional)</string>
+    <string name="families_field_country">Country (optional)</string>
+    <string name="families_refresh_desc">Refresh families</string>
     <string name="families_save">Save</string>
     <string name="families_cancel">Cancel</string>
     <string name="families_update">Update</string>
@@ -1197,7 +1208,7 @@
     <string name="map_back_desc">Back</string>
     <string name="map_distance_tool_desc">Distance Tool</string>
     <string name="map_child_label">Child: %1$s</string>
-    <string name="map_case_format">Case #%1$s - %2$s</string>
+    <string name="map_case_format">Case #%1$s &#8211; %2$s</string>
     <string name="map_family_label">Family: %1$s</string>
     <string name="map_status_licensed">Licensed</string>
     <string name="map_status_format">Status: %1$s</string>
@@ -1229,7 +1240,7 @@
     <string name="reports_delete_dialog_title">Delete Case Report</string>
     <string name="reports_delete_confirm">Are you sure you want to delete \'%1$s\'?</string>
     <string name="reports_field_user_id">User ID</string>
-    <string name="reports_field_date">Report date (YYYY-MM-DD)</string>
+    <string name="reports_field_date">Report date (YYYY&#8211;MM&#8211;DD)</string>
     <string name="reports_field_date_edit">Report date</string>
     <string name="reports_field_title">Title</string>
     <string name="reports_field_content">Content</string>
@@ -1240,7 +1251,7 @@
     <string name="reports_error_token">No authentication token available</string>
     <string name="reports_error_fetch">Failed to fetch case reports: %1$s</string>
     <string name="reports_error_no_auth">No authentication token available</string>
-    <string name="reports_field_child_readonly">Child (Read-only)</string>
+    <string name="reports_field_child_readonly">Child (Read&#8211;only)</string>
 
     <!-- Case Activity Feed Strings -->
     <string name="activity_feed_title">Case Activity Feed</string>
@@ -1367,7 +1378,7 @@
     <string name="deadlines_add_dialog_title">Add Deadline</string>
     <string name="deadlines_label_high_priority">High Priority</string>
     <string name="deadlines_label_overdue">Overdue</string>
-    <string name="deadlines_due_date_field">Due Date (YYYY-MM-DD)</string>
+    <string name="deadlines_due_date_field">Due Date (YYYY&#8211;MM&#8211;DD)</string>
 
     <string name="approvals_title">Case Approvals</string>
     <string name="approvals_request_desc">Request Approval</string>
@@ -1454,8 +1465,8 @@
     <string name="common_no_desc">No description</string>
     <string name="common_back_desc">Back</string>
     <string name="common_select_child">Select Child</string>
-    <string name="common_search_select_child">Search and select child...</string>
-    <string name="common_start_typing_name">Start typing name...</string>
+    <string name="common_search_select_child">Search and select child…</string>
+    <string name="common_start_typing_name">Start typing name…</string>
     <string name="common_no_children_found">No children found</string>
     <string name="common_child_id_status">ID: %1$d • Status: %2$s</string>
     <string name="common_page_number">Page %1$d</string>
@@ -1524,7 +1535,7 @@
     <string name="edu_label_performance">Academic Performance</string>
     <string name="edu_field_school_name">School name</string>
     <string name="edu_field_grade">Grade</string>
-    <string name="edu_field_enrollment_hint">Enrollment Date (YYYY-MM-DD)</string>
+    <string name="edu_field_enrollment_hint">Enrollment Date (YYYY&#8211;MM&#8211;DD)</string>
     <string name="edu_field_performance_hint">Performance (optional)</string>
     <string name="edu_save">Save</string>
     <string name="edu_cancel">Cancel</string>
@@ -1541,9 +1552,9 @@
 
     <string name="pdf_page_number">Page %1$d</string>
     <string name="pdf_summary_title">Summary of Case Status</string>
-    <string name="pdf_summary_content">This document provides a comprehensive overview of the child\'s current status, including placement history, medical updates, and legal proceedings. The child is currently adjusting well to the new foster environment...</string>
-    <string name="common_date_format">yyyy-MM-dd</string>
-    <string name="common_default_plan_number">PLN-101</string>
+    <string name="pdf_summary_content">This document provides a comprehensive overview of the child\'s current status, including placement history, medical updates, and legal proceedings. The child is currently adjusting well to the new foster environment…</string>
+    <string name="common_date_format">yyyy&#8211;MM&#8211;dd</string>
+    <string name="common_default_plan_number">PLN&#8211;101</string>
     <string name="common_goal_reunification">Reunification</string>
     <string name="common_goal_adoption">Adoption</string>
     <string name="common_msg_title_meeting">Meeting Tomorrow</string>

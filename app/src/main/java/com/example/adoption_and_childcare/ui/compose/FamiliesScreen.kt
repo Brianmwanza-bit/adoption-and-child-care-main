@@ -2,7 +2,7 @@ package com.example.adoption_and_childcare.ui.compose
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -19,12 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.R
 import com.example.adoption_and_childcare.data.db.entities.FamilyEntity
 import com.example.adoption_and_childcare.viewmodel.FamiliesViewModel
-import kotlinx.coroutines.launch
 
 /**
  * Screen for managing families in the system.
@@ -43,19 +40,19 @@ fun FamiliesScreen(
 ) {
     val context = LocalContext.current
     val families by viewModel.families.collectAsState(initial = emptyList())
-    val scope = rememberCoroutineScope()
     
     // UI State from ViewModel
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     
-    // Dialogs
+    // Dialogs & Navigation State
     var showCreate by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showDetails by remember { mutableStateOf(false) }
     var selectedFamily by remember { mutableStateOf<FamilyEntity?>(null) }
     
+    // Form State
     var primary by remember { mutableStateOf(TextFieldValue("")) }
     var secondary by remember { mutableStateOf(TextFieldValue("")) }
     var email by remember { mutableStateOf(TextFieldValue("")) }
@@ -64,10 +61,12 @@ fun FamiliesScreen(
     var address by remember { mutableStateOf(TextFieldValue("")) }
     var city by remember { mutableStateOf(TextFieldValue("")) }
     var county by remember { mutableStateOf(TextFieldValue("")) }
+    var state by remember { mutableStateOf(TextFieldValue("")) }
+    var country by remember { mutableStateOf(TextFieldValue("")) }
+
     val statusActive = stringResource(R.string.status_active)
     val statusInactive = stringResource(R.string.status_inactive)
     val statusPending = stringResource(R.string.status_pending)
-
     var status by remember { mutableStateOf(statusActive) }
 
     val statuses = listOf(statusActive, statusInactive, statusPending)
@@ -76,7 +75,10 @@ fun FamiliesScreen(
     if (showDetails && selectedFamily != null) {
         FamilyHubScreen(
             family = selectedFamily!!,
-            onBack = { showDetails = false; selectedFamily = null }
+            onBack = { 
+                showDetails = false
+                selectedFamily = null 
+            }
         )
     } else {
         Scaffold(
@@ -87,34 +89,60 @@ fun FamiliesScreen(
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.families_back_desc))
                         }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.refreshFromApi() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.families_refresh_desc))
+                        }
                     }
                 )
             },
             floatingActionButton = {
-                FloatingActionButton(onClick = { showCreate = true }) {
+                FloatingActionButton(onClick = { 
+                    showCreate = true 
+                    // Reset fields for fresh entry
+                    primary = TextFieldValue("")
+                    secondary = TextFieldValue("")
+                    email = TextFieldValue("")
+                    phone = TextFieldValue("")
+                    nationalId = TextFieldValue("")
+                    address = TextFieldValue("")
+                    city = TextFieldValue("")
+                    county = TextFieldValue("")
+                    state = TextFieldValue("")
+                    country = TextFieldValue("")
+                    status = statusActive
+                }) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.families_add_desc))
                 }
             }
         ) { padding ->
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (families.isEmpty()) {
-                    Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.FamilyRestroom, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(stringResource(R.string.families_no_families), style = MaterialTheme.typography.bodyLarge)
-                        }
+            if (families.isEmpty() && !isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding), 
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.FamilyRestroom, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(64.dp), 
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            stringResource(R.string.families_no_families), 
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
-                } else {
-                    families.forEachIndexed { index, family ->
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    itemsIndexed(families) { index, family ->
                         FormRecordCard(
                             title = stringResource(R.string.families_item_id, family.familyId),
                             subtitle = family.primaryContactName,
@@ -130,6 +158,8 @@ fun FamiliesScreen(
                                 address = TextFieldValue(family.address ?: "")
                                 city = TextFieldValue(family.city ?: "")
                                 county = TextFieldValue(family.county ?: "")
+                                state = TextFieldValue(family.state ?: "")
+                                country = TextFieldValue(family.country ?: "")
                                 status = family.status ?: statusActive
                             },
                             onDelete = {
@@ -137,15 +167,26 @@ fun FamiliesScreen(
                                 showDeleteDialog = true
                             },
                             onDownloadPdf = {
-                                // TODO: Implement PDF Generation
+                                // TODO: Implement PDF Generation logic
                             },
-                            headerIcon = Icons.Default.FamilyRestroom
+                            headerIcon = Icons.Default.FamilyRestroom,
+                            onClick = {
+                                selectedFamily = family
+                                showDetails = true
+                            }
                         ) {
                             FormDetailRow(label = stringResource(R.string.families_label_primary_contact), value = family.primaryContactName)
                             FormDetailRow(label = stringResource(R.string.families_label_phone), value = family.phone ?: stringResource(R.string.search_na))
                             FormDetailRow(label = stringResource(R.string.families_label_email), value = family.email ?: stringResource(R.string.search_na))
-                            FormDetailRow(label = stringResource(R.string.families_label_location), value = listOfNotNull(family.city, family.county).joinToString(", ").ifBlank { stringResource(R.string.search_na) })
-                            FormDetailRow(label = stringResource(R.string.families_label_status), value = family.status ?: statusActive, valueColor = if (family.status == statusActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                            FormDetailRow(
+                                label = stringResource(R.string.families_label_location), 
+                                value = listOfNotNull(family.city, family.county, family.country).joinToString(", ").ifBlank { stringResource(R.string.search_na) }
+                            )
+                            FormDetailRow(
+                                label = stringResource(R.string.families_label_status), 
+                                value = family.status ?: statusActive, 
+                                valueColor = if (family.status == statusActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                            )
                             
                             if (!family.secondaryContactName.isNullOrBlank()) {
                                 FormDetailRow(label = stringResource(R.string.families_label_secondary_contact), value = family.secondaryContactName)
@@ -154,24 +195,38 @@ fun FamiliesScreen(
                     }
                 }
             }
+
+            if (isLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(padding))
+            }
         }
     }
 
+    // Add Family Dialog
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
             title = { Text(stringResource(R.string.families_add_dialog_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true)
-                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true)
-                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true)
-                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true)
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true)
-                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true)
-                    ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = state, onValueChange = { state = it }, label = { Text(stringResource(R.string.families_field_state)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = country, onValueChange = { country = it }, label = { Text(stringResource(R.string.families_field_country)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    
+                    ExposedDropdownMenuBox(
+                        expanded = showStatusDropdown, 
+                        onExpandedChange = { showStatusDropdown = !showStatusDropdown }
+                    ) {
                         OutlinedTextField(
                             value = status,
                             onValueChange = { },
@@ -180,12 +235,18 @@ fun FamiliesScreen(
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
-                        ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
+                        ExposedDropdownMenu(
+                            expanded = showStatusDropdown, 
+                            onDismissRequest = { showStatusDropdown = false }
+                        ) {
                             statuses.forEach { s ->
-                                DropdownMenuItem(text = { Text(s) }, onClick = {
-                                    status = s
-                                    showStatusDropdown = false
-                                })
+                                DropdownMenuItem(
+                                    text = { Text(s) }, 
+                                    onClick = {
+                                        status = s
+                                        showStatusDropdown = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -204,19 +265,12 @@ fun FamiliesScreen(
                                 address = address.text.ifBlank { null },
                                 city = city.text.ifBlank { null },
                                 county = county.text.ifBlank { null },
+                                state = state.text.ifBlank { null },
+                                country = country.text.ifBlank { null },
                                 status = status
                             )
                         )
                         showCreate = false
-                        primary = TextFieldValue("")
-                        secondary = TextFieldValue("")
-                        email = TextFieldValue("")
-                        phone = TextFieldValue("")
-                        nationalId = TextFieldValue("")
-                        address = TextFieldValue("")
-                        city = TextFieldValue("")
-                        county = TextFieldValue("")
-                        status = statusActive
                     }
                 }) { Text(stringResource(R.string.families_save)) }
             },
@@ -226,21 +280,31 @@ fun FamiliesScreen(
         )
     }
 
+    // Edit Family Dialog
     if (showEditDialog && selectedFamily != null) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
             title = { Text(stringResource(R.string.families_edit_dialog_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true)
-                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true)
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true)
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true)
-                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true)
-                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true)
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true)
-                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true)
-                    ExposedDropdownMenuBox(expanded = showStatusDropdown, onExpandedChange = { showStatusDropdown = !showStatusDropdown }) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(value = primary, onValueChange = { primary = it }, label = { Text(stringResource(R.string.families_field_primary)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = secondary, onValueChange = { secondary = it }, label = { Text(stringResource(R.string.families_field_secondary)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.families_field_email)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.families_label_phone)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = nationalId, onValueChange = { nationalId = it }, label = { Text(stringResource(R.string.families_field_national_id)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.families_field_address)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.families_field_city)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = county, onValueChange = { county = it }, label = { Text(stringResource(R.string.families_field_county)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = state, onValueChange = { state = it }, label = { Text(stringResource(R.string.families_field_state)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = country, onValueChange = { country = it }, label = { Text(stringResource(R.string.families_field_country)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+
+                    ExposedDropdownMenuBox(
+                        expanded = showStatusDropdown, 
+                        onExpandedChange = { showStatusDropdown = !showStatusDropdown }
+                    ) {
                         OutlinedTextField(
                             value = status,
                             onValueChange = { },
@@ -249,12 +313,18 @@ fun FamiliesScreen(
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
-                        ExposedDropdownMenu(expanded = showStatusDropdown, onDismissRequest = { showStatusDropdown = false }) {
+                        ExposedDropdownMenu(
+                            expanded = showStatusDropdown, 
+                            onDismissRequest = { showStatusDropdown = false }
+                        ) {
                             statuses.forEach { s ->
-                                DropdownMenuItem(text = { Text(s) }, onClick = {
-                                    status = s
-                                    showStatusDropdown = false
-                                })
+                                DropdownMenuItem(
+                                    text = { Text(s) }, 
+                                    onClick = {
+                                        status = s
+                                        showStatusDropdown = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -273,6 +343,8 @@ fun FamiliesScreen(
                             address = address.text.ifBlank { null },
                             city = city.text.ifBlank { null },
                             county = county.text.ifBlank { null },
+                            state = state.text.ifBlank { null },
+                            country = country.text.ifBlank { null },
                             status = status
                         )
                         viewModel.updateFamily(updated)
@@ -287,6 +359,7 @@ fun FamiliesScreen(
         )
     }
 
+    // Delete Family Dialog
     if (showDeleteDialog && selectedFamily != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false; selectedFamily = null },
@@ -310,6 +383,9 @@ fun FamiliesScreen(
     }
 }
 
+/**
+ * Basic details screen for a family.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FamilyDetailsScreen(family: FamilyEntity, onBack: () -> Unit) {

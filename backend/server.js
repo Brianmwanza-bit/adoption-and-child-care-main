@@ -79,20 +79,21 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// MySQL connection configuration
+// MySQL / Aiven DB connection configuration
 const dbConfig = {
-  host: '127.0.0.1',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  port: parseInt(process.env.DB_PORT) || 3306,
+  host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || '127.0.0.1',
+  user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'root',
+  password: process.env.AIVEN_DB_PASSWORD || process.env.DB_PASSWORD || '',
+  port: parseInt(process.env.AIVEN_DB_PORT || process.env.DB_PORT) || 3306,
+  database: process.env.AIVEN_DB_NAME || process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
   multipleStatements: true,
   charset: 'utf8mb4',
   timezone: '+00:00',
   connectTimeout: 30000, // 30 seconds
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : null
+  ssl: (process.env.DB_SSL === 'true' || (process.env.AIVEN_DB_HOST || process.env.DB_HOST || '').includes('aivencloud.com')) ? { rejectUnauthorized: false } : null
 };
 
-console.log(`[DB CONFIG] Attempting connection to 127.0.0.1:${dbConfig.port} (User: ${dbConfig.user})`);
+console.log(`[DB CONFIG] Attempting connection to ${dbConfig.host}:${dbConfig.port} (User: ${dbConfig.user}, DB: ${dbConfig.database})`);
 
 // Create a connection specifically to ensure the database exists
 const initialDb = mysql.createConnection({ ...dbConfig, database: undefined });

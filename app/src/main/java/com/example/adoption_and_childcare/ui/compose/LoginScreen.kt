@@ -648,11 +648,12 @@ fun RegisterScreen(
                     )
                     ExposedDropdownMenu(
                         expanded = showOccupationDropdown,
-                        onDismissRequest = { showOccupationDropdown = false }
+                        onDismissRequest = { showOccupationDropdown = false },
+                        modifier = Modifier.background(Color(0xFF2196F3))
                     ) {
                         roles.forEach { role: UserRole ->
                             DropdownMenuItem(
-                                text = { Text(role.getLabel(), color = Color.Black) },
+                                text = { Text(role.getLabel(), color = Color.White, fontWeight = FontWeight.Medium) },
                                 onClick = {
                                     occupationRoleName = role.roleName
                                     autoSave.saveRegisterField(AutoSaveManager.REG_OCCUPATION, role.roleName)

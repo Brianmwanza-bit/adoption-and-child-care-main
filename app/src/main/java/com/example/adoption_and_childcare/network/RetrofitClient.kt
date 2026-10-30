@@ -30,8 +30,16 @@ object RetrofitClient {
         val settings = AppSettings(context)
         var baseUrl = settings.apiBaseUrl.trim()
         
-        // Auto-map localhost/emulator to 10.0.2.2 for convenience
-        if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
+        val isEmulator = android.os.Build.FINGERPRINT.startsWith("generic") ||
+                         android.os.Build.MODEL.contains("google_sdk") ||
+                         android.os.Build.MODEL.contains("Emulator") ||
+                         android.os.Build.DEVICE.startsWith("generic") ||
+                         android.os.Build.PRODUCT.contains("sdk")
+
+        // Auto-map localhost, 127.0.0.1, or local network IPs to 10.0.2.2 when running on emulator
+        if (isEmulator && (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1") || baseUrl.contains("192.168."))) {
+            baseUrl = baseUrl.replace(Regex("https?://[^/:]+"), "http://$EMULATOR_HOST")
+        } else if (baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1")) {
             baseUrl = baseUrl.replace("localhost", EMULATOR_HOST).replace("127.0.0.1", EMULATOR_HOST)
         }
         

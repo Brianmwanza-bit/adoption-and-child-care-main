@@ -80,6 +80,11 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // MySQL / Aiven DB connection configuration
+const caPath = path.join(__dirname, 'config-aiven-ca.pem');
+const sslConfig = (process.env.DB_SSL === 'true' || (process.env.AIVEN_DB_HOST || process.env.DB_HOST || '').includes('aivencloud.com'))
+  ? (fs.existsSync(caPath) ? { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false } : { rejectUnauthorized: false })
+  : null;
+
 const dbConfig = {
   host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || '127.0.0.1',
   user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'root',
@@ -90,7 +95,7 @@ const dbConfig = {
   charset: 'utf8mb4',
   timezone: '+00:00',
   connectTimeout: 30000, // 30 seconds
-  ssl: (process.env.DB_SSL === 'true' || (process.env.AIVEN_DB_HOST || process.env.DB_HOST || '').includes('aivencloud.com')) ? { rejectUnauthorized: false } : null
+  ssl: sslConfig
 };
 
 console.log(`[DB CONFIG] Attempting connection to ${dbConfig.host}:${dbConfig.port} (User: ${dbConfig.user}, DB: ${dbConfig.database})`);

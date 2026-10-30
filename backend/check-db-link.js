@@ -1,5 +1,7 @@
 require('dotenv').config();
 const mysql = require('mysql2');
+const fs = require('fs');
+const path = require('path');
 
 console.log('--- Database Link Checker ---');
 console.log('Host:', process.env.DB_HOST);
@@ -7,12 +9,18 @@ console.log('User:', process.env.DB_USER);
 console.log('Database:', process.env.DB_NAME);
 console.log('Port:', process.env.DB_PORT);
 
+const caPath = path.join(__dirname, 'config-aiven-ca.pem');
+const sslConfig = fs.existsSync(caPath)
+  ? { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false }
+  : { rejectUnauthorized: false };
+
 const connection = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
-  port: process.env.DB_PORT || 3306
+  port: process.env.DB_PORT || 3306,
+  ssl: sslConfig
 });
 
 connection.connect((err) => {
@@ -25,7 +33,7 @@ connection.connect((err) => {
     process.exit(1);
   }
 
-  console.log('\n✅ SUCCESS: Connected to MySQL!');
+  console.log('\n✅ SUCCESS: Connected to Aiven MySQL!');
 
   connection.query('SELECT COUNT(*) as count FROM users', (err, results) => {
     if (err) {

@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -91,7 +93,7 @@ fun ChildrenListScreen(
                 if (children.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.ChildCare, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.ChildCare, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.risk_assessment_empty), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -119,7 +121,7 @@ fun ChildrenListScreen(
                                             val dob = child.dateOfBirth
                                             if (dob != null) append("DOB: $dob")
                                         }
-                                        if (details.isNotBlank()) Text(text = details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        if (details.isNotBlank()) Text(text = details, style = MaterialTheme.typography.bodySmall, color = Color.Black)
                                         val county = child.currentCounty
                                         if (county != null) {
                                             Text(stringResource(R.string.search_county_label, county), style = MaterialTheme.typography.bodySmall)

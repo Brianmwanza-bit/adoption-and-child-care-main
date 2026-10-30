@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -99,7 +101,7 @@ fun HomeStudiesScreen(onBack: () -> Unit = {}) {
             if (studies.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.AssignmentTurnedIn, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Default.AssignmentTurnedIn, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(stringResource(R.string.home_studies_no_studies), style = MaterialTheme.typography.bodyLarge)
                     }
@@ -117,7 +119,7 @@ fun HomeStudiesScreen(onBack: () -> Unit = {}) {
                                         Text(stringResource(R.string.home_studies_family_name_label, family.primaryContactName), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                     }
                                     hs.result?.let { Text(stringResource(R.string.home_studies_result_label, it), style = MaterialTheme.typography.bodySmall) }
-                                    hs.startedAt?.let { Text(stringResource(R.string.home_studies_started_label, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                    hs.startedAt?.let { Text(stringResource(R.string.home_studies_started_label, it), style = MaterialTheme.typography.bodySmall, color = Color.Black) }
                                     hs.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
                                 }
                                 Row(verticalAlignment = Alignment.Top) {

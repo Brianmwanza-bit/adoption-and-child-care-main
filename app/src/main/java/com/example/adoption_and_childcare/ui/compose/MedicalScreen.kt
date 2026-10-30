@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -94,7 +96,7 @@ fun MedicalScreen(
                 if (records.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.LocalHospital, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.LocalHospital, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.medical_no_records), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -139,7 +141,7 @@ fun MedicalScreen(
                                 Text(
                                     text = stringResource(R.string.medical_label_treatment),
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = Color.Black
                                 )
                                 Text(
                                     text = r.treatment,

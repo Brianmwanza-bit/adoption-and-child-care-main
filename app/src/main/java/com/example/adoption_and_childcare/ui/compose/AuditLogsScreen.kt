@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -86,10 +88,10 @@ fun AuditLogsScreen(onBack: () -> Unit = {}) {
                                 Text("Changed by User: ${log.changedBy}", style = MaterialTheme.typography.bodySmall)
                                 Text("Time: ${log.changedAt}", style = MaterialTheme.typography.bodySmall)
                                 log.oldData?.let {
-                                    Text("Old Data: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                                    Text("Old Data: $it", style = MaterialTheme.typography.bodySmall, color = Color.Black)
                                 }
                                 log.newData?.let {
-                                    Text("New Data: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("New Data: $it", style = MaterialTheme.typography.bodySmall, color = Color.Black)
                                 }
                             }
                         }

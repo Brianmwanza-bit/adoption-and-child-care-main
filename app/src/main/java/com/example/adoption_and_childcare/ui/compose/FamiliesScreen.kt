@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -127,7 +129,7 @@ fun FamiliesScreen(
                             Icons.Default.FamilyRestroom, 
                             contentDescription = null, 
                             modifier = Modifier.size(64.dp), 
-                            tint = MaterialTheme.colorScheme.outline
+                            tint = Color.Black
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -430,7 +432,7 @@ fun FamilyDetailsScreen(family: FamilyEntity, onBack: () -> Unit) {
             Text(
                 text = stringResource(R.string.families_id_format, family.familyId),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.secondary
+                color = Color.Black
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -505,13 +507,13 @@ fun DetailRow(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Color.Black
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = Color.Black
         )
     }
 }

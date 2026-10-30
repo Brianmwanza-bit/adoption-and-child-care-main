@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -115,7 +117,7 @@ fun PlacementsScreen(
                 if (placements.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.Place, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.placements_no_records), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -164,7 +166,7 @@ fun PlacementsScreen(
                             FormDetailRow(
                                 label = stringResource(R.string.placements_label_status),
                                 value = if (placement.isCurrent) stringResource(R.string.placements_status_current) else stringResource(R.string.placements_status_past),
-                                valueColor = if (placement.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                                valueColor = if (placement.isCurrent) MaterialTheme.colorScheme.primary else Color.Black
                             )
 
                             if (!placement.notes.isNullOrBlank()) {
@@ -172,7 +174,7 @@ fun PlacementsScreen(
                                 Text(
                                     text = stringResource(R.string.placements_label_notes),
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = Color.Black
                                 )
                                 Text(
                                     text = placement.notes,

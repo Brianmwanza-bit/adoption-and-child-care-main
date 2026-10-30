@@ -218,7 +218,7 @@ fun SettingsScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    titleContentColor = Color.Black,
                     navigationIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
@@ -642,7 +642,7 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings_sos_desc),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Black
                     )
                     
                     // Emergency Services
@@ -709,7 +709,7 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings_contact_1),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Black
                     )
                     
                     OutlinedTextField(
@@ -733,7 +733,7 @@ fun SettingsScreen(
                     Text(
                         text = stringResource(R.string.settings_contact_2),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Black
                     )
                     
                     OutlinedTextField(

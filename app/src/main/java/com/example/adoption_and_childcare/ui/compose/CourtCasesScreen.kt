@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -85,7 +87,7 @@ fun CourtCasesScreen(
             if (cases.isEmpty() && !isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Gavel, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Default.Gavel, null, modifier = Modifier.size(64.dp), tint = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("No court cases found", style = MaterialTheme.typography.bodyLarge)
                     }

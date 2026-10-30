@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -98,7 +100,7 @@ fun CaseReportsScreen(
                 if (reports.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.Assessment, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.reports_no_reports), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -149,7 +151,7 @@ fun CaseReportsScreen(
                             Text(
                                 text = stringResource(R.string.reports_label_content),
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.secondary
+                                color = Color.Black
                             )
                             Text(
                                 text = r.content,

@@ -93,7 +93,7 @@ fun AnalyticsScreen(onBack: () -> Unit = {}, viewModel: AnalyticsViewModel = vie
                 item {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SummaryStatCard(stringResource(R.string.analytics_total_placements), placementsOverTime.size.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-                        SummaryStatCard(stringResource(R.string.analytics_active_cases), childrenByStatus.values.sum().toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+                        SummaryStatCard(stringResource(R.string.analytics_active_cases), childrenByStatus.values.sum().toString(), Color.Black, Modifier.weight(1f))
                     }
                 }
 
@@ -114,7 +114,7 @@ fun AnalyticsScreen(onBack: () -> Unit = {}, viewModel: AnalyticsViewModel = vie
                                     StatusProgressBar(status, count, count / max)
                                 }
                             } else {
-                                Text(stringResource(R.string.analytics_no_status_data), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                                Text(stringResource(R.string.analytics_no_status_data), color = Color.Black, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                             }
                         }
                     }
@@ -146,7 +146,7 @@ fun AnalyticsScreen(onBack: () -> Unit = {}, viewModel: AnalyticsViewModel = vie
                                     )
                                 }
                             } else {
-                                Text(stringResource(R.string.analytics_no_placement_trends), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                                Text(stringResource(R.string.analytics_no_placement_trends), color = Color.Black, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                             }
                         }
                     }
@@ -178,7 +178,7 @@ fun SummaryStatCard(label: String, value: String, color: Color, modifier: Modifi
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
-            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text(label, fontSize = 12.sp, color = Color.Black, textAlign = TextAlign.Center)
         }
     }
 }
@@ -193,7 +193,7 @@ fun StatusProgressBar(status: String, count: Int, progress: Float) {
         LinearProgressIndicator(
             progress = { progress },
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
-            color = if (progress > 0.7f) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+            color = if (progress > 0.7f) MaterialTheme.colorScheme.primary else Color.Black,
             trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
         )
     }

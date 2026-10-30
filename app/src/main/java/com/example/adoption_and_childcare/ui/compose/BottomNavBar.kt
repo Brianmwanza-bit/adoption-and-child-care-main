@@ -54,7 +54,7 @@ fun BottomNavBar(
     val sosState by sosViewModel.sosState.collectAsState()
 
     Column {
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+        HorizontalDivider(thickness = 1.dp, color = Color.Black.copy(alpha = 0.12f))
         NavigationBar(
             containerColor = Color(0xFF1976D2), // Modern Blue Block
             tonalElevation = 12.dp,

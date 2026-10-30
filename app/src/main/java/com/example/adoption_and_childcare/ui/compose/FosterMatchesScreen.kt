@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -107,7 +109,7 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
             if (matches.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.PeopleAlt, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Default.PeopleAlt, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(stringResource(R.string.foster_matches_no_matches), style = MaterialTheme.typography.bodyLarge)
                     }
@@ -125,10 +127,10 @@ fun FosterMatchesScreen(onBack: () -> Unit = {}) {
                                     Text(stringResource(R.string.foster_matches_status_label, match.status ?: ""), style = MaterialTheme.typography.bodySmall, color = when(match.status) {
                                         "Approved", "Completed" -> MaterialTheme.colorScheme.primary
                                         "Under Review" -> MaterialTheme.colorScheme.tertiary
-                                        else -> MaterialTheme.colorScheme.outline
+                                        else -> Color.Black
                                     })
                                     match.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                                    match.createdAt?.let { Text(stringResource(R.string.foster_matches_created_label, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                    match.createdAt?.let { Text(stringResource(R.string.foster_matches_created_label, it), style = MaterialTheme.typography.bodySmall, color = Color.Black) }
                                 }
                                 Row(verticalAlignment = Alignment.Top) {
                                     IconButton(onClick = {

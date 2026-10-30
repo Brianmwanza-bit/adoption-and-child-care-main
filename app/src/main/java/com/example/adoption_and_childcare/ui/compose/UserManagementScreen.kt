@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -200,7 +202,7 @@ private fun UserList(
         if (users.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Group, null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                    Icon(Icons.Default.Group, null, modifier = Modifier.size(64.dp), tint = Color.Black)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(stringResource(R.string.user_management_no_users), style = MaterialTheme.typography.bodyLarge)
                 }

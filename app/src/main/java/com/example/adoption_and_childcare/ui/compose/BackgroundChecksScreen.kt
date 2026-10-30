@@ -106,7 +106,7 @@ fun BackgroundChecksScreen(
                 if (checks.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.VerifiedUser, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.bg_checks_no_results), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -311,7 +311,7 @@ fun BackgroundCheckCard(
                 FormDetailRow(label = "Completed At", value = check.completedAt)
             }
             if (!check.result.isNullOrBlank()) {
-                Text("Result Summary", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(top = 8.dp))
+                Text("Result Summary", style = MaterialTheme.typography.labelLarge, color = Color.Black, modifier = Modifier.padding(top = 8.dp))
                 Text(check.result, style = MaterialTheme.typography.bodyMedium)
             }
         }

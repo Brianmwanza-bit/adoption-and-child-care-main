@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -126,7 +128,7 @@ fun FosterTasksScreen(onBack: () -> Unit = {}) {
                             Icons.Default.Task,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.outline
+                            tint = Color.Black
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
@@ -168,14 +170,14 @@ fun FosterTasksScreen(onBack: () -> Unit = {}) {
                                         color = when(task.status) {
                                             completedStatus -> MaterialTheme.colorScheme.primary
                                             inProgressStatus -> MaterialTheme.colorScheme.tertiary
-                                            else -> MaterialTheme.colorScheme.outline
+                                            else -> Color.Black
                                         }
                                     )
                                     task.dueDate?.let { date: String ->
                                         Text(
                                             stringResource(R.string.foster_tasks_due_label, date),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color.Black
                                         )
                                     }
                                     task.createdAt?.let { created: String ->

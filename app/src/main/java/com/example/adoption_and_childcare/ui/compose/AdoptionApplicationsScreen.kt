@@ -118,7 +118,7 @@ fun AdoptionApplicationsScreen(
                             Text(
                                 text = "Notes",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.secondary
+                                color = Color.Black
                             )
                             Text(
                                 text = a.notes,
@@ -193,7 +193,7 @@ fun AdoptionStageTracker(currentStatus: String) {
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             stages.forEachIndexed { index, stage ->
-                val color = if (index <= currentIdx) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                val color = if (index <= currentIdx) MaterialTheme.colorScheme.primary else Color.Black
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     Box(Modifier.size(24.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
                         if (index < currentIdx) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))

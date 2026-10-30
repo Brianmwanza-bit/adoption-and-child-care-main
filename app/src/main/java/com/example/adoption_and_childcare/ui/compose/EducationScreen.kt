@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -107,7 +109,7 @@ fun EducationScreen(
                 if (records.isEmpty() && !isLoading) {
                     Box(Modifier.fillMaxSize().height(400.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.School, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(stringResource(R.string.edu_no_records), style = MaterialTheme.typography.bodyLarge)
                         }
@@ -161,7 +163,7 @@ fun EducationScreen(
                                 Text(
                                     text = stringResource(R.string.edu_label_performance),
                                     style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = Color.Black
                                 )
                                 Text(
                                     text = perf,

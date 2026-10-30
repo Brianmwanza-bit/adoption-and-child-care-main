@@ -186,10 +186,10 @@ fun DashboardScreen(
 
     val allModules = listOf(
         DashboardCard(stringResource(R.string.dashboard_active_cases), Icons.Default.FolderOpen, childrenCount + familiesCount, stringResource(R.string.dashboard_active_cases_summary), MaterialTheme.colorScheme.primary, route = "children_list"),
-        DashboardCard(stringResource(R.string.dashboard_awaiting_placement), Icons.Default.Schedule, adoptionAppsCount, stringResource(R.string.dashboard_awaiting_placement_summary), MaterialTheme.colorScheme.secondary, route = "adoption_applications"),
+        DashboardCard(stringResource(R.string.dashboard_awaiting_placement), Icons.Default.Schedule, adoptionAppsCount, stringResource(R.string.dashboard_awaiting_placement_summary), Color.Black, route = "adoption_applications"),
         DashboardCard(stringResource(R.string.dashboard_in_placement), Icons.Default.Home, placementsCount, stringResource(R.string.dashboard_in_placement_summary), MaterialTheme.colorScheme.tertiary, route = "placements"),
         DashboardCard(stringResource(R.string.dashboard_home_studies), Icons.Default.AssignmentTurnedIn, homeStudiesCount, stringResource(R.string.dashboard_home_studies_summary), MaterialTheme.colorScheme.error, route = "home_studies"),
-        DashboardCard(stringResource(R.string.dashboard_documents), Icons.Default.Description, documentsCount, stringResource(R.string.dashboard_documents_summary), MaterialTheme.colorScheme.outline, route = "documents"),
+        DashboardCard(stringResource(R.string.dashboard_documents), Icons.Default.Description, documentsCount, stringResource(R.string.dashboard_documents_summary), Color.Black, route = "documents"),
         DashboardCard(stringResource(R.string.dashboard_medical), Icons.Default.LocalHospital, medicalCount, stringResource(R.string.dashboard_medical_summary), MaterialTheme.colorScheme.errorContainer, route = "medical"),
         DashboardCard(stringResource(R.string.dashboard_education), Icons.Default.School, educationCount, stringResource(R.string.dashboard_education_summary), MaterialTheme.colorScheme.primaryContainer, route = "education"),
         DashboardCard(stringResource(R.string.dashboard_finance), Icons.Default.AttachMoney, financeCount, stringResource(R.string.dashboard_finance_summary), MaterialTheme.colorScheme.secondaryContainer, route = "finance"),
@@ -372,7 +372,7 @@ fun DashboardHeaderSection(unreadCount: Int, overdueTasks: Int) {
     ) {
         HeaderStatCard(stringResource(R.string.dashboard_stat_urgent_cases), "3", MaterialTheme.colorScheme.error, Modifier.weight(1f))
         HeaderStatCard(stringResource(R.string.dashboard_stat_overdue), overdueTasks.toString(), MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
-        HeaderStatCard(stringResource(R.string.dashboard_stat_todays_tasks), "4", MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        HeaderStatCard(stringResource(R.string.dashboard_stat_todays_tasks), "4", Color.Black, Modifier.weight(1f))
         HeaderStatCard(stringResource(R.string.dashboard_stat_messages), unreadCount.toString(), MaterialTheme.colorScheme.inversePrimary, Modifier.weight(1f))
     }
 }
@@ -431,7 +431,7 @@ fun SearchHeaderBar(
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+            unfocusedBorderColor = Color.Black.copy(alpha = 0.3f)
         ),
         textStyle = MaterialTheme.typography.bodySmall
     )

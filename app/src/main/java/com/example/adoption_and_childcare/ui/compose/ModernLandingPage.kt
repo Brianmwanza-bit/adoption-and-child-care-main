@@ -211,7 +211,7 @@ fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 18.sp)
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Black, textAlign = TextAlign.Center)
         }
     }
 }
@@ -294,7 +294,7 @@ fun GlassmorphicFeatureCard(feature: FeatureData) {
             Column {
                 Text(feature.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(feature.desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(feature.desc, style = MaterialTheme.typography.bodySmall, color = Color.Black)
             }
         }
     }
@@ -314,7 +314,7 @@ fun QuoteSection(testimonialSettings: List<com.example.adoption_and_childcare.da
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.2f))
     ) {
         Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.FormatQuote, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
+            Icon(Icons.Default.FormatQuote, contentDescription = null, tint = Color.Black, modifier = Modifier.size(48.dp))
             Text(
                 text = "\"$quote\"",
                 style = MaterialTheme.typography.bodyLarge,
@@ -341,7 +341,7 @@ fun BottomStickyCTA(onGetStarted: () -> Unit, hasLoggedInBefore: Boolean) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(if (hasLoggedInBefore) stringResource(R.string.landing_access_portal) else stringResource(R.string.landing_ready_title), fontWeight = FontWeight.Bold)
-                Text(if (hasLoggedInBefore) stringResource(R.string.landing_manage_cases) else stringResource(R.string.landing_ready_desc), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (hasLoggedInBefore) stringResource(R.string.landing_manage_cases) else stringResource(R.string.landing_ready_desc), style = MaterialTheme.typography.labelSmall, color = Color.Black)
             }
             Button(
                 onClick = onGetStarted,

@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -111,7 +113,7 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                                     permission.description?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                                     permission.category?.let { Text("Category: $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
                                     val assignedCount = userPermissions.count { it.permissionId == permission.permissionId }
-                                    Text("Assigned to $assignedCount users", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("Assigned to $assignedCount users", style = MaterialTheme.typography.bodySmall, color = Color.Black)
                                 }
                                 Row(verticalAlignment = Alignment.Top) {
                                     IconButton(onClick = {
@@ -154,7 +156,7 @@ fun UserRolesScreen(onBack: () -> Unit = {}) {
                                 perm?.let {
                                     Text("Permission: ${it.name}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                                 }
-                                Text("Granted: ${up.grantedAt}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Granted: ${up.grantedAt}", style = MaterialTheme.typography.bodySmall, color = Color.Black)
                             }
                         }
                     }

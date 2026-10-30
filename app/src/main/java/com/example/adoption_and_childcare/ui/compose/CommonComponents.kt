@@ -160,7 +160,7 @@ fun FormRecordCard(
                     Text(
                         text = stringResource(R.string.common_page_number, pageNumber),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = Color.Black
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -173,7 +173,7 @@ fun FormRecordCard(
                 Box(
                     modifier = Modifier
                         .size(100.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                        .border(1.dp, Color.Black, RoundedCornerShape(4.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
@@ -181,13 +181,13 @@ fun FormRecordCard(
                         headerIcon ?: Icons.Default.Person,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = Color.Black
                     )
                     Text(
                         text = stringResource(R.string.common_passport),
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Black
                     )
                 }
             }
@@ -238,7 +238,7 @@ fun FormRecordCard(
  * @param valueColor Theme color for the value text.
  */
 @Composable
-fun FormDetailRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
+fun FormDetailRow(label: String, value: String, valueColor: Color = Color.Black) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -248,7 +248,7 @@ fun FormDetailRow(label: String, value: String, valueColor: Color = MaterialThem
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.secondary,
+            color = Color.Black,
             modifier = Modifier.weight(1f)
         )
         Text(

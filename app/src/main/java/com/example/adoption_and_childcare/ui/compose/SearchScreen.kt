@@ -287,7 +287,7 @@ fun SearchResultItem(result: SearchResult) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    color = Color.Black.copy(alpha = 0.7f)
                 )
                 Text(text = details, style = MaterialTheme.typography.labelSmall, color = color)
             }
@@ -295,7 +295,7 @@ fun SearchResultItem(result: SearchResult) {
             Icon(
                 Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                tint = Color.Black.copy(alpha = 0.3f)
             )
         }
     }

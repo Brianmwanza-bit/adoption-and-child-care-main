@@ -157,7 +157,7 @@ fun GenericCard(
                 Text(
                     text = status,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (status == critical || status == urgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+                    color = if (status == critical || status == urgent) MaterialTheme.colorScheme.error else Color.Black
                 )
             }
         }
@@ -1368,13 +1368,13 @@ fun TaskCard(task: TaskEntity, onStatusChange: (newStatus: String) -> Unit) {
         pending -> MaterialTheme.colorScheme.error
         inProgress -> MaterialTheme.colorScheme.primary
         completed -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     val priorityColor = when (task.priority) { 
         high -> MaterialTheme.colorScheme.error
-        medium -> MaterialTheme.colorScheme.secondary
+        medium -> Color.Black
         low -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
@@ -1458,7 +1458,7 @@ fun DeadlineCard(deadline: CaseDeadlineEntity, onStatusChange: (newStatus: Strin
         pending -> MaterialTheme.colorScheme.error
         inProgress -> MaterialTheme.colorScheme.primary
         completed -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(all = 16.dp)) {
@@ -1537,7 +1537,7 @@ fun ApprovalCard(approval: CaseApprovalEntity, onStatusChange: (newStatus: Strin
         pending -> MaterialTheme.colorScheme.error
         approved -> MaterialTheme.colorScheme.tertiary
         rejected -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(all = 16.dp)) {
@@ -1664,13 +1664,13 @@ fun ActionItemCard(item: ActionItemEntity, onStatusChange: (newStatus: String) -
         open -> MaterialTheme.colorScheme.error
         inProgress -> MaterialTheme.colorScheme.primary
         completed -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     val priorityColor = when (item.priority) { 
         high -> MaterialTheme.colorScheme.error
-        medium -> MaterialTheme.colorScheme.secondary
+        medium -> Color.Black
         low -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.outline
+        else -> Color.Black
     }
     Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(all = 16.dp)) {
@@ -1736,7 +1736,7 @@ fun ActivityTimelineCard(activity: CaseActivityEntity) {
     val courtHearing = stringResource(id = R.string.activities_type_court_hearing)
     val activityColor = when (activity.activityType) { 
         homeVisit -> MaterialTheme.colorScheme.primary
-        caseReview -> MaterialTheme.colorScheme.secondary
+        caseReview -> Color.Black
         courtHearing -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.tertiary
     }
@@ -1802,11 +1802,11 @@ fun UrgencyFlagCard(flag: CaseUrgencyFlagEntity) {
         Row(modifier = Modifier.padding(all = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(weight = 1f)) {
                 Text(text = flag.flagType, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Black)
             }
             val highRisk = stringResource(id = R.string.status_high)
             val mediumRisk = stringResource(id = R.string.status_medium)
-            val riskColor = if (flag.riskLevel == highRisk) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
+            val riskColor = if (flag.riskLevel == highRisk) MaterialTheme.colorScheme.error else Color.Black
             Surface(shape = RoundedCornerShape(size = 12.dp), color = riskColor.copy(alpha = 0.1f)) {
                 Text(text = flag.riskLevel ?: mediumRisk, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = riskColor)
             }

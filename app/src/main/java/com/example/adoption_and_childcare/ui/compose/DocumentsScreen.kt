@@ -1,5 +1,7 @@
 package com.example.adoption_and_childcare.ui.compose
 
+import androidx.compose.ui.graphics.Color
+
 import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -146,7 +148,7 @@ fun DocumentsScreen(
             if (filteredDocs.isEmpty() && !isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
+                        Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(if (searchQuery.isEmpty()) stringResource(R.string.docs_no_docs) else stringResource(R.string.docs_no_match, searchQuery), style = MaterialTheme.typography.bodyLarge)
                     }

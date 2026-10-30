@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.Crossfade
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -594,6 +595,7 @@ class MainActivity : ComponentActivity() {
                         }
                     ) {
                         Scaffold(
+                            containerColor = Color(0xFFF8F9FA),
                             topBar = {
                                 Column {
                                     if (sosState == SOSState.ACTIVE) {

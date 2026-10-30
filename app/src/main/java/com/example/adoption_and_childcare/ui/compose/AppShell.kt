@@ -42,7 +42,7 @@ fun DrawerHeader(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF4CAF50))
+            .background(Color(0xFF2196F3))
             .padding(24.dp)
     ) {
         Box(
@@ -116,7 +116,7 @@ fun GreenHeader(
             .fillMaxWidth()
             .padding(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF4CAF50)
+            containerColor = Color(0xFF2196F3)
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)

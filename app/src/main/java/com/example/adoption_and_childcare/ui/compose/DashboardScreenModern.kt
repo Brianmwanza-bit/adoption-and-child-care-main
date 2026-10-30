@@ -646,8 +646,8 @@ fun ActionItemCardModern(actionItem: ActionItemModern) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(actionItem.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
-                    Text(actionItem.assignee, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
+                    Text(actionItem.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.Black)
+                    Text(actionItem.assignee, style = MaterialTheme.typography.bodySmall, color = Color.Black)
                 }
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.footer_action_approve), tint = Color.Black, modifier = Modifier.size(20.dp))
@@ -672,7 +672,8 @@ fun RecentUpdatesSectionModern(updates: List<String>, onViewAll: () -> Unit) {
             Text(
                 stringResource(R.string.dashboard_recent_updates),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
             Text(
                 stringResource(R.string.dashboard_view_all),
@@ -686,7 +687,7 @@ fun RecentUpdatesSectionModern(updates: List<String>, onViewAll: () -> Unit) {
             Text(
                 stringResource(R.string.dashboard_no_updates),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = Color.Black,
                 modifier = Modifier.padding(8.dp)
             )
         } else {
@@ -698,7 +699,7 @@ fun RecentUpdatesSectionModern(updates: List<String>, onViewAll: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.Info, stringResource(R.string.activity_doc_uploaded), tint = Color(0xFF9C27B0), modifier = Modifier.size(20.dp))
-                    Text(updateText, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    Text(updateText, style = MaterialTheme.typography.bodySmall, color = Color.Black, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -898,7 +899,7 @@ fun ModernScreenCard(
                 Text(
                     description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = Color.Black,
                     fontSize = 11.sp
                 )
             }

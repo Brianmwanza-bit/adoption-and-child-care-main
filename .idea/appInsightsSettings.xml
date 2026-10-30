@@ -21,6 +21,14 @@
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
+              <option name="connection">
+                <ConnectionSetting>
+                  <option name="appId" value="com.example.adoption_and_childcare" />
+                  <option name="mobileSdkAppId" value="1:903675369901:android:49263fb18c2c4f7b8b2924" />
+                  <option name="projectId" value="kotlin-projects-952fa" />
+                  <option name="projectNumber" value="903675369901" />
+                </ConnectionSetting>
+              </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
               <option name="timeIntervalDays" value="THIRTY_DAYS" />
               <option name="visibilityType" value="ALL" />

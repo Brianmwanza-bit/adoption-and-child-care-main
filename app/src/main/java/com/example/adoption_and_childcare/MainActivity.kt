@@ -396,7 +396,7 @@ class MainActivity : ComponentActivity() {
                     } else {
                         Crossfade(targetState = onboardingStep, label = stringResource(R.string.label_onboarding_transition)) { step: Int ->
                             when (step) {
-                                0 -> WelcomeScreen { onboardingStep = 1 }
+                                0 -> WelcomeScreen { onboardingStep = if (session.isLoggedIn()) 5 else 3 }
                                 1 -> ModernLandingPage(
                                         onGetStarted = { 
                                             onboardingStep = if (hasLoggedInBefore) 3 else 2 

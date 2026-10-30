@@ -79,26 +79,28 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// MySQL / Aiven DB connection configuration
+// Aiven DB connection configuration (Strictly Cloud Aiven MySQL)
 const caPath = path.join(__dirname, 'config-aiven-ca.pem');
-const sslConfig = (process.env.DB_SSL === 'true' || (process.env.AIVEN_DB_HOST || process.env.DB_HOST || '').includes('aivencloud.com'))
-  ? (fs.existsSync(caPath) ? { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false } : { rejectUnauthorized: false })
-  : null;
+const sslConfig = fs.existsSync(caPath)
+  ? { minVersion: 'TLSv1.2', ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false }
+  : { minVersion: 'TLSv1.2', rejectUnauthorized: false };
 
 const dbConfig = {
-  host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || '127.0.0.1',
-  user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'root',
-  password: process.env.AIVEN_DB_PASSWORD || process.env.DB_PASSWORD || '',
-  port: parseInt(process.env.AIVEN_DB_PORT || process.env.DB_PORT) || 3306,
-  database: process.env.AIVEN_DB_NAME || process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db',
+  host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || 'mysql-2e009ff8-addoptionandchildcaretrackingsystem.j.aivencloud.com',
+  user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'avnadmin',
+  password: process.env.AIVEN_DB_PASSWORD || process.env.DB_PASSWORD,
+  port: parseInt(process.env.AIVEN_DB_PORT || process.env.DB_PORT) || 13255,
+  database: process.env.AIVEN_DB_NAME || process.env.DB_NAME || 'defaultdb',
   multipleStatements: true,
   charset: 'utf8mb4',
   timezone: '+00:00',
   connectTimeout: 30000, // 30 seconds
-  ssl: sslConfig
+  ssl: sslConfig,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000
 };
 
-console.log(`[DB CONFIG] Attempting connection to ${dbConfig.host}:${dbConfig.port} (User: ${dbConfig.user}, DB: ${dbConfig.database})`);
+console.log(`[DB CONFIG] Connecting exclusively to Aiven Cloud DB -> ${dbConfig.host}:${dbConfig.port} (User: ${dbConfig.user}, DB: ${dbConfig.database})`);
 
 // Create a connection specifically to ensure the database exists
 const initialDb = mysql.createConnection({ ...dbConfig, database: undefined });

@@ -11,8 +11,8 @@ console.log('Port:', process.env.DB_PORT);
 
 const caPath = path.join(__dirname, 'config-aiven-ca.pem');
 const sslConfig = fs.existsSync(caPath)
-  ? { ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false }
-  : { rejectUnauthorized: false };
+  ? { minVersion: 'TLSv1.2', ca: fs.readFileSync(caPath, 'utf8'), rejectUnauthorized: false }
+  : { minVersion: 'TLSv1.2', rejectUnauthorized: false };
 
 const connection = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',

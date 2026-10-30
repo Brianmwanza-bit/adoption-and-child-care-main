@@ -31,11 +31,14 @@ class BiometricAuthManager(private val context: Context) {
      * @return True if biometric authentication is available, false otherwise.
      */
     fun isBiometricAvailable(): Boolean {
-        val biometricManager: BiometricManager = BiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            BiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
+        val biometricManager = BiometricManager.from(context)
+        val authStatus = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or 
+            BiometricManager.Authenticators.BIOMETRIC_WEAK or 
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        )
+        return authStatus == BiometricManager.BIOMETRIC_SUCCESS || 
+               authStatus == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
     }
 
     /**
@@ -100,7 +103,11 @@ class BiometricAuthManager(private val context: Context) {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(context.getString(R.string.biometric_prompt_title))
             .setSubtitle(context.getString(R.string.biometric_prompt_subtitle))
-            .setNegativeButtonText(context.getString(R.string.biometric_negative_button))
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or 
+                BiometricManager.Authenticators.BIOMETRIC_WEAK or 
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
             .build()
 
         biometricPrompt.authenticate(promptInfo)

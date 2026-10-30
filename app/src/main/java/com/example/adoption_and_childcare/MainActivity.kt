@@ -584,20 +584,6 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                     )
                                 }
-
-                                val versionDisplay = stringResource(
-                                    R.string.app_version_format, 
-                                    BuildConfig.VERSION_NAME,
-                                    BuildConfig.VERSION_CODE
-                                )
-                                Text(
-                                    text = versionDisplay,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                                )
                             }
                         }
                     ) {

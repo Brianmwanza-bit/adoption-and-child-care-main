@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import coil.compose.AsyncImage
 import com.example.adoption_and_childcare.data.db.entities.UserEntity
+import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.data.model.UserRole
 import com.example.adoption_and_childcare.data.security.BiometricAuthManager
 import com.example.adoption_and_childcare.utils.AutoSaveManager
@@ -94,9 +95,7 @@ fun LoginScreen(
     val scrollState = rememberScrollState()
     val autoSave = remember { AutoSaveManager(context) }
     val biometricAuthManager = remember { BiometricAuthManager(context) }
-
-    val roomUsers by viewModel.users.collectAsState(initial = emptyList())
-    var showAutofillDropdown by remember { mutableStateOf(false) }
+    val sessionManager = remember { SessionManager(context) }
 
     var email by remember { mutableStateOf(autoSave.getLoginField(AutoSaveManager.LOGIN_EMAIL)) }
     var password by remember { mutableStateOf(autoSave.getLoginField(AutoSaveManager.LOGIN_PASSWORD)) }
@@ -104,11 +103,18 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf("") }
     var infoMessage by remember { mutableStateOf(successMessage) }
     var isLoading by remember { mutableStateOf(false) }
-    var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var profilePhotoUri by remember {
+        mutableStateOf<Uri?>(sessionManager.getProfilePhotoUri()?.let { Uri.parse(it) })
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> profilePhotoUri = uri }
+    ) { uri: Uri? ->
+        profilePhotoUri = uri
+        if (uri != null) {
+            sessionManager.saveProfilePhotoUri(uri.toString())
+        }
+    }
 
     AuthBackground {
         Card(
@@ -191,153 +197,26 @@ fun LoginScreen(
                     color = Color(0xFF2196F3)
                 )
 
-                // Room DB Quick Autofill Chips
-                if (roomUsers.isNotEmpty()) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Storage,
-                                contentDescription = "Room DB",
-                                modifier = Modifier.size(16.dp),
-                                tint = Color(0xFF2196F3)
-                            )
-                            Text(
-                                text = "Autofill from Room DB:",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2196F3)
-                            )
-                        }
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            items(roomUsers) { u ->
-                                val targetEmail = u.email.takeIf { !it.isNullOrBlank() } ?: u.username
-                                val targetPassword = getPasswordForUser(u)
-                                AssistChip(
-                                    onClick = {
-                                        email = targetEmail
-                                        password = targetPassword
-                                        autoSave.saveLoginField(AutoSaveManager.LOGIN_EMAIL, targetEmail)
-                                        autoSave.saveLoginField(AutoSaveManager.LOGIN_PASSWORD, targetPassword)
-                                    },
-                                    label = {
-                                        Text(
-                                            text = "${u.username} (${u.role})",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.AccountCircle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
-                                            tint = Color(0xFF2196F3)
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Email Input Box with Room DB Autofill Dropdown
-                ExposedDropdownMenuBox(
-                    expanded = showAutofillDropdown && roomUsers.isNotEmpty(),
-                    onExpandedChange = { showAutofillDropdown = it }
-                ) {
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            autoSave.saveLoginField(AutoSaveManager.LOGIN_EMAIL, it)
-                            showAutofillDropdown = true
-                        },
-                        label = { Text(stringResource(R.string.login_email_hint)) },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2196F3)) },
-                        trailingIcon = {
-                            if (roomUsers.isNotEmpty()) {
-                                IconButton(onClick = { showAutofillDropdown = !showAutofillDropdown }) {
-                                    Icon(
-                                        Icons.Default.AccountCircle,
-                                        contentDescription = "Autofill from Room DB",
-                                        tint = Color(0xFF2196F3)
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        singleLine = true,
-                        textStyle = TextStyle(color = Color.Black),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    val filteredUsers = roomUsers.filter { user ->
-                        val userEmail = user.email ?: ""
-                        val username = user.username
-                        email.isBlank() || userEmail.contains(email, ignoreCase = true) || username.contains(email, ignoreCase = true)
-                    }
-
-                    if (showAutofillDropdown && filteredUsers.isNotEmpty()) {
-                        ExposedDropdownMenu(
-                            expanded = showAutofillDropdown,
-                            onDismissRequest = { showAutofillDropdown = false }
-                        ) {
-                            Text(
-                                text = "Autofill saved user from Room DB",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2196F3),
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                            )
-                            HorizontalDivider()
-                            filteredUsers.forEach { user ->
-                                val autofillValue = user.email.takeIf { !it.isNullOrBlank() } ?: user.username
-                                val targetPassword = getPasswordForUser(user)
-                                DropdownMenuItem(
-                                    text = {
-                                        Column {
-                                            Text(
-                                                text = autofillValue,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 14.sp
-                                            )
-                                            Text(
-                                                text = "Username: ${user.username} • Role: ${user.role}",
-                                                fontSize = 11.sp,
-                                                color = Color.Gray
-                                            )
-                                        }
-                                    },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.Person,
-                                            contentDescription = null,
-                                            tint = Color(0xFF2196F3)
-                                        )
-                                    },
-                                    onClick = {
-                                        email = autofillValue
-                                        password = targetPassword
-                                        autoSave.saveLoginField(AutoSaveManager.LOGIN_EMAIL, autofillValue)
-                                        autoSave.saveLoginField(AutoSaveManager.LOGIN_PASSWORD, targetPassword)
-                                        showAutofillDropdown = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
+                // Clean Email / Username Input Box directly beneath Title
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        autoSave.saveLoginField(AutoSaveManager.LOGIN_EMAIL, it)
+                    },
+                    label = { Text(stringResource(R.string.login_email_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2196F3)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
 
                 // Password Input Box with View/Hide prompt & toggle
                 OutlinedTextField(
@@ -346,7 +225,7 @@ fun LoginScreen(
                         password = it
                         autoSave.saveLoginField(AutoSaveManager.LOGIN_PASSWORD, it)
                     },
-                    label = { Text(stringResource(R.string.login_password_hint)) },
+                    label = { Text(stringResource(R.string.login_password_hint), color = Color.Black) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF2196F3)) },
                     trailingIcon = {
                         Row(
@@ -498,6 +377,7 @@ fun RegisterScreen(
     val scrollState = rememberScrollState()
     val autoSave = remember { AutoSaveManager(context) }
 
+    val sessionManager = remember { SessionManager(context) }
     var username by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_USERNAME)) }
     var email by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_EMAIL)) }
     var password by remember { mutableStateOf(autoSave.getRegisterField(AutoSaveManager.REG_PASSWORD)) }
@@ -511,14 +391,21 @@ fun RegisterScreen(
     var showOccupationDropdown by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+    var profilePhotoUri by remember {
+        mutableStateOf<Uri?>(sessionManager.getProfilePhotoUri()?.let { Uri.parse(it) })
+    }
 
     val roles = UserRole.entries
 
     /** Callback that stores the selected profile photo URI, or null if selection was canceled. */
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> profilePhotoUri = uri }
+    ) { uri: Uri? ->
+        profilePhotoUri = uri
+        if (uri != null) {
+            sessionManager.saveProfilePhotoUri(uri.toString())
+        }
+    }
 
     AuthBackground {
         Card(
@@ -601,17 +488,24 @@ fun RegisterScreen(
                     color = Color(0xFF2196F3)
                 )
 
-                // --- Core credential fields ---
+                // --- Core credential fields (all text strictly Black) ---
                 OutlinedTextField(
                     value = username,
                     onValueChange = {
                         username = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_USERNAME, it)
                     },
-                    label = { Text(stringResource(R.string.register_username_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_username_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
                 OutlinedTextField(
                     value = email,
@@ -619,10 +513,17 @@ fun RegisterScreen(
                         email = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_EMAIL, it)
                     },
-                    label = { Text(stringResource(R.string.register_email_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_email_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
                 OutlinedTextField(
                     value = password,
@@ -630,8 +531,8 @@ fun RegisterScreen(
                         password = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_PASSWORD, it)
                     },
-                    label = { Text(stringResource(R.string.register_password_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_password_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF2196F3)) },
                     trailingIcon = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -656,7 +557,14 @@ fun RegisterScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    visualTransformation = if (isRegisterPasswordVisible) VisualTransformation.None else PasswordVisualTransformation()
+                    visualTransformation = if (isRegisterPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
                 OutlinedTextField(
                     value = phone,
@@ -664,10 +572,17 @@ fun RegisterScreen(
                         phone = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_PHONE, it)
                     },
-                    label = { Text(stringResource(R.string.register_phone_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_phone_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
 
                 // --- Identification fields ---
@@ -677,10 +592,17 @@ fun RegisterScreen(
                         nationalIdNo = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_NATIONAL_ID, it)
                     },
-                    label = { Text(stringResource(R.string.register_national_id_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_national_id_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
                 OutlinedTextField(
                     value = idNumber,
@@ -688,10 +610,17 @@ fun RegisterScreen(
                         idNumber = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_ID_NUMBER, it)
                     },
-                    label = { Text(stringResource(R.string.register_id_number_hint)) },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_id_number_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
 
                 // --- Role ---
@@ -703,12 +632,19 @@ fun RegisterScreen(
                         value = if (occupationRoleName.isEmpty()) "" else UserRole.fromRoleName(occupationRoleName).getLabel(),
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text(stringResource(R.string.register_occupation_hint)) },
-                        leadingIcon = { Icon(Icons.Default.Work, contentDescription = null) },
+                        label = { Text(stringResource(R.string.register_occupation_hint), color = Color.Black) },
+                        leadingIcon = { Icon(Icons.Default.Work, contentDescription = null, tint = Color(0xFF2196F3)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showOccupationDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(),
+                        textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedLabelColor = Color(0xFF2196F3),
+                            unfocusedLabelColor = Color.Black
+                        )
                     )
                     ExposedDropdownMenu(
                         expanded = showOccupationDropdown,
@@ -716,7 +652,7 @@ fun RegisterScreen(
                     ) {
                         roles.forEach { role: UserRole ->
                             DropdownMenuItem(
-                                text = { Text(role.getLabel()) },
+                                text = { Text(role.getLabel(), color = Color.Black) },
                                 onClick = {
                                     occupationRoleName = role.roleName
                                     autoSave.saveRegisterField(AutoSaveManager.REG_OCCUPATION, role.roleName)
@@ -734,10 +670,17 @@ fun RegisterScreen(
                         county = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_COUNTY, it)
                     },
-                    label = { Text(stringResource(R.string.register_county_hint)) },
-                    leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_county_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
                 OutlinedTextField(
                     value = subCounty,
@@ -745,10 +688,17 @@ fun RegisterScreen(
                         subCounty = it
                         autoSave.saveRegisterField(AutoSaveManager.REG_SUB_COUNTY, it)
                     },
-                    label = { Text(stringResource(R.string.register_sub_county_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Map, contentDescription = null) },
+                    label = { Text(stringResource(R.string.register_sub_county_hint), color = Color.Black) },
+                    leadingIcon = { Icon(Icons.Default.Map, contentDescription = null, tint = Color(0xFF2196F3)) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontWeight = FontWeight.Medium),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedLabelColor = Color(0xFF2196F3),
+                        unfocusedLabelColor = Color.Black
+                    )
                 )
 
                 if (errorMessage.isNotEmpty()) {

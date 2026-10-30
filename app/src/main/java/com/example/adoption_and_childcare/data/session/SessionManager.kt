@@ -49,6 +49,15 @@ class SessionManager(private val context: Context) {
     fun getRole(): String? = prefs.getString(KEY_ROLE, null)
     fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
     fun getCounty(): String? = prefs.getString(KEY_COUNTY, null)
+    fun getProfilePhotoUri(): String? = prefs.getString(KEY_PROFILE_PHOTO_URI, null)
+
+    fun saveProfilePhotoUri(uri: String?) {
+        if (uri.isNullOrBlank()) {
+            prefs.edit().remove(KEY_PROFILE_PHOTO_URI).apply()
+        } else {
+            prefs.edit().putString(KEY_PROFILE_PHOTO_URI, uri).apply()
+        }
+    }
 
     fun userId(): Int = getUserId()
     fun username(): String = getUsername() ?: ""
@@ -63,5 +72,6 @@ class SessionManager(private val context: Context) {
         private const val KEY_COUNTY = "county"
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_HAS_LOGGED_IN_BEFORE = "has_logged_in_before"
+        private const val KEY_PROFILE_PHOTO_URI = "profile_photo_uri"
     }
 }

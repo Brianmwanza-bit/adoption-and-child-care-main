@@ -108,15 +108,5 @@ fun WelcomeScreen(
                 )
             }
         }
-
-        // Footer Version
-        Text(
-            text = "Version 1.0.0",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp),
-            color = Color.White.copy(alpha = 0.6f),
-            style = MaterialTheme.typography.labelMedium
-        )
     }
 }

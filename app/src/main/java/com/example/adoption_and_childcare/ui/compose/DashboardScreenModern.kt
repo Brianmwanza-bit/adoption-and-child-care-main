@@ -107,10 +107,13 @@ fun DashboardScreenModern(
         stringResource(R.string.dashboard_audit_update_format, log.action, log.tableName, log.recordId)
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        containerColor = Color(0xFFF8F9FA)
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color(0xFFF8F9FA))
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
@@ -505,9 +508,9 @@ fun MetricCardModern(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(icon, title, tint = color, modifier = Modifier.size(24.dp))
-                Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black)
             }
-            Text(title, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            Text(title, style = MaterialTheme.typography.bodySmall, color = Color.Black, fontWeight = FontWeight.SemiBold)
             Text(trend, style = MaterialTheme.typography.bodySmall, color = color, fontSize = 10.sp)
         }
     }
@@ -546,7 +549,7 @@ fun OverdueTasksSectionModern(count: Int, onViewTasks: () -> Unit) {
                 Text(
                     stringResource(R.string.dashboard_action_required_today),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.DarkGray
                 )
             }
             Icon(Icons.Default.Warning, stringResource(R.string.dashboard_stat_overdue), tint = Color(0xFFE91E63), modifier = Modifier.size(24.dp))
@@ -575,7 +578,8 @@ fun ActionItemsSectionModern(
             Text(
                 stringResource(R.string.dashboard_action_items),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
             Text(
                 stringResource(R.string.dashboard_view_all),
@@ -588,7 +592,7 @@ fun ActionItemsSectionModern(
             Text(
                 stringResource(R.string.dashboard_no_action_items),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
+                color = Color.DarkGray,
                 modifier = Modifier.padding(8.dp)
             )
         } else {
@@ -635,16 +639,16 @@ fun ActionItemCardModern(actionItem: ActionItemModern) {
                     )
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(actionItem.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                Text(actionItem.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color.Black)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(actionItem.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    Text(actionItem.assignee, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(actionItem.dueDate, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
+                    Text(actionItem.assignee, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                 }
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.footer_action_approve), tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, stringResource(R.string.footer_action_approve), tint = Color.Black, modifier = Modifier.size(20.dp))
         }
     }
 }

@@ -418,22 +418,24 @@ fun SearchHeaderBar(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp),
-        placeholder = { Text(stringResource(R.string.dashboard_search_hint)) },
-        leadingIcon = { Icon(Icons.Default.Search, stringResource(R.string.dashboard_search_desc), tint = MaterialTheme.colorScheme.primary) },
+        placeholder = { Text(stringResource(R.string.dashboard_search_hint), color = Color.DarkGray) },
+        leadingIcon = { Icon(Icons.Default.Search, stringResource(R.string.dashboard_search_desc), tint = Color(0xFF2196F3)) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Close, stringResource(R.string.dashboard_clear_desc))
+                    Icon(Icons.Default.Close, stringResource(R.string.dashboard_clear_desc), tint = Color.Black)
                 }
             }
         },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Black.copy(alpha = 0.3f)
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            focusedBorderColor = Color(0xFF2196F3),
+            unfocusedBorderColor = Color.Black.copy(alpha = 0.4f)
         ),
-        textStyle = MaterialTheme.typography.bodySmall
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black, fontWeight = FontWeight.Medium)
     )
 }
 
@@ -446,7 +448,7 @@ fun SearchHeaderBar(
 @Composable
 fun CriticalAlertsSection(cases: List<CaseStatus>, overdueTasks: Int, onNavigate: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.dashboard_section_urgent_attention), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(stringResource(R.string.dashboard_section_urgent_attention), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
         cases.forEach { case ->
             CriticalCaseCard(case)
         }
@@ -468,7 +470,7 @@ fun CriticalAlertsSection(cases: List<CaseStatus>, overdueTasks: Int, onNavigate
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(stringResource(R.string.dashboard_overdue_tasks_alert, overdueTasks), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFFE91E63))
-                        Text(stringResource(R.string.dashboard_action_required_today), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text(stringResource(R.string.dashboard_action_required_today), style = MaterialTheme.typography.labelSmall, color = Color.Black)
                     }
                     Icon(Icons.Default.ChevronRight, "Navigate", tint = Color(0xFFE91E63))
                 }
@@ -490,7 +492,7 @@ fun CriticalCaseCard(case: CaseStatus) {
             containerColor = when (case.urgency) {
                 "critical" -> Color(0xFFFFEBEE)
                 "high" -> Color(0xFFFFF3E0)
-                else -> Color(0xFFF5F5F5)
+                else -> Color.White
             }
         ),
         border = androidx.compose.foundation.BorderStroke(
@@ -505,8 +507,8 @@ fun CriticalCaseCard(case: CaseStatus) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(case.childName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Text(case.familyName, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(case.childName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(case.familyName, style = MaterialTheme.typography.labelSmall, color = Color.DarkGray)
                 }
                 Badge(
                     modifier = Modifier.align(Alignment.Top),
@@ -521,8 +523,8 @@ fun CriticalCaseCard(case: CaseStatus) {
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    Text("Days in status: ${case.daysInStatus}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-                    Text("Deadline: ${case.nextDeadline}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text("Days in status: ${case.daysInStatus}", style = MaterialTheme.typography.labelSmall, color = Color.Black)
+                    Text("Deadline: ${case.nextDeadline}", style = MaterialTheme.typography.labelSmall, color = Color.Black)
                 }
                 Text(case.assignee, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF2196F3))
             }
@@ -538,7 +540,7 @@ fun CriticalCaseCard(case: CaseStatus) {
 fun TodaysWorkloadSection(tasks: List<ActionItem>) {
     if (tasks.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.dashboard_section_todays_workload), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(stringResource(R.string.dashboard_section_todays_workload), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 14.sp)
             tasks.forEach { task ->
                 CompactActionCard(task)
             }
@@ -556,7 +558,7 @@ fun CompactActionCard(item: ActionItem) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -578,17 +580,17 @@ fun CompactActionCard(item: ActionItem) {
                     )
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                Text("${item.childName} • ${item.dueDate}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(item.title, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text("${item.childName} • ${item.dueDate}", style = MaterialTheme.typography.labelSmall, color = Color.DarkGray)
             }
-            Icon(Icons.Default.ChevronRight, "Navigate", modifier = Modifier.size(18.dp), tint = Color.Gray)
+            Icon(Icons.Default.ChevronRight, "Navigate", modifier = Modifier.size(18.dp), tint = Color.Black)
         }
     }
 }
 
 
 /**
- * A compact square card representing a system module.
+ * A compact square card representing a system module with crisp black text.
  * @param card The module data.
  * @param onClick Callback when the module is clicked.
  */
@@ -598,10 +600,10 @@ fun CompactModuleCard(card: DashboardCard, onClick: () -> Unit = {}) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = card.route != null) { onClick() },
-        colors = CardDefaults.cardColors(containerColor = card.color.copy(alpha = 0.1f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, card.color.copy(alpha = 0.5f))
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0E0E0))
     ) {
         Column(
             modifier = Modifier
@@ -610,11 +612,11 @@ fun CompactModuleCard(card: DashboardCard, onClick: () -> Unit = {}) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(card.icon, card.title, tint = card.color, modifier = Modifier.size(28.dp))
+            Icon(card.icon, card.title, tint = Color(0xFF2196F3), modifier = Modifier.size(28.dp))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(card.count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = card.color)
-            Text(card.title, style = MaterialTheme.typography.labelSmall, color = card.color, fontSize = 10.sp)
-            Text(card.summary, style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 8.sp)
+            Text(card.count.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(card.title, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 11.sp)
+            Text(card.summary, style = MaterialTheme.typography.labelSmall, color = Color(0xFF424242), fontSize = 9.sp)
         }
     }
 }

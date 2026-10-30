@@ -407,6 +407,12 @@ class MainActivity : ComponentActivity() {
                                         onLoginSuccess = { user ->
                                             currentUser = user.username
                                             currentRole = user.role
+                                            val savedPhotoStr = session.getProfilePhotoUri()
+                                            if (!savedPhotoStr.isNullOrBlank()) {
+                                                try {
+                                                    profilePhotoUri = Uri.parse(savedPhotoStr)
+                                                } catch (_: Exception) {}
+                                            }
                                             isLoadingAfterLogin = true
                                         },
                                         onNavigateToRegister = {
@@ -613,14 +619,6 @@ class MainActivity : ComponentActivity() {
                                         }
                                     )
                                 }
-                            },
-                            bottomBar = {
-                                BottomNavBar(
-                                    navController = navController,
-                                    syncViewModel = syncViewModel,
-                                    notificationsViewModel = notificationsViewModel,
-                                    sosViewModel = sosViewModel
-                                )
                             }
                         ) { scaffoldPadding: PaddingValues ->
                             Column(

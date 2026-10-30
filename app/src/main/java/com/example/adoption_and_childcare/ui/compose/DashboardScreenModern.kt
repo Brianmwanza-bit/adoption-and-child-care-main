@@ -329,7 +329,8 @@ fun PriorityAlertSectionModern(
         Text(
             stringResource(R.string.dashboard_priority_alerts),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -438,7 +439,8 @@ fun KeyMetricsSectionModern(
             Text(
                 stringResource(R.string.dashboard_key_metrics),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
             )
             
             filteredMetrics.chunked(2).forEach { rowMetrics ->

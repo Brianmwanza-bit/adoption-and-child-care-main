@@ -685,25 +685,17 @@ private fun AppNavHost(
 
     NavHost(navController = navController, startDestination = MainActivityConstants.ROUTE_DASHBOARD, modifier = modifier) {
         composable(MainActivityConstants.ROUTE_DASHBOARD) { _: NavBackStackEntry ->
-                                    val currentDest = navController.currentDestination?.route
-                                    DashboardScreenModern(
-                                        userRole = userRole,
-                                        onNavigate = { destination: String ->
-                                            if (currentDest != destination) {
-                                                if (canAccessRoute(destination, userRole, adminRole, supervisorRole, caseworkerRole, socialWorkerRole, guardianRole)) {
-                                                    navController.navigate(destination) {
-                                                        popUpTo(MainActivityConstants.ROUTE_DASHBOARD) { saveState = true }
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
-                                                } else {
-                                                    val deniedMsg = String.format(deniedMsgTemplate, destination, userRole)
-                                                    Log.d(logTag, deniedMsg)
-                                                }
-                                            }
-                                        }
-                                    )
-                                }
+            DashboardScreenModern(
+                userRole = userRole,
+                onNavigate = { destination: String ->
+                    try {
+                        navController.navigate(destination)
+                    } catch (e: Exception) {
+                        Log.e(logTag, "Navigation error: ${e.message}")
+                    }
+                }
+            )
+        }
         composable(MainActivityConstants.ROUTE_CHILDREN_LIST) { _: NavBackStackEntry -> ChildrenListScreen(onBack = { navController.popBackStack() }) }
         composable(MainActivityConstants.ROUTE_FAMILIES) { _: NavBackStackEntry -> FamiliesScreen(onBack = { navController.popBackStack() }) }
         composable(MainActivityConstants.ROUTE_ADOPTION_APPS) { _: NavBackStackEntry -> AdoptionApplicationsScreen(onBack = { navController.popBackStack() }) }
@@ -840,7 +832,15 @@ internal fun canAccessRoute(
         MainActivityConstants.ROUTE_RECENT_ACTIVITY,
         MainActivityConstants.ROUTE_SHORTCUTS,
         MainActivityConstants.ROUTE_PERMISSIONS,
-        MainActivityConstants.ROUTE_HELP_ABOUT
+        MainActivityConstants.ROUTE_HELP_ABOUT,
+        MainActivityConstants.ROUTE_CASE_URGENCY_FLAGS,
+        MainActivityConstants.ROUTE_RISK_ASSESSMENTS,
+        MainActivityConstants.ROUTE_CASE_DEADLINES,
+        MainActivityConstants.ROUTE_CHILDREN_LIST,
+        MainActivityConstants.ROUTE_FAMILIES,
+        MainActivityConstants.ROUTE_PLACEMENTS,
+        MainActivityConstants.ROUTE_ADOPTION_APPS,
+        MainActivityConstants.ROUTE_ACTION_ITEMS
     )
 
     return when (userRole) {

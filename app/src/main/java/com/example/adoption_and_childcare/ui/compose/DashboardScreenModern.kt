@@ -138,7 +138,8 @@ fun DashboardScreenModern(
                         PriorityAlertSectionModern(
                             urgentCount = 2,
                             atRiskCount = atRiskCount,
-                            upcomingCount = 5
+                            upcomingCount = 5,
+                            onNavigate = onNavigate
                         )
                     }
                 }
@@ -323,7 +324,8 @@ fun SearchBarModern(
 fun PriorityAlertSectionModern(
     urgentCount: Int,
     atRiskCount: Int,
-    upcomingCount: Int
+    upcomingCount: Int,
+    onNavigate: (String) -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -340,19 +342,22 @@ fun PriorityAlertSectionModern(
                 count = urgentCount,
                 label = stringResource(R.string.dashboard_urgent),
                 color = Color(0xFFE91E63),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate(MainActivityConstants.ROUTE_CASE_URGENCY_FLAGS) }
             )
             AlertCardModern(
                 count = atRiskCount,
                 label = stringResource(R.string.dashboard_at_risk),
                 color = Color(0xFFFF9800),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate(MainActivityConstants.ROUTE_RISK_ASSESSMENTS) }
             )
             AlertCardModern(
                 count = upcomingCount,
                 label = stringResource(R.string.dashboard_upcoming),
                 color = Color(0xFFFFC107),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = { onNavigate(MainActivityConstants.ROUTE_CASE_DEADLINES) }
             )
         }
     }
@@ -365,16 +370,18 @@ fun PriorityAlertSectionModern(
  * @param label Category label.
  * @param color Theme color for the card.
  * @param modifier Layout modifier.
+ * @param onClick Click callback.
  */
 @Composable
 fun AlertCardModern(
     count: Int,
     label: String,
     color: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)),
         border = androidx.compose.foundation.BorderStroke(1.dp, color)

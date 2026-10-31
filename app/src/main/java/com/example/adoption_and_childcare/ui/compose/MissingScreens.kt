@@ -64,12 +64,18 @@ fun SimpleBackScreen(
     content: @Composable (padding: PaddingValues) -> Unit
 ) {
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
-                title = { Text(text = title) },
+                title = { Text(text = title, color = Color.Black) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color.Black,
+                    navigationIconContentColor = Color.Black
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.common_back_desc))
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.common_back_desc), tint = Color.Black)
                     }
                 }
             )
@@ -859,18 +865,25 @@ fun CaseUrgencyFlagsScreen(onBack: () -> Unit = {}, viewModel: CaseToolsViewMode
     val currentDate = getCurrentDate()
     
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(id = R.string.urgency_flags_title)) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.common_back_desc)) } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(id = R.string.urgency_flags_add_desc)) } }
+                title = { Text(text = stringResource(id = R.string.urgency_flags_title), color = Color.Black) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = Color.Black,
+                    navigationIconContentColor = Color.Black,
+                    actionIconContentColor = Color.Black
+                ),
+                navigationIcon = { IconButton(onClick = onBack) { Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.common_back_desc), tint = Color.Black) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(id = R.string.urgency_flags_add_desc), tint = Color.Black) } }
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }, containerColor = Color(0xFFF44336)) { Icon(imageVector = Icons.Default.Warning, contentDescription = stringResource(id = R.string.urgency_flags_add_desc)) }
         }
     ) { innerPadding: PaddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues = innerPadding)) {
+        Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(paddingValues = innerPadding)) {
             val highRisk = stringResource(id = R.string.status_high)
             val mediumRisk = stringResource(id = R.string.status_medium)
             val highRiskCount = flags.count { it.riskLevel == highRisk }
@@ -1798,10 +1811,14 @@ fun AddActivityDialog(onDismiss: () -> Unit, onActivityAdded: (title: String, ac
  */
 @Composable
 fun UrgencyFlagCard(flag: CaseUrgencyFlagEntity) {
-    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
         Row(modifier = Modifier.padding(all = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(weight = 1f)) {
-                Text(text = flag.flagType, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(text = flag.flagType, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black)
                 Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Black)
             }
             val highRisk = stringResource(id = R.string.status_high)

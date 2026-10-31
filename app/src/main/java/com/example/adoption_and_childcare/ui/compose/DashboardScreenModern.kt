@@ -108,12 +108,12 @@ fun DashboardScreenModern(
     }
 
     Scaffold(
-        containerColor = Color(0xFFF8F9FA)
+        containerColor = Color.White
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
+                .background(Color.White)
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {

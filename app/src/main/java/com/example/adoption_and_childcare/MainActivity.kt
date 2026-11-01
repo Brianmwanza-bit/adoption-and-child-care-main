@@ -359,7 +359,11 @@ class MainActivity : ComponentActivity() {
                 var isLoadingAfterLogin by remember { mutableStateOf(value = false) }
                 var onboardingStep by remember { mutableIntStateOf(if (isLoggedInState) 5 else if (hasLoggedInBefore) 1 else 0) }
                 var registrationSuccessMessage by remember { mutableStateOf(value = "") }
-                var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
+                var profilePhotoUri by remember {
+                    mutableStateOf<Uri?>(session.getProfilePhotoUri()?.let { 
+                        try { Uri.parse(it) } catch (_: Exception) { null } 
+                    })
+                }
                 var headerSearchQuery by remember { mutableStateOf(value = "") }
                 
                 val guestLabel = stringResource(R.string.dashboard_guest)
@@ -381,7 +385,16 @@ class MainActivity : ComponentActivity() {
                 val imagePickerLauncher = rememberLauncherForActivityResult(
                     contract = PickVisualMedia()
                 ) { uri: Uri? -> 
-                    profilePhotoUri = uri
+                    if (uri != null) {
+                        try {
+                            context.contentResolver.takePersistableUriPermission(
+                                uri,
+                                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            )
+                        } catch (_: Exception) {}
+                        profilePhotoUri = uri
+                        session.saveProfilePhotoUri(uri.toString())
+                    }
                 }
 
                 if (!isLoggedIn) {

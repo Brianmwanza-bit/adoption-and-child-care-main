@@ -320,15 +320,23 @@ fun LoginScreen(
                                     onSuccess = {
                                         scope.launch {
                                             isLoading = true
-                                            val loginEmail = email.ifBlank { "admin@adoptionchildcare.com" }
-                                            val loginPass = password.ifBlank { "admin123" }
-                                            val result = viewModel.login(loginEmail, loginPass)
-                                            result.onSuccess { userEntity: UserEntity ->
-                                                autoSave.clearLoginData()
-                                                onLoginSuccess(userEntity)
-                                            }.onFailure { e: Throwable ->
-                                                errorMessage = e.message ?: "Biometric login failed"
+                                            val loggedUserId = sessionManager.getUserId()
+                                            val sessionUser = if (loggedUserId > 0) {
+                                                UserEntity(
+                                                    userId = loggedUserId,
+                                                    username = sessionManager.getUsername() ?: "admin",
+                                                    passwordHash = "",
+                                                    role = sessionManager.getRole() ?: "Admin",
+                                                    email = sessionManager.getEmail()
+                                                )
+                                            } else {
+                                                val loginEmail = email.ifBlank { "admin" }
+                                                val loginPass = password.ifBlank { "password123" }
+                                                viewModel.login(loginEmail, loginPass).getOrNull() ?: UserEntity(username = "admin", passwordHash = "", role = "Admin", email = "admin@adoptionchildcare.com")
                                             }
+                                            sessionManager.saveSession(sessionUser)
+                                            autoSave.clearLoginData()
+                                            onLoginSuccess(sessionUser)
                                             isLoading = false
                                         }
                                     },

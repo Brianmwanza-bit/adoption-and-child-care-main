@@ -45,6 +45,11 @@ fun DrawerHeader(
             .background(Color(0xFF2196F3))
             .padding(24.dp)
     ) {
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val session = remember { com.example.adoption_and_childcare.data.session.SessionManager(context) }
+        val photoStr = profilePhotoUri?.toString() ?: session.getProfilePhotoUri()
+        val photoModel = com.example.adoption_and_childcare.network.RetrofitClient.getNormalizedPhotoModel(photoStr)
+
         Box(
             modifier = Modifier
                 .size(64.dp)
@@ -53,16 +58,12 @@ fun DrawerHeader(
                 .border(2.dp, Color.White.copy(alpha = 0.5f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            if (profilePhotoUri != null) {
-                AsyncImage(
-                    model = profilePhotoUri,
-                    contentDescription = stringResource(R.string.profile_photo_desc),
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text("\uD83D\uDC64", fontSize = 24.sp)
-            }
+            AsyncImage(
+                model = photoModel,
+                contentDescription = stringResource(R.string.profile_photo_desc),
+                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
         }
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -172,6 +173,11 @@ fun GreenHeader(
                 singleLine = true
             )
             
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val session = remember { com.example.adoption_and_childcare.data.session.SessionManager(context) }
+            val photoStr = profilePhotoUri?.toString() ?: session.getProfilePhotoUri()
+            val photoModel = com.example.adoption_and_childcare.network.RetrofitClient.getNormalizedPhotoModel(photoStr)
+
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -180,16 +186,12 @@ fun GreenHeader(
                     .clickable { onImagePicker() },
                 contentAlignment = Alignment.Center
             ) {
-                if (profilePhotoUri != null) {
-                    AsyncImage(
-                        model = profilePhotoUri,
-                        contentDescription = stringResource(R.string.profile_photo_desc),
-                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Text("\uD83D\uDC64", fontSize = 16.sp)
-                }
+                AsyncImage(
+                    model = photoModel,
+                    contentDescription = stringResource(R.string.profile_photo_desc),
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
             }
         }
     }

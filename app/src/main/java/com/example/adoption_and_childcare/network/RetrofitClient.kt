@@ -67,4 +67,30 @@ object RetrofitClient {
             return retrofit!!
         }
     }
+
+    /**
+     * Resolves photo data (URL, Base64 data URI, content URI, or relative path) into a Coil-compatible model.
+     */
+    fun getNormalizedPhotoModel(photoData: String?): Any {
+        if (photoData.isNullOrBlank()) {
+            return com.example.adoption_and_childcare.R.drawable.app_logo
+        }
+        val trimmed = photoData.trim()
+        return when {
+            trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true) -> trimmed
+            trimmed.startsWith("content://", ignoreCase = true) || trimmed.startsWith("file://", ignoreCase = true) -> trimmed
+            trimmed.startsWith("data:", ignoreCase = true) -> {
+                try {
+                    val base64Part = trimmed.substringAfter("base64,", trimmed)
+                    android.util.Base64.decode(base64Part, android.util.Base64.DEFAULT)
+                } catch (_: Exception) { trimmed }
+            }
+            !trimmed.contains("/") && trimmed.length > 50 -> {
+                try {
+                    android.util.Base64.decode(trimmed, android.util.Base64.DEFAULT)
+                } catch (_: Exception) { trimmed }
+            }
+            else -> trimmed
+        }
+    }
 }

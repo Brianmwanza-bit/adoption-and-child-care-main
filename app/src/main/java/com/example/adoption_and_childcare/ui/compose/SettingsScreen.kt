@@ -14,15 +14,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.example.adoption_and_childcare.data.db.AppDatabase
+import com.example.adoption_and_childcare.data.security.BiometricAuthManager
 import com.example.adoption_and_childcare.data.session.AppSettings
 import com.example.adoption_and_childcare.data.session.SessionManager
 import com.example.adoption_and_childcare.viewmodel.SettingsViewModel
 import com.example.adoption_and_childcare.R
+import android.widget.Toast
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
@@ -113,6 +117,7 @@ fun SettingsScreen(
     // Security Settings
     var sessionTimeoutState by remember { mutableStateOf(settings.sessionTimeoutMinutes.toString()) }
     var maxLoginAttemptsState by remember { mutableStateOf(settings.maxLoginAttempts.toString()) }
+    var biometricLoginEnabledState by remember { mutableStateOf(settings.biometricLoginEnabled) }
     
     // UI Settings
     var themeModeState by remember { mutableStateOf(settings.themeMode) }
@@ -496,6 +501,48 @@ fun SettingsScreen(
                         label = { Text(stringResource(R.string.settings_max_login_label)) },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Biometric Fast Login Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.biometric_prompt_title), fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(stringResource(R.string.biometric_prompt_subtitle), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                        Switch(
+                            checked = biometricLoginEnabledState,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    val biometricManager = BiometricAuthManager(context)
+                                    val activity = context as? FragmentActivity
+                                    if (activity != null && biometricManager.isBiometricAvailable()) {
+                                        biometricManager.authenticate(
+                                            activity = activity,
+                                            onSuccess = {
+                                                biometricLoginEnabledState = true
+                                                settings.biometricLoginEnabled = true
+                                                Toast.makeText(context, "Biometric authentication linked successfully", Toast.LENGTH_SHORT).show()
+                                            },
+                                            onError = { err ->
+                                                Toast.makeText(context, "Biometric auth failed: $err", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    } else {
+                                        biometricLoginEnabledState = true
+                                        settings.biometricLoginEnabled = true
+                                        Toast.makeText(context, "Biometric login enabled", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    biometricLoginEnabledState = false
+                                    settings.biometricLoginEnabled = false
+                                }
+                            }
+                        )
+                    }
+
                     Button(
                         onClick = {
                             settings.sessionTimeoutMinutes = sessionTimeoutState.toIntOrNull() ?: 30

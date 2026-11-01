@@ -55,6 +55,10 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(KEY_MAX_LOGIN_ATTEMPTS, 5)
         set(value) { prefs.edit().putInt(KEY_MAX_LOGIN_ATTEMPTS, value).apply() }
 
+    var biometricLoginEnabled: Boolean
+        get() = prefs.getBoolean(KEY_BIOMETRIC_LOGIN, false)
+        set(value) { prefs.edit().putBoolean(KEY_BIOMETRIC_LOGIN, value).apply() }
+
     // UI Configuration
     var themeMode: String
         get() = prefs.getString(KEY_THEME_MODE, "system") ?: "system"
@@ -109,5 +113,6 @@ class AppSettings(context: Context) {
         private const val KEY_LOCAL_DB_PATH = "local_db_path"
         private const val KEY_DEBUG_MODE = "debug_mode"
         private const val KEY_ENABLE_LOGGING = "enable_logging"
+        private const val KEY_BIOMETRIC_LOGIN = "biometric_login_enabled"
     }
 }

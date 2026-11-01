@@ -1811,12 +1811,13 @@ fun AddActivityDialog(onDismiss: () -> Unit, onActivityAdded: (title: String, ac
  */
 @Composable
 fun UrgencyFlagCard(flag: CaseUrgencyFlagEntity) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(vertical = 12.dp, horizontal = 16.dp)
     ) {
-        Row(modifier = Modifier.padding(all = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(weight = 1f)) {
                 Text(text = flag.flagType, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black)
                 Text(text = flag.reason ?: "", style = MaterialTheme.typography.bodySmall, color = Color.Black)
@@ -1828,6 +1829,8 @@ fun UrgencyFlagCard(flag: CaseUrgencyFlagEntity) {
                 Text(text = flag.riskLevel ?: mediumRisk, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = riskColor)
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
+        HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
     }
 }
 

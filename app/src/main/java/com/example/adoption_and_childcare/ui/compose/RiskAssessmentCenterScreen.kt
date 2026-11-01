@@ -44,21 +44,22 @@ fun RiskAssessmentCenterScreen(
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.risk_assessment_title)) },
+                title = { Text(stringResource(R.string.risk_assessment_title), color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.risk_assessment_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.risk_assessment_back), tint = Color.White)
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Help/Info */ }) {
-                        Icon(Icons.Default.Info, contentDescription = stringResource(R.string.risk_assessment_info))
+                        Icon(Icons.Default.Info, contentDescription = stringResource(R.string.risk_assessment_info), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFE91E63),
+                    containerColor = Color(0xFF2196F3),
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White,
                     actionIconContentColor = Color.White
@@ -68,7 +69,7 @@ fun RiskAssessmentCenterScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = Color(0xFFE91E63),
+                containerColor = Color(0xFF2196F3),
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.risk_assessment_conduct))
@@ -78,6 +79,7 @@ fun RiskAssessmentCenterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(Color.White)
                 .padding(scPadding)
         ) {
             // Safety Overview Section

@@ -422,9 +422,15 @@ class MainActivity : ComponentActivity() {
                                             currentUser = user.username
                                             currentRole = user.role
                                             val savedPhotoStr = session.getProfilePhotoUri()
+                                            val accountPhotoStr = user.photo ?: user.photoUrl
                                             if (!savedPhotoStr.isNullOrBlank()) {
                                                 try {
                                                     profilePhotoUri = Uri.parse(savedPhotoStr)
+                                                } catch (_: Exception) {}
+                                            } else if (!accountPhotoStr.isNullOrBlank()) {
+                                                try {
+                                                    profilePhotoUri = Uri.parse(accountPhotoStr)
+                                                    session.saveProfilePhotoUri(accountPhotoStr)
                                                 } catch (_: Exception) {}
                                             }
                                             isLoadingAfterLogin = true

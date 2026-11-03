@@ -17,7 +17,7 @@ async function topupTablesTo20() {
         user: process.env.DB_USER || 'root',
         password: process.env.DB_PASSWORD || '',
         database: process.env.DB_NAME || 'defaultdb',
-        port: process.env.DB_PORT || 13255,
+        port: process.env.DB_PORT || 11951,
         ssl: sslConfig,
         multipleStatements: true
     });

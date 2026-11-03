@@ -16,10 +16,13 @@ The **Adoption & Child Care Tracking System** is built on an **Offline-First And
 ---
 
 ## 2. Database Connection Credentials
-- **Host:** `mysql-2e009ff8-addoptionandchildcaretrackingsystem.j.aivencloud.com`
-- **Port:** `13255`
+- **Service URI:** `mysql://avnadmin:REDACTED@mysql-207bdfd9-adoption-and-child-care-tracking-system.g.aivencloud.com:11951/defaultdb?ssl-mode=REQUIRED`
+- **Host:** `mysql-207bdfd9-adoption-and-child-care-tracking-system.g.aivencloud.com`
+- **Port:** `11951`
 - **User:** `avnadmin`
+- **Password:** `[REDACTED]`
 - **Database:** `defaultdb`
+- **SSL Mode:** `REQUIRED`
 - **SSL Certificate:** `backend/config-aiven-ca.pem` (Pinned TLSv1.2 Trust Anchor)
 
 ---

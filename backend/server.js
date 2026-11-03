@@ -86,10 +86,10 @@ const sslConfig = fs.existsSync(caPath)
   : { minVersion: 'TLSv1.2', rejectUnauthorized: false };
 
 const dbConfig = {
-  host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || 'mysql-2e009ff8-addoptionandchildcaretrackingsystem.j.aivencloud.com',
+  host: process.env.AIVEN_DB_HOST || process.env.DB_HOST || 'mysql-207bdfd9-adoption-and-child-care-tracking-system.g.aivencloud.com',
   user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'avnadmin',
   password: process.env.AIVEN_DB_PASSWORD || process.env.DB_PASSWORD,
-  port: parseInt(process.env.AIVEN_DB_PORT || process.env.DB_PORT) || 13255,
+  port: parseInt(process.env.AIVEN_DB_PORT || process.env.DB_PORT) || 11951,
   database: process.env.AIVEN_DB_NAME || process.env.DB_NAME || 'defaultdb',
   multipleStatements: true,
   charset: 'utf8mb4',
@@ -109,21 +109,18 @@ function connectWithRetry(connection, retries = 5) {
   connection.connect((err) => {
     if (err) {
       if (retries > 0) {
-        // Try toggling between 127.0.0.1 and localhost on retry
-        const nextHost = connection.config.host === '127.0.0.1' ? 'localhost' : '127.0.0.1';
-        connection.config.host = nextHost;
-        console.log(`Connection failed (${err.code}). Retrying with ${nextHost}... (${retries} retries left)`);
-        setTimeout(() => connectWithRetry(connection, retries - 1), 2000);
+        console.log(`Connection failed (${err.code || err.message}). Retrying connection... (${retries} retries left)`);
+        setTimeout(() => connectWithRetry(connection, retries - 1), 3000);
       } else {
-        console.error(`Failed to connect to MySQL server on port ${dbConfig.port}:`, err.message);
+        console.error(`Failed to connect to Aiven MySQL server on port ${dbConfig.port}:`, err.message);
         console.log('--- TROUBLESHOOTING ---');
-        console.log(`1. Check if MySQL is running on port ${dbConfig.port} in XAMPP.`);
-        console.log('2. Ensure no other MySQL instance is blocking the port.');
+        console.log('1. Check network/internet connection.');
+        console.log('2. Verify Aiven credentials in backend/.env');
         console.log('------------------------');
       }
     } else {
-      console.log('✔ Connected to MySQL server.');
-      const dbName = process.env.DB_NAME || 'adoption_and_childcare_tracking_system_db';
+      console.log('✔ Connected to Aiven MySQL server.');
+      const dbName = process.env.DB_NAME || 'defaultdb';
       connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``, (err) => {
         connection.end();
         if (err) {

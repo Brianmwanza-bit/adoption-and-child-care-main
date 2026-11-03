@@ -17,7 +17,7 @@ async function syncLocalToRemote() {
         user: process.env.AIVEN_DB_USER || process.env.DB_USER || 'avnadmin',
         password: process.env.AIVEN_DB_PASSWORD || process.env.DB_PASSWORD,
         database: process.env.AIVEN_DB_NAME || process.env.DB_NAME || 'defaultdb',
-        port: process.env.AIVEN_DB_PORT || process.env.DB_PORT || 13255,
+        port: process.env.AIVEN_DB_PORT || process.env.DB_PORT || 11951,
         ssl: { rejectUnauthorized: false }
     };
 
